@@ -1,0 +1,5380 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {
+    "hyperedges": [
+      {
+        "id": "vite_build_toolchain",
+        "label": "Vite + TypeScript + Tailwind Build Toolchain",
+        "nodes": [
+          "package_root_manifest",
+          "vite_config_defineConfig",
+          "tsconfig_main",
+          "tsconfig_node",
+          "postcss_config",
+          "tailwind_config"
+        ],
+        "relation": "form",
+        "confidence": "INFERRED",
+        "confidence_score": 0.95,
+        "source_file": "package.json"
+      },
+      {
+        "id": "magic_patterns_screen_flow",
+        "label": "Magic Patterns Canvas Screen-State Flow",
+        "nodes": [
+          "canvas_manifest_manifest",
+          "useScreenInit_useScreenInit",
+          "dashboard_Dashboard",
+          "concept_screen_state_init"
+        ],
+        "relation": "participate_in",
+        "confidence": "INFERRED",
+        "confidence_score": 0.85,
+        "source_file": "src/useScreenInit.js"
+      },
+      {
+        "id": "app_bootstrap_chain",
+        "label": "App Bootstrap Chain (HTML -> entry -> App -> Dashboard)",
+        "nodes": [
+          "index_html_root",
+          "index_entry_render",
+          "app_App",
+          "dashboard_Dashboard"
+        ],
+        "relation": "participate_in",
+        "confidence": "EXTRACTED",
+        "confidence_score": 1.0,
+        "source_file": "src/index.tsx"
+      },
+      {
+        "id": "date_range_state_flow",
+        "label": "Date-Range Filter State Flow",
+        "nodes": [
+          "dashboard_Dashboard",
+          "dashboardheader_DashboardHeader",
+          "kpicards_KpiCards",
+          "marketsharetab_MarketShareTab",
+          "sentimenttab_SentimentTab",
+          "engagementtrendchart_EngagementTrendChart"
+        ],
+        "relation": "participate_in",
+        "confidence": "EXTRACTED",
+        "confidence_score": 1.0,
+        "source_file": "src/pages/Dashboard.tsx"
+      },
+      {
+        "id": "staggered_entrance_animation",
+        "label": "Duplicated Framer-Motion Stagger Animation Pattern",
+        "nodes": [
+          "kpicards_KpiCards",
+          "marketsharetab_MarketShareTab",
+          "sentimenttab_SentimentTab"
+        ],
+        "relation": "implement",
+        "confidence": "INFERRED",
+        "confidence_score": 0.85,
+        "source_file": "src/components/KpiCards.tsx"
+      },
+      {
+        "id": "own_brand_highlighting",
+        "label": "Sonalika Own-Brand Highlighting via SONALIKA_ID",
+        "nodes": [
+          "kpicards_KpiCards",
+          "competitortable_CompetitorTable",
+          "contentfrequencychart_ContentFrequencyChart",
+          "shareofvoicecharts_ShareOfVoiceCharts",
+          "marketsharetab_MarketShareTab"
+        ],
+        "relation": "implement",
+        "confidence": "INFERRED",
+        "confidence_score": 0.85,
+        "source_file": "src/data/mockData.ts"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "label": "package.json",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L1",
+      "id": "package_json",
+      "community": 4,
+      "norm_label": "package.json"
+    },
+    {
+      "label": "name",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L2",
+      "id": "dashboard_v2_package_name",
+      "community": 4,
+      "norm_label": "name"
+    },
+    {
+      "label": "version",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L3",
+      "id": "dashboard_v2_package_version",
+      "community": 4,
+      "norm_label": "version"
+    },
+    {
+      "label": "private",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L4",
+      "id": "dashboard_v2_package_private",
+      "community": 4,
+      "norm_label": "private"
+    },
+    {
+      "label": "type",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L5",
+      "id": "dashboard_v2_package_type",
+      "community": 4,
+      "norm_label": "type"
+    },
+    {
+      "label": "scripts",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L6",
+      "id": "dashboard_v2_package_scripts",
+      "community": 4,
+      "norm_label": "scripts"
+    },
+    {
+      "label": "dev",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L7",
+      "id": "dashboard_v2_package_scripts_dev",
+      "community": 4,
+      "norm_label": "dev"
+    },
+    {
+      "label": "build",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L8",
+      "id": "dashboard_v2_package_scripts_build",
+      "community": 4,
+      "norm_label": "build"
+    },
+    {
+      "label": "lint",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L9",
+      "id": "dashboard_v2_package_scripts_lint",
+      "community": 4,
+      "norm_label": "lint"
+    },
+    {
+      "label": "preview",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L10",
+      "id": "dashboard_v2_package_scripts_preview",
+      "community": 4,
+      "norm_label": "preview"
+    },
+    {
+      "label": "dependencies",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L12",
+      "id": "dashboard_v2_package_dependencies",
+      "community": 4,
+      "norm_label": "dependencies"
+    },
+    {
+      "label": "react",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L13",
+      "id": "dashboard_v2_package_dependencies_react",
+      "community": 4,
+      "norm_label": "react"
+    },
+    {
+      "label": "react-dom",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L14",
+      "id": "dashboard_v2_package_dependencies_react_dom",
+      "community": 4,
+      "norm_label": "react-dom"
+    },
+    {
+      "label": "@emotion/react",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L15",
+      "id": "dashboard_v2_package_dependencies_emotion_react",
+      "community": 4,
+      "norm_label": "@emotion/react"
+    },
+    {
+      "label": "lucide-react",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L16",
+      "id": "dashboard_v2_package_dependencies_lucide_react",
+      "community": 4,
+      "norm_label": "lucide-react"
+    },
+    {
+      "label": "framer-motion",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L17",
+      "id": "dashboard_v2_package_dependencies_framer_motion",
+      "community": 4,
+      "norm_label": "framer-motion"
+    },
+    {
+      "label": "recharts",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L18",
+      "id": "dashboard_v2_package_dependencies_recharts",
+      "community": 4,
+      "norm_label": "recharts"
+    },
+    {
+      "label": "devDependencies",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L20",
+      "id": "dashboard_v2_package_devdependencies",
+      "community": 5,
+      "norm_label": "devdependencies"
+    },
+    {
+      "label": "@types/node",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L21",
+      "id": "dashboard_v2_package_devdependencies_types_node",
+      "community": 5,
+      "norm_label": "@types/node"
+    },
+    {
+      "label": "@types/react",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L22",
+      "id": "dashboard_v2_package_devdependencies_types_react",
+      "community": 5,
+      "norm_label": "@types/react"
+    },
+    {
+      "label": "@types/react-dom",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L23",
+      "id": "dashboard_v2_package_devdependencies_types_react_dom",
+      "community": 5,
+      "norm_label": "@types/react-dom"
+    },
+    {
+      "label": "@typescript-eslint/eslint-plugin",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L24",
+      "id": "dashboard_v2_package_devdependencies_typescript_eslint_eslint_plugin",
+      "community": 5,
+      "norm_label": "@typescript-eslint/eslint-plugin"
+    },
+    {
+      "label": "@typescript-eslint/parser",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L25",
+      "id": "dashboard_v2_package_devdependencies_typescript_eslint_parser",
+      "community": 5,
+      "norm_label": "@typescript-eslint/parser"
+    },
+    {
+      "label": "@vitejs/plugin-react",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L26",
+      "id": "dashboard_v2_package_devdependencies_vitejs_plugin_react",
+      "community": 5,
+      "norm_label": "@vitejs/plugin-react"
+    },
+    {
+      "label": "eslint",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L27",
+      "id": "dashboard_v2_package_devdependencies_eslint",
+      "community": 5,
+      "norm_label": "eslint"
+    },
+    {
+      "label": "eslint-plugin-react-hooks",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L28",
+      "id": "dashboard_v2_package_devdependencies_eslint_plugin_react_hooks",
+      "community": 5,
+      "norm_label": "eslint-plugin-react-hooks"
+    },
+    {
+      "label": "eslint-plugin-react-refresh",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L29",
+      "id": "dashboard_v2_package_devdependencies_eslint_plugin_react_refresh",
+      "community": 5,
+      "norm_label": "eslint-plugin-react-refresh"
+    },
+    {
+      "label": "typescript",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L30",
+      "id": "dashboard_v2_package_devdependencies_typescript",
+      "community": 5,
+      "norm_label": "typescript"
+    },
+    {
+      "label": "vite",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L31",
+      "id": "dashboard_v2_package_devdependencies_vite",
+      "community": 5,
+      "norm_label": "vite"
+    },
+    {
+      "label": "tailwindcss",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L32",
+      "id": "dashboard_v2_package_devdependencies_tailwindcss",
+      "community": 5,
+      "norm_label": "tailwindcss"
+    },
+    {
+      "label": "autoprefixer",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L33",
+      "id": "dashboard_v2_package_devdependencies_autoprefixer",
+      "community": 5,
+      "norm_label": "autoprefixer"
+    },
+    {
+      "label": "postcss",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L34",
+      "id": "dashboard_v2_package_devdependencies_postcss",
+      "community": 5,
+      "norm_label": "postcss"
+    },
+    {
+      "label": "postcss.config.js",
+      "file_type": "code",
+      "source_file": "postcss.config.js",
+      "source_location": "L1",
+      "id": "postcss_config_js",
+      "community": 11,
+      "norm_label": "postcss.config.js"
+    },
+    {
+      "label": "tailwind.config.js",
+      "file_type": "code",
+      "source_file": "tailwind.config.js",
+      "source_location": "L1",
+      "id": "tailwind_config_js",
+      "community": 12,
+      "norm_label": "tailwind.config.js"
+    },
+    {
+      "label": "tsconfig.json",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L1",
+      "id": "tsconfig_json",
+      "community": 3,
+      "norm_label": "tsconfig.json"
+    },
+    {
+      "label": "compilerOptions",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L2",
+      "id": "dashboard_v2_tsconfig_compileroptions",
+      "community": 3,
+      "norm_label": "compileroptions"
+    },
+    {
+      "label": "target",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L3",
+      "id": "dashboard_v2_tsconfig_compileroptions_target",
+      "community": 3,
+      "norm_label": "target"
+    },
+    {
+      "label": "useDefineForClassFields",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L4",
+      "id": "dashboard_v2_tsconfig_compileroptions_usedefineforclassfields",
+      "community": 3,
+      "norm_label": "usedefineforclassfields"
+    },
+    {
+      "label": "lib",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L5",
+      "id": "dashboard_v2_tsconfig_compileroptions_lib",
+      "community": 3,
+      "norm_label": "lib"
+    },
+    {
+      "label": "module",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L6",
+      "id": "dashboard_v2_tsconfig_compileroptions_module",
+      "community": 3,
+      "norm_label": "module"
+    },
+    {
+      "label": "skipLibCheck",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L7",
+      "id": "dashboard_v2_tsconfig_compileroptions_skiplibcheck",
+      "community": 3,
+      "norm_label": "skiplibcheck"
+    },
+    {
+      "label": "moduleResolution",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L10",
+      "id": "dashboard_v2_tsconfig_compileroptions_moduleresolution",
+      "community": 3,
+      "norm_label": "moduleresolution"
+    },
+    {
+      "label": "allowImportingTsExtensions",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L11",
+      "id": "dashboard_v2_tsconfig_compileroptions_allowimportingtsextensions",
+      "community": 3,
+      "norm_label": "allowimportingtsextensions"
+    },
+    {
+      "label": "resolveJsonModule",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L12",
+      "id": "dashboard_v2_tsconfig_compileroptions_resolvejsonmodule",
+      "community": 3,
+      "norm_label": "resolvejsonmodule"
+    },
+    {
+      "label": "isolatedModules",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L13",
+      "id": "dashboard_v2_tsconfig_compileroptions_isolatedmodules",
+      "community": 3,
+      "norm_label": "isolatedmodules"
+    },
+    {
+      "label": "noEmit",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L14",
+      "id": "dashboard_v2_tsconfig_compileroptions_noemit",
+      "community": 3,
+      "norm_label": "noemit"
+    },
+    {
+      "label": "jsx",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L15",
+      "id": "dashboard_v2_tsconfig_compileroptions_jsx",
+      "community": 3,
+      "norm_label": "jsx"
+    },
+    {
+      "label": "strict",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L18",
+      "id": "dashboard_v2_tsconfig_compileroptions_strict",
+      "community": 3,
+      "norm_label": "strict"
+    },
+    {
+      "label": "noUnusedLocals",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L19",
+      "id": "dashboard_v2_tsconfig_compileroptions_nounusedlocals",
+      "community": 3,
+      "norm_label": "nounusedlocals"
+    },
+    {
+      "label": "noUnusedParameters",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L20",
+      "id": "dashboard_v2_tsconfig_compileroptions_nounusedparameters",
+      "community": 3,
+      "norm_label": "nounusedparameters"
+    },
+    {
+      "label": "noFallthroughCasesInSwitch",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L21",
+      "id": "dashboard_v2_tsconfig_compileroptions_nofallthroughcasesinswitch",
+      "community": 3,
+      "norm_label": "nofallthroughcasesinswitch"
+    },
+    {
+      "label": "include",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L23",
+      "id": "dashboard_v2_tsconfig_include",
+      "community": 3,
+      "norm_label": "include"
+    },
+    {
+      "label": "references",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L24",
+      "id": "dashboard_v2_tsconfig_references",
+      "community": 3,
+      "norm_label": "references"
+    },
+    {
+      "label": "tsconfig.node.json",
+      "file_type": "code",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L1",
+      "id": "tsconfig_node_json",
+      "community": 8,
+      "norm_label": "tsconfig.node.json"
+    },
+    {
+      "label": "compilerOptions",
+      "file_type": "code",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L2",
+      "id": "dashboard_v2_tsconfig_node_compileroptions",
+      "community": 8,
+      "norm_label": "compileroptions"
+    },
+    {
+      "label": "composite",
+      "file_type": "code",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L3",
+      "id": "dashboard_v2_tsconfig_node_compileroptions_composite",
+      "community": 8,
+      "norm_label": "composite"
+    },
+    {
+      "label": "skipLibCheck",
+      "file_type": "code",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L4",
+      "id": "dashboard_v2_tsconfig_node_compileroptions_skiplibcheck",
+      "community": 8,
+      "norm_label": "skiplibcheck"
+    },
+    {
+      "label": "module",
+      "file_type": "code",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L5",
+      "id": "dashboard_v2_tsconfig_node_compileroptions_module",
+      "community": 8,
+      "norm_label": "module"
+    },
+    {
+      "label": "moduleResolution",
+      "file_type": "code",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L6",
+      "id": "dashboard_v2_tsconfig_node_compileroptions_moduleresolution",
+      "community": 8,
+      "norm_label": "moduleresolution"
+    },
+    {
+      "label": "allowSyntheticDefaultImports",
+      "file_type": "code",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L7",
+      "id": "dashboard_v2_tsconfig_node_compileroptions_allowsyntheticdefaultimports",
+      "community": 8,
+      "norm_label": "allowsyntheticdefaultimports"
+    },
+    {
+      "label": "strict",
+      "file_type": "code",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L8",
+      "id": "dashboard_v2_tsconfig_node_compileroptions_strict",
+      "community": 8,
+      "norm_label": "strict"
+    },
+    {
+      "label": "include",
+      "file_type": "code",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L10",
+      "id": "dashboard_v2_tsconfig_node_include",
+      "community": 8,
+      "norm_label": "include"
+    },
+    {
+      "label": "vite.config.ts",
+      "file_type": "code",
+      "source_file": "vite.config.ts",
+      "source_location": "L1",
+      "id": "vite_config_ts",
+      "community": 13,
+      "norm_label": "vite.config.ts"
+    },
+    {
+      "label": "App.tsx",
+      "file_type": "code",
+      "source_file": "src/App.tsx",
+      "source_location": "L1",
+      "id": "src_app_tsx",
+      "community": 9,
+      "norm_label": "app.tsx"
+    },
+    {
+      "label": "App()",
+      "file_type": "code",
+      "source_file": "src/App.tsx",
+      "source_location": "L3",
+      "id": "src_app_app",
+      "community": 9,
+      "norm_label": "app()"
+    },
+    {
+      "label": "canvas.manifest.js",
+      "file_type": "code",
+      "source_file": "src/canvas.manifest.js",
+      "source_location": "L1",
+      "id": "src_canvas_manifest_js",
+      "community": 9,
+      "norm_label": "canvas.manifest.js"
+    },
+    {
+      "label": "manifest",
+      "file_type": "code",
+      "source_file": "src/canvas.manifest.js",
+      "source_location": "L1",
+      "id": "src_canvas_manifest_manifest",
+      "community": 9,
+      "norm_label": "manifest"
+    },
+    {
+      "label": "index.tsx",
+      "file_type": "code",
+      "source_file": "src/index.tsx",
+      "source_location": "L1",
+      "id": "src_index_tsx",
+      "community": 9,
+      "norm_label": "index.tsx"
+    },
+    {
+      "label": "package.json",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L1",
+      "id": "src_package_json",
+      "community": 7,
+      "norm_label": "package.json"
+    },
+    {
+      "label": "name",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L2",
+      "id": "src_package_name",
+      "community": 7,
+      "norm_label": "name"
+    },
+    {
+      "label": "private",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L3",
+      "id": "src_package_private",
+      "community": 7,
+      "norm_label": "private"
+    },
+    {
+      "label": "dependencies",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L4",
+      "id": "src_package_dependencies",
+      "community": 7,
+      "norm_label": "dependencies"
+    },
+    {
+      "label": "react",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L5",
+      "id": "src_package_dependencies_react",
+      "community": 7,
+      "norm_label": "react"
+    },
+    {
+      "label": "react-dom",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L6",
+      "id": "src_package_dependencies_react_dom",
+      "community": 7,
+      "norm_label": "react-dom"
+    },
+    {
+      "label": "react-router-dom",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L7",
+      "id": "src_package_dependencies_react_router_dom",
+      "community": 7,
+      "norm_label": "react-router-dom"
+    },
+    {
+      "label": "lucide-react",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L8",
+      "id": "src_package_dependencies_lucide_react",
+      "community": 7,
+      "norm_label": "lucide-react"
+    },
+    {
+      "label": "framer-motion",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L9",
+      "id": "src_package_dependencies_framer_motion",
+      "community": 7,
+      "norm_label": "framer-motion"
+    },
+    {
+      "label": "@radix-ui/react-icons",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L10",
+      "id": "src_package_dependencies_radix_ui_react_icons",
+      "community": 7,
+      "norm_label": "@radix-ui/react-icons"
+    },
+    {
+      "label": "date-fns",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L11",
+      "id": "src_package_dependencies_date_fns",
+      "community": 7,
+      "norm_label": "date-fns"
+    },
+    {
+      "label": "tailwind-merge",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L12",
+      "id": "src_package_dependencies_tailwind_merge",
+      "community": 7,
+      "norm_label": "tailwind-merge"
+    },
+    {
+      "label": "recharts",
+      "file_type": "code",
+      "source_file": "src/package.json",
+      "source_location": "L13",
+      "id": "src_package_dependencies_recharts",
+      "community": 7,
+      "norm_label": "recharts"
+    },
+    {
+      "label": "useScreenInit.js",
+      "file_type": "code",
+      "source_file": "src/useScreenInit.js",
+      "source_location": "L1",
+      "id": "src_usescreeninit_js",
+      "community": 9,
+      "norm_label": "usescreeninit.js"
+    },
+    {
+      "label": "useScreenInit()",
+      "file_type": "code",
+      "source_file": "src/useScreenInit.js",
+      "source_location": "L4",
+      "id": "src_usescreeninit_usescreeninit",
+      "community": 9,
+      "norm_label": "usescreeninit()"
+    },
+    {
+      "label": "DashboardHeader.tsx",
+      "file_type": "code",
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "L1",
+      "id": "src_components_dashboardheader_tsx",
+      "community": 0,
+      "norm_label": "dashboardheader.tsx"
+    },
+    {
+      "label": "DashboardHeaderProps",
+      "file_type": "code",
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "L15",
+      "id": "components_dashboardheader_dashboardheaderprops",
+      "community": 0,
+      "norm_label": "dashboardheaderprops"
+    },
+    {
+      "label": "DashboardHeader()",
+      "file_type": "code",
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "L21",
+      "id": "components_dashboardheader_dashboardheader",
+      "community": 0,
+      "norm_label": "dashboardheader()"
+    },
+    {
+      "label": "KpiCards.tsx",
+      "file_type": "code",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L1",
+      "id": "src_components_kpicards_tsx",
+      "community": 0,
+      "norm_label": "kpicards.tsx"
+    },
+    {
+      "label": "KpiCardsProps",
+      "file_type": "code",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L22",
+      "id": "components_kpicards_kpicardsprops",
+      "community": 0,
+      "norm_label": "kpicardsprops"
+    },
+    {
+      "label": "Kpi",
+      "file_type": "code",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L26",
+      "id": "components_kpicards_kpi",
+      "community": 0,
+      "norm_label": "kpi"
+    },
+    {
+      "label": "container",
+      "file_type": "code",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L34",
+      "id": "components_kpicards_container",
+      "community": 0,
+      "norm_label": "container"
+    },
+    {
+      "label": "item",
+      "file_type": "code",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L42",
+      "id": "components_kpicards_item",
+      "community": 0,
+      "norm_label": "item"
+    },
+    {
+      "label": "KpiCards()",
+      "file_type": "code",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L56",
+      "id": "components_kpicards_kpicards",
+      "community": 0,
+      "norm_label": "kpicards()"
+    },
+    {
+      "label": "SectionCard.tsx",
+      "file_type": "code",
+      "source_file": "src/components/SectionCard.tsx",
+      "source_location": "L1",
+      "id": "src_components_sectioncard_tsx",
+      "community": 1,
+      "norm_label": "sectioncard.tsx"
+    },
+    {
+      "label": "SectionCardProps",
+      "file_type": "code",
+      "source_file": "src/components/SectionCard.tsx",
+      "source_location": "L2",
+      "id": "components_sectioncard_sectioncardprops",
+      "community": 1,
+      "norm_label": "sectioncardprops"
+    },
+    {
+      "label": "SectionCard()",
+      "file_type": "code",
+      "source_file": "src/components/SectionCard.tsx",
+      "source_location": "L8",
+      "id": "components_sectioncard_sectioncard",
+      "community": 1,
+      "norm_label": "sectioncard()"
+    },
+    {
+      "label": "TabBar.tsx",
+      "file_type": "code",
+      "source_file": "src/components/TabBar.tsx",
+      "source_location": "L1",
+      "id": "src_components_tabbar_tsx",
+      "community": 0,
+      "norm_label": "tabbar.tsx"
+    },
+    {
+      "label": "TabBarProps",
+      "file_type": "code",
+      "source_file": "src/components/TabBar.tsx",
+      "source_location": "L5",
+      "id": "components_tabbar_tabbarprops",
+      "community": 0,
+      "norm_label": "tabbarprops"
+    },
+    {
+      "label": "TABS",
+      "file_type": "code",
+      "source_file": "src/components/TabBar.tsx",
+      "source_location": "L9",
+      "id": "components_tabbar_tabs",
+      "community": 0,
+      "norm_label": "tabs"
+    },
+    {
+      "label": "TabBar()",
+      "file_type": "code",
+      "source_file": "src/components/TabBar.tsx",
+      "source_location": "L25",
+      "id": "components_tabbar_tabbar",
+      "community": 0,
+      "norm_label": "tabbar()"
+    },
+    {
+      "label": "CompetitorTable.tsx",
+      "file_type": "code",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L1",
+      "id": "src_components_market_share_competitortable_tsx",
+      "community": 1,
+      "norm_label": "competitortable.tsx"
+    },
+    {
+      "label": "CompetitorTableProps",
+      "file_type": "code",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L11",
+      "id": "market_share_competitortable_competitortableprops",
+      "community": 1,
+      "norm_label": "competitortableprops"
+    },
+    {
+      "label": "SortKey",
+      "file_type": "code",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L14",
+      "id": "market_share_competitortable_sortkey",
+      "community": 1,
+      "norm_label": "sortkey"
+    },
+    {
+      "label": "SortDir",
+      "file_type": "code",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L22",
+      "id": "market_share_competitortable_sortdir",
+      "community": 1,
+      "norm_label": "sortdir"
+    },
+    {
+      "label": "Row",
+      "file_type": "code",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L23",
+      "id": "market_share_competitortable_row",
+      "community": 1,
+      "norm_label": "row"
+    },
+    {
+      "label": "COLUMNS",
+      "file_type": "code",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L33",
+      "id": "market_share_competitortable_columns",
+      "community": 1,
+      "norm_label": "columns"
+    },
+    {
+      "label": "CompetitorTable()",
+      "file_type": "code",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L66",
+      "id": "market_share_competitortable_competitortable",
+      "community": 1,
+      "norm_label": "competitortable()"
+    },
+    {
+      "label": "ContentFrequencyChart.tsx",
+      "file_type": "code",
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "L1",
+      "id": "src_components_market_share_contentfrequencychart_tsx",
+      "community": 1,
+      "norm_label": "contentfrequencychart.tsx"
+    },
+    {
+      "label": "ContentFrequencyChartProps",
+      "file_type": "code",
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "L15",
+      "id": "market_share_contentfrequencychart_contentfrequencychartprops",
+      "community": 1,
+      "norm_label": "contentfrequencychartprops"
+    },
+    {
+      "label": "ContentFrequencyChart()",
+      "file_type": "code",
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "L18",
+      "id": "market_share_contentfrequencychart_contentfrequencychart",
+      "community": 1,
+      "norm_label": "contentfrequencychart()"
+    },
+    {
+      "label": "EngagementTrendChart.tsx",
+      "file_type": "code",
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "L1",
+      "id": "src_components_market_share_engagementtrendchart_tsx",
+      "community": 1,
+      "norm_label": "engagementtrendchart.tsx"
+    },
+    {
+      "label": "EngagementTrendChartProps",
+      "file_type": "code",
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "L14",
+      "id": "market_share_engagementtrendchart_engagementtrendchartprops",
+      "community": 1,
+      "norm_label": "engagementtrendchartprops"
+    },
+    {
+      "label": "EngagementTrendChart()",
+      "file_type": "code",
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "L17",
+      "id": "market_share_engagementtrendchart_engagementtrendchart",
+      "community": 1,
+      "norm_label": "engagementtrendchart()"
+    },
+    {
+      "label": "MarketShareTab.tsx",
+      "file_type": "code",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L1",
+      "id": "src_components_market_share_marketsharetab_tsx",
+      "community": 1,
+      "norm_label": "marketsharetab.tsx"
+    },
+    {
+      "label": "MarketShareTabProps",
+      "file_type": "code",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L8",
+      "id": "market_share_marketsharetab_marketsharetabprops",
+      "community": 0,
+      "norm_label": "marketsharetabprops"
+    },
+    {
+      "label": "container",
+      "file_type": "code",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L12",
+      "id": "market_share_marketsharetab_container",
+      "community": 1,
+      "norm_label": "container"
+    },
+    {
+      "label": "item",
+      "file_type": "code",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L20",
+      "id": "market_share_marketsharetab_item",
+      "community": 1,
+      "norm_label": "item"
+    },
+    {
+      "label": "MarketShareTab()",
+      "file_type": "code",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L34",
+      "id": "market_share_marketsharetab_marketsharetab",
+      "community": 0,
+      "norm_label": "marketsharetab()"
+    },
+    {
+      "label": "ShareOfVoiceCharts.tsx",
+      "file_type": "code",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L1",
+      "id": "src_components_market_share_shareofvoicecharts_tsx",
+      "community": 1,
+      "norm_label": "shareofvoicecharts.tsx"
+    },
+    {
+      "label": "ShareOfVoiceChartsProps",
+      "file_type": "code",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L10",
+      "id": "market_share_shareofvoicecharts_shareofvoicechartsprops",
+      "community": 1,
+      "norm_label": "shareofvoicechartsprops"
+    },
+    {
+      "label": "MetricKey",
+      "file_type": "code",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L13",
+      "id": "market_share_shareofvoicecharts_metrickey",
+      "community": 1,
+      "norm_label": "metrickey"
+    },
+    {
+      "label": "METRICS",
+      "file_type": "code",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L14",
+      "id": "market_share_shareofvoicecharts_metrics",
+      "community": 1,
+      "norm_label": "metrics"
+    },
+    {
+      "label": "ShareOfVoiceCharts()",
+      "file_type": "code",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L31",
+      "id": "market_share_shareofvoicecharts_shareofvoicecharts",
+      "community": 1,
+      "norm_label": "shareofvoicecharts()"
+    },
+    {
+      "label": "SentimentTab.tsx",
+      "file_type": "code",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L1",
+      "id": "src_components_sentiment_sentimenttab_tsx",
+      "community": 0,
+      "norm_label": "sentimenttab.tsx"
+    },
+    {
+      "label": "SentimentTabProps",
+      "file_type": "code",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L34",
+      "id": "sentiment_sentimenttab_sentimenttabprops",
+      "community": 0,
+      "norm_label": "sentimenttabprops"
+    },
+    {
+      "label": "SIGNAL_STYLES",
+      "file_type": "code",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L37",
+      "id": "sentiment_sentimenttab_signal_styles",
+      "community": 0,
+      "norm_label": "signal_styles"
+    },
+    {
+      "label": "SEVERITY_STYLES",
+      "file_type": "code",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L57",
+      "id": "sentiment_sentimenttab_severity_styles",
+      "community": 0,
+      "norm_label": "severity_styles"
+    },
+    {
+      "label": "container",
+      "file_type": "code",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L62",
+      "id": "sentiment_sentimenttab_container",
+      "community": 0,
+      "norm_label": "container"
+    },
+    {
+      "label": "item",
+      "file_type": "code",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L70",
+      "id": "sentiment_sentimenttab_item",
+      "community": 0,
+      "norm_label": "item"
+    },
+    {
+      "label": "SentimentTab()",
+      "file_type": "code",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L84",
+      "id": "sentiment_sentimenttab_sentimenttab",
+      "community": 0,
+      "norm_label": "sentimenttab()"
+    },
+    {
+      "label": "mockData.ts",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L1",
+      "id": "src_data_mockdata_ts",
+      "community": 0,
+      "norm_label": "mockdata.ts"
+    },
+    {
+      "label": "DateRangeKey",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L2",
+      "id": "data_mockdata_daterangekey",
+      "community": 0,
+      "norm_label": "daterangekey"
+    },
+    {
+      "label": "TabKey",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L3",
+      "id": "data_mockdata_tabkey",
+      "community": 0,
+      "norm_label": "tabkey"
+    },
+    {
+      "label": "IntentSignal",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L4",
+      "id": "data_mockdata_intentsignal",
+      "community": 0,
+      "norm_label": "intentsignal"
+    },
+    {
+      "label": "Severity",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L8",
+      "id": "data_mockdata_severity",
+      "community": 0,
+      "norm_label": "severity"
+    },
+    {
+      "label": "Brand",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L10",
+      "id": "data_mockdata_brand",
+      "community": 0,
+      "norm_label": "brand"
+    },
+    {
+      "label": "BrandStats",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L18",
+      "id": "data_mockdata_brandstats",
+      "community": 1,
+      "norm_label": "brandstats"
+    },
+    {
+      "label": "TrendPoint",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L27",
+      "id": "data_mockdata_trendpoint",
+      "community": 0,
+      "norm_label": "trendpoint"
+    },
+    {
+      "label": "IntentComment",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L33",
+      "id": "data_mockdata_intentcomment",
+      "community": 0,
+      "norm_label": "intentcomment"
+    },
+    {
+      "label": "UnmetNeed",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L43",
+      "id": "data_mockdata_unmetneed",
+      "community": 0,
+      "norm_label": "unmetneed"
+    },
+    {
+      "label": "RecurringQuestion",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L52",
+      "id": "data_mockdata_recurringquestion",
+      "community": 0,
+      "norm_label": "recurringquestion"
+    },
+    {
+      "label": "BRANDS",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L63",
+      "id": "data_mockdata_brands",
+      "community": 0,
+      "norm_label": "brands"
+    },
+    {
+      "label": "COMPETITORS",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L78",
+      "id": "data_mockdata_competitors",
+      "community": 0,
+      "norm_label": "competitors"
+    },
+    {
+      "label": "getBrand()",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L80",
+      "id": "data_mockdata_getbrand",
+      "community": 1,
+      "norm_label": "getbrand()"
+    },
+    {
+      "label": "DATE_RANGES",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L84",
+      "id": "data_mockdata_date_ranges",
+      "community": 0,
+      "norm_label": "date_ranges"
+    },
+    {
+      "label": "RANGE_MULTIPLIER",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L90",
+      "id": "data_mockdata_range_multiplier",
+      "community": 0,
+      "norm_label": "range_multiplier"
+    },
+    {
+      "label": "scaleCount()",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L96",
+      "id": "data_mockdata_scalecount",
+      "community": 0,
+      "norm_label": "scalecount()"
+    },
+    {
+      "label": "BASE_STATS_30D",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L100",
+      "id": "data_mockdata_base_stats_30d",
+      "community": 0,
+      "norm_label": "base_stats_30d"
+    },
+    {
+      "label": "getBrandStats()",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L151",
+      "id": "data_mockdata_getbrandstats",
+      "community": 0,
+      "norm_label": "getbrandstats()"
+    },
+    {
+      "label": "engagementOf()",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L160",
+      "id": "data_mockdata_engagementof",
+      "community": 1,
+      "norm_label": "engagementof()"
+    },
+    {
+      "label": "SOV_TRENDS",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L164",
+      "id": "data_mockdata_sov_trends",
+      "community": 1,
+      "norm_label": "sov_trends"
+    },
+    {
+      "label": "KPI_META",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L190",
+      "id": "data_mockdata_kpi_meta",
+      "community": 0,
+      "norm_label": "kpi_meta"
+    },
+    {
+      "label": "SENTIMENT_SPLIT",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L228",
+      "id": "data_mockdata_sentiment_split",
+      "community": 0,
+      "norm_label": "sentiment_split"
+    },
+    {
+      "label": "INTENT_BASE_COUNTS",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L238",
+      "id": "data_mockdata_intent_base_counts",
+      "community": 0,
+      "norm_label": "intent_base_counts"
+    },
+    {
+      "label": "INTENT_COMMENTS",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L245",
+      "id": "data_mockdata_intent_comments",
+      "community": 0,
+      "norm_label": "intent_comments"
+    },
+    {
+      "label": "UNMET_NEEDS",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L321",
+      "id": "data_mockdata_unmet_needs",
+      "community": 0,
+      "norm_label": "unmet_needs"
+    },
+    {
+      "label": "RECURRING_QUESTIONS",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L433",
+      "id": "data_mockdata_recurring_questions",
+      "community": 0,
+      "norm_label": "recurring_questions"
+    },
+    {
+      "label": "formatNumber()",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L493",
+      "id": "data_mockdata_formatnumber",
+      "community": 0,
+      "norm_label": "formatnumber()"
+    },
+    {
+      "label": "formatPercent()",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L500",
+      "id": "data_mockdata_formatpercent",
+      "community": 0,
+      "norm_label": "formatpercent()"
+    },
+    {
+      "label": "Dashboard.tsx",
+      "file_type": "code",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L1",
+      "id": "src_pages_dashboard_tsx",
+      "community": 0,
+      "norm_label": "dashboard.tsx"
+    },
+    {
+      "label": "Dashboard()",
+      "file_type": "code",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L10",
+      "id": "pages_dashboard_dashboard",
+      "community": 9,
+      "norm_label": "dashboard()"
+    },
+    {
+      "label": "Root Package Manifest (magic-patterns-vite-template)",
+      "file_type": "document",
+      "source_file": "package.json",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "package_root_manifest",
+      "community": 10,
+      "norm_label": "root package manifest (magic-patterns-vite-template)"
+    },
+    {
+      "label": "Src Package Manifest (magic-patterns-project)",
+      "file_type": "document",
+      "source_file": "src/package.json",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "package_src_manifest",
+      "community": 10,
+      "norm_label": "src package manifest (magic-patterns-project)"
+    },
+    {
+      "label": "PostCSS Config",
+      "file_type": "code",
+      "source_file": "postcss.config.js",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "postcss_config",
+      "community": 6,
+      "norm_label": "postcss config"
+    },
+    {
+      "label": "Tailwind CSS Config",
+      "file_type": "code",
+      "source_file": "tailwind.config.js",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "tailwind_config",
+      "community": 6,
+      "norm_label": "tailwind css config"
+    },
+    {
+      "label": "TypeScript Config (app)",
+      "file_type": "document",
+      "source_file": "tsconfig.json",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "tsconfig_main",
+      "community": 10,
+      "norm_label": "typescript config (app)"
+    },
+    {
+      "label": "TypeScript Config (node/vite)",
+      "file_type": "document",
+      "source_file": "tsconfig.node.json",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "tsconfig_node",
+      "community": 10,
+      "norm_label": "typescript config (node/vite)"
+    },
+    {
+      "label": "Vite Build Config",
+      "file_type": "code",
+      "source_file": "vite.config.ts",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "vite_config_defineConfig",
+      "community": 10,
+      "norm_label": "vite build config"
+    },
+    {
+      "label": "App Root Component",
+      "file_type": "code",
+      "source_file": "src/App.tsx",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "app_App",
+      "community": 6,
+      "norm_label": "app root component"
+    },
+    {
+      "label": "Dashboard Page Component",
+      "file_type": "code",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "dashboard_Dashboard",
+      "community": 6,
+      "norm_label": "dashboard page component"
+    },
+    {
+      "label": "Canvas Manifest (Magic Patterns screens/sections)",
+      "file_type": "code",
+      "source_file": "src/canvas.manifest.js",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "canvas_manifest_manifest",
+      "community": 6,
+      "norm_label": "canvas manifest (magic patterns screens/sections)"
+    },
+    {
+      "label": "React Entry Point (render bootstrap)",
+      "file_type": "code",
+      "source_file": "src/index.tsx",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "index_entry_render",
+      "community": 6,
+      "norm_label": "react entry point (render bootstrap)"
+    },
+    {
+      "label": "useScreenInit Hook",
+      "file_type": "code",
+      "source_file": "src/useScreenInit.js",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "useScreenInit_useScreenInit",
+      "community": 6,
+      "norm_label": "usescreeninit hook"
+    },
+    {
+      "label": "HTML Shell (Content Insights Dashboard)",
+      "file_type": "document",
+      "source_file": "index.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "index_html_root",
+      "community": 6,
+      "norm_label": "html shell (content insights dashboard)"
+    },
+    {
+      "label": "README Getting Started",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "readme_getting_started",
+      "community": 10,
+      "norm_label": "readme getting started"
+    },
+    {
+      "label": "URL-Driven Screen State Initialization (mp_screen)",
+      "file_type": "rationale",
+      "source_file": "src/useScreenInit.js",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Magic Patterns canvas tooling deep-links into a specific screen state: the mp_screen query parameter selects a screen entry in canvas.manifest.js and its saved state (e.g. activeTab) seeds the UI, letting one route render multiple designed screens (Content Market Share vs Viewer Sentiment) without separate routes.",
+      "id": "concept_screen_state_init",
+      "community": 6,
+      "norm_label": "url-driven screen state initialization (mp_screen)"
+    },
+    {
+      "label": "DashboardHeader Component",
+      "file_type": "code",
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "DashboardHeader",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "dashboardheader_DashboardHeader",
+      "community": 6,
+      "norm_label": "dashboardheader component"
+    },
+    {
+      "label": "KpiCards Component",
+      "file_type": "code",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "KpiCards",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "kpicards_KpiCards",
+      "community": 2,
+      "norm_label": "kpicards component"
+    },
+    {
+      "label": "SectionCard Layout Component",
+      "file_type": "code",
+      "source_file": "src/components/SectionCard.tsx",
+      "source_location": "SectionCard",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "sectioncard_SectionCard",
+      "community": 2,
+      "norm_label": "sectioncard layout component"
+    },
+    {
+      "label": "TabBar Component",
+      "file_type": "code",
+      "source_file": "src/components/TabBar.tsx",
+      "source_location": "TabBar",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "tabbar_TabBar",
+      "community": 6,
+      "norm_label": "tabbar component"
+    },
+    {
+      "label": "CompetitorTable Component",
+      "file_type": "code",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "CompetitorTable",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "competitortable_CompetitorTable",
+      "community": 2,
+      "norm_label": "competitortable component"
+    },
+    {
+      "label": "ContentFrequencyChart Component",
+      "file_type": "code",
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "ContentFrequencyChart",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "contentfrequencychart_ContentFrequencyChart",
+      "community": 2,
+      "norm_label": "contentfrequencychart component"
+    },
+    {
+      "label": "EngagementTrendChart Component",
+      "file_type": "code",
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "EngagementTrendChart",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "engagementtrendchart_EngagementTrendChart",
+      "community": 2,
+      "norm_label": "engagementtrendchart component"
+    },
+    {
+      "label": "MarketShareTab Component",
+      "file_type": "code",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "MarketShareTab",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "marketsharetab_MarketShareTab",
+      "community": 2,
+      "norm_label": "marketsharetab component"
+    },
+    {
+      "label": "ShareOfVoiceCharts Component",
+      "file_type": "code",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "ShareOfVoiceCharts",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "shareofvoicecharts_ShareOfVoiceCharts",
+      "community": 2,
+      "norm_label": "shareofvoicecharts component"
+    },
+    {
+      "label": "SentimentTab Component",
+      "file_type": "code",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "SentimentTab",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "sentimenttab_SentimentTab",
+      "community": 2,
+      "norm_label": "sentimenttab component"
+    },
+    {
+      "label": "getBrandStats Helper",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "getBrandStats",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_getBrandStats",
+      "community": 2,
+      "norm_label": "getbrandstats helper"
+    },
+    {
+      "label": "getBrand Helper",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "getBrand",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_getBrand",
+      "community": 2,
+      "norm_label": "getbrand helper"
+    },
+    {
+      "label": "engagementOf Helper",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "engagementOf",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_engagementOf",
+      "community": 2,
+      "norm_label": "engagementof helper"
+    },
+    {
+      "label": "scaleCount Helper",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "scaleCount",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_scaleCount",
+      "community": 2,
+      "norm_label": "scalecount helper"
+    },
+    {
+      "label": "formatNumber Helper (Indian Cr/L/K)",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "formatNumber",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_formatNumber",
+      "community": 2,
+      "norm_label": "formatnumber helper (indian cr/l/k)"
+    },
+    {
+      "label": "BRANDS Registry (Tractor Brands)",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "BRANDS",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_BRANDS",
+      "community": 6,
+      "norm_label": "brands registry (tractor brands)"
+    },
+    {
+      "label": "COMPETITORS Derived List",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "COMPETITORS",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_COMPETITORS",
+      "community": 6,
+      "norm_label": "competitors derived list"
+    },
+    {
+      "label": "DATE_RANGES Options",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "DATE_RANGES",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_DATE_RANGES",
+      "community": 6,
+      "norm_label": "date_ranges options"
+    },
+    {
+      "label": "SOV_TRENDS Trend Series",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "SOV_TRENDS",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_SOV_TRENDS",
+      "community": 2,
+      "norm_label": "sov_trends trend series"
+    },
+    {
+      "label": "KPI_META Deltas & Sentiment Scores",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "KPI_META",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_KPI_META",
+      "community": 2,
+      "norm_label": "kpi_meta deltas & sentiment scores"
+    },
+    {
+      "label": "SENTIMENT_SPLIT Per-Range Data",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "SENTIMENT_SPLIT",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_SENTIMENT_SPLIT",
+      "community": 2,
+      "norm_label": "sentiment_split per-range data"
+    },
+    {
+      "label": "INTENT_BASE_COUNTS Signal Counts",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "INTENT_BASE_COUNTS",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_INTENT_BASE_COUNTS",
+      "community": 2,
+      "norm_label": "intent_base_counts signal counts"
+    },
+    {
+      "label": "INTENT_COMMENTS Sample Comments",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "INTENT_COMMENTS",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_INTENT_COMMENTS",
+      "community": 2,
+      "norm_label": "intent_comments sample comments"
+    },
+    {
+      "label": "UNMET_NEEDS Content Gaps",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "UNMET_NEEDS",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_UNMET_NEEDS",
+      "community": 2,
+      "norm_label": "unmet_needs content gaps"
+    },
+    {
+      "label": "RECURRING_QUESTIONS Data",
+      "file_type": "code",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "RECURRING_QUESTIONS",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mockdata_RECURRING_QUESTIONS",
+      "community": 2,
+      "norm_label": "recurring_questions data"
+    },
+    {
+      "label": "useScreenInit Hook",
+      "file_type": "code",
+      "source_file": "src/useScreenInit.js",
+      "source_location": "useScreenInit",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "usescreeninit_useScreenInit",
+      "community": 6,
+      "norm_label": "usescreeninit hook"
+    },
+    {
+      "label": "Date-Range Scaling Mechanism",
+      "file_type": "rationale",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "RANGE_MULTIPLIER / scaleCount",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Mock data stores only 30-day base figures; scaleCount multiplies by a per-range factor (1 / 2.9 / 5.6) so every UI surface stays consistent across 30/90/180-day views without duplicating datasets.",
+      "id": "concept_range_scaling",
+      "community": 2,
+      "norm_label": "date-range scaling mechanism"
+    },
+    {
+      "label": "Share of Voice Metric",
+      "file_type": "rationale",
+      "source_file": "src/data/mockData.ts",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Core competitive metric: Sonalika's proportion of category video volume (and views/comments). Chosen as the headline KPI because the dashboard's purpose is competitive YouTube intelligence for the Indian tractor category.",
+      "id": "concept_share_of_voice",
+      "community": 2,
+      "norm_label": "share of voice metric"
+    },
+    {
+      "label": "Share of Engagement Metric",
+      "file_type": "rationale",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "engagementOf",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Engagement is defined as views + likes + comments and centralized in engagementOf so KPI cards and the competitor table compute engagement share identically.",
+      "id": "concept_share_of_engagement",
+      "community": 2,
+      "norm_label": "share of engagement metric"
+    },
+    {
+      "label": "Own-Brand (Sonalika) Highlighting Pattern",
+      "file_type": "rationale",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "SONALIKA_ID",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "SONALIKA_ID is the single source of truth for which brand is 'own'; components compare brandId against it to pin Sonalika in filters, emphasize its bars/rows, and exclude it from category averages.",
+      "id": "concept_own_brand_highlight",
+      "community": 2,
+      "norm_label": "own-brand (sonalika) highlighting pattern"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "package_json",
+      "target": "dashboard_v2_package_name",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "package_json",
+      "target": "dashboard_v2_package_version",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "package_json",
+      "target": "dashboard_v2_package_private",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "package_json",
+      "target": "dashboard_v2_package_type",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "package_json",
+      "target": "dashboard_v2_package_scripts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "package_json",
+      "target": "dashboard_v2_package_dependencies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "package_json",
+      "target": "dashboard_v2_package_devdependencies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_scripts",
+      "target": "dashboard_v2_package_scripts_dev",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_scripts",
+      "target": "dashboard_v2_package_scripts_build",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_scripts",
+      "target": "dashboard_v2_package_scripts_lint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_scripts",
+      "target": "dashboard_v2_package_scripts_preview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_dependencies",
+      "target": "dashboard_v2_package_dependencies_react",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_dependencies",
+      "target": "dashboard_v2_package_dependencies_react_dom",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_dependencies",
+      "target": "dashboard_v2_package_dependencies_emotion_react",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_dependencies",
+      "target": "dashboard_v2_package_dependencies_lucide_react",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_dependencies",
+      "target": "dashboard_v2_package_dependencies_framer_motion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_dependencies",
+      "target": "dashboard_v2_package_dependencies_recharts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_types_node",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_types_react",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_types_react_dom",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_typescript_eslint_eslint_plugin",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_typescript_eslint_parser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_vitejs_plugin_react",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_eslint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_eslint_plugin_react_hooks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_eslint_plugin_react_refresh",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_typescript",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_vite",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_tailwindcss",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_autoprefixer",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "dashboard_v2_package_devdependencies",
+      "target": "dashboard_v2_package_devdependencies_postcss",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "tsconfig_json",
+      "target": "dashboard_v2_tsconfig_compileroptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "tsconfig_json",
+      "target": "dashboard_v2_tsconfig_include",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "tsconfig_json",
+      "target": "dashboard_v2_tsconfig_references",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_target",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_usedefineforclassfields",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_lib",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_module",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_skiplibcheck",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_moduleresolution",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_allowimportingtsextensions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_resolvejsonmodule",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_isolatedmodules",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_noemit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_jsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_strict",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_nounusedlocals",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_nounusedparameters",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_compileroptions",
+      "target": "dashboard_v2_tsconfig_compileroptions_nofallthroughcasesinswitch",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "tsconfig_node_json",
+      "target": "dashboard_v2_tsconfig_node_compileroptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "tsconfig_node_json",
+      "target": "dashboard_v2_tsconfig_node_include",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_node_compileroptions",
+      "target": "dashboard_v2_tsconfig_node_compileroptions_composite",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_node_compileroptions",
+      "target": "dashboard_v2_tsconfig_node_compileroptions_skiplibcheck",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_node_compileroptions",
+      "target": "dashboard_v2_tsconfig_node_compileroptions_module",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_node_compileroptions",
+      "target": "dashboard_v2_tsconfig_node_compileroptions_moduleresolution",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_node_compileroptions",
+      "target": "dashboard_v2_tsconfig_node_compileroptions_allowsyntheticdefaultimports",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.node.json",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "dashboard_v2_tsconfig_node_compileroptions",
+      "target": "dashboard_v2_tsconfig_node_compileroptions_strict",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_app_tsx",
+      "target": "src_pages_dashboard_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_app_tsx",
+      "target": "pages_dashboard_dashboard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_app_tsx",
+      "target": "src_app_app",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_index_tsx",
+      "target": "src_app_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_index_tsx",
+      "target": "src_app_app",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/canvas.manifest.js",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "src_canvas_manifest_js",
+      "target": "src_canvas_manifest_manifest",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/useScreenInit.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_usescreeninit_js",
+      "target": "src_canvas_manifest_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/useScreenInit.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_usescreeninit_js",
+      "target": "src_canvas_manifest_manifest",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/package.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_package_json",
+      "target": "src_package_name",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/package.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_package_json",
+      "target": "src_package_private",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/package.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_package_json",
+      "target": "src_package_dependencies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/package.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_package_dependencies",
+      "target": "src_package_dependencies_react",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/package.json",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_package_dependencies",
+      "target": "src_package_dependencies_react_dom",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/package.json",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_package_dependencies",
+      "target": "src_package_dependencies_react_router_dom",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/package.json",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_package_dependencies",
+      "target": "src_package_dependencies_lucide_react",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/package.json",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_package_dependencies",
+      "target": "src_package_dependencies_framer_motion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/package.json",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "src_package_dependencies",
+      "target": "src_package_dependencies_radix_ui_react_icons",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/package.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "src_package_dependencies",
+      "target": "src_package_dependencies_date_fns",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/package.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_package_dependencies",
+      "target": "src_package_dependencies_tailwind_merge",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/package.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_package_dependencies",
+      "target": "src_package_dependencies_recharts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/useScreenInit.js",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_usescreeninit_js",
+      "target": "src_usescreeninit_usescreeninit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "src_usescreeninit_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "src_usescreeninit_usescreeninit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "pages_dashboard_dashboard",
+      "target": "src_usescreeninit_usescreeninit"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_components_dashboardheader_tsx",
+      "target": "src_data_mockdata_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_components_dashboardheader_tsx",
+      "target": "data_mockdata_brands",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_components_dashboardheader_tsx",
+      "target": "data_mockdata_competitors",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_components_dashboardheader_tsx",
+      "target": "data_mockdata_date_ranges",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_components_dashboardheader_tsx",
+      "target": "data_mockdata_daterangekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "src_components_dashboardheader_tsx",
+      "target": "components_dashboardheader_dashboardheaderprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "src_components_dashboardheader_tsx",
+      "target": "components_dashboardheader_dashboardheader",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "src_components_dashboardheader_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "components_dashboardheader_dashboardheaderprops",
+      "target": "data_mockdata_daterangekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "components_dashboardheader_dashboardheader",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "src_data_mockdata_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "data_mockdata_daterangekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "data_mockdata_kpi_meta",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "data_mockdata_intent_base_counts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "data_mockdata_engagementof",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "data_mockdata_formatnumber",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "data_mockdata_getbrandstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "data_mockdata_scalecount",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "components_kpicards_kpicardsprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "components_kpicards_kpi",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "components_kpicards_container",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "components_kpicards_item",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "src_components_kpicards_tsx",
+      "target": "components_kpicards_kpicards",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "src_components_kpicards_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "components_kpicards_kpicardsprops",
+      "target": "data_mockdata_daterangekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "components_kpicards_kpicards",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "components_kpicards_kpicards",
+      "target": "data_mockdata_getbrandstats"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "components_kpicards_kpicards",
+      "target": "data_mockdata_engagementof"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L71",
+      "weight": 1.0,
+      "source": "components_kpicards_kpicards",
+      "target": "data_mockdata_scalecount"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "L112",
+      "weight": 1.0,
+      "source": "components_kpicards_kpicards",
+      "target": "data_mockdata_formatnumber"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/SectionCard.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_components_sectioncard_tsx",
+      "target": "components_sectioncard_sectioncardprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/SectionCard.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_components_sectioncard_tsx",
+      "target": "components_sectioncard_sectioncard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "src_components_sectioncard_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_components_market_share_contentfrequencychart_tsx",
+      "target": "src_components_sectioncard_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_components_market_share_engagementtrendchart_tsx",
+      "target": "src_components_sectioncard_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_components_market_share_shareofvoicecharts_tsx",
+      "target": "src_components_sectioncard_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "src_components_sectioncard_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "components_sectioncard_sectioncard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_components_market_share_contentfrequencychart_tsx",
+      "target": "components_sectioncard_sectioncard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_components_market_share_engagementtrendchart_tsx",
+      "target": "components_sectioncard_sectioncard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_components_market_share_shareofvoicecharts_tsx",
+      "target": "components_sectioncard_sectioncard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "components_sectioncard_sectioncard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/TabBar.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_tabbar_tsx",
+      "target": "src_data_mockdata_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/TabBar.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_tabbar_tsx",
+      "target": "data_mockdata_tabkey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/TabBar.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_components_tabbar_tsx",
+      "target": "components_tabbar_tabbarprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/TabBar.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_components_tabbar_tsx",
+      "target": "components_tabbar_tabs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/TabBar.tsx",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "src_components_tabbar_tsx",
+      "target": "components_tabbar_tabbar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "src_components_tabbar_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/TabBar.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "components_tabbar_tabbarprops",
+      "target": "data_mockdata_tabkey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "components_tabbar_tabbar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "src_data_mockdata_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "data_mockdata_brandstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "data_mockdata_engagementof",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "data_mockdata_formatnumber",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "data_mockdata_getbrand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "market_share_competitortable_competitortableprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "market_share_competitortable_sortkey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "market_share_competitortable_sortdir",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "market_share_competitortable_row",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "market_share_competitortable_columns",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "src_components_market_share_competitortable_tsx",
+      "target": "market_share_competitortable_competitortable",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "src_components_market_share_competitortable_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "market_share_competitortable_competitortableprops",
+      "target": "data_mockdata_brandstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "market_share_competitortable_competitortable",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_components_market_share_contentfrequencychart_tsx",
+      "target": "src_data_mockdata_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_components_market_share_contentfrequencychart_tsx",
+      "target": "data_mockdata_brandstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_components_market_share_contentfrequencychart_tsx",
+      "target": "data_mockdata_getbrand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "src_components_market_share_contentfrequencychart_tsx",
+      "target": "market_share_contentfrequencychart_contentfrequencychartprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "src_components_market_share_contentfrequencychart_tsx",
+      "target": "market_share_contentfrequencychart_contentfrequencychart",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "src_components_market_share_contentfrequencychart_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "market_share_contentfrequencychart_contentfrequencychartprops",
+      "target": "data_mockdata_brandstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "market_share_contentfrequencychart_contentfrequencychart",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_components_market_share_engagementtrendchart_tsx",
+      "target": "src_data_mockdata_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_components_market_share_engagementtrendchart_tsx",
+      "target": "data_mockdata_daterangekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_components_market_share_engagementtrendchart_tsx",
+      "target": "data_mockdata_sov_trends",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_components_market_share_engagementtrendchart_tsx",
+      "target": "market_share_engagementtrendchart_engagementtrendchartprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "src_components_market_share_engagementtrendchart_tsx",
+      "target": "market_share_engagementtrendchart_engagementtrendchart",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "src_components_market_share_engagementtrendchart_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "market_share_engagementtrendchart_engagementtrendchartprops",
+      "target": "data_mockdata_daterangekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "market_share_engagementtrendchart_engagementtrendchart",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "src_components_market_share_shareofvoicecharts_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "market_share_shareofvoicecharts_shareofvoicecharts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "src_data_mockdata_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "data_mockdata_daterangekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "data_mockdata_getbrandstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "market_share_marketsharetab_marketsharetabprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "market_share_marketsharetab_container",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "market_share_marketsharetab_item",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "src_components_market_share_marketsharetab_tsx",
+      "target": "market_share_marketsharetab_marketsharetab",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "src_components_market_share_marketsharetab_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "market_share_marketsharetab_marketsharetabprops",
+      "target": "data_mockdata_daterangekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "market_share_marketsharetab_marketsharetab",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "L38",
+      "weight": 1.0,
+      "source": "market_share_marketsharetab_marketsharetab",
+      "target": "data_mockdata_getbrandstats"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_market_share_shareofvoicecharts_tsx",
+      "target": "src_data_mockdata_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_market_share_shareofvoicecharts_tsx",
+      "target": "data_mockdata_brandstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_market_share_shareofvoicecharts_tsx",
+      "target": "data_mockdata_formatnumber",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_components_market_share_shareofvoicecharts_tsx",
+      "target": "data_mockdata_getbrand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "src_components_market_share_shareofvoicecharts_tsx",
+      "target": "market_share_shareofvoicecharts_shareofvoicechartsprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_components_market_share_shareofvoicecharts_tsx",
+      "target": "market_share_shareofvoicecharts_metrickey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_components_market_share_shareofvoicecharts_tsx",
+      "target": "market_share_shareofvoicecharts_metrics",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "src_components_market_share_shareofvoicecharts_tsx",
+      "target": "market_share_shareofvoicecharts_shareofvoicecharts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "market_share_shareofvoicecharts_shareofvoicechartsprops",
+      "target": "data_mockdata_brandstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "src_data_mockdata_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "data_mockdata_daterangekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "data_mockdata_intentsignal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "data_mockdata_intent_base_counts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "data_mockdata_intent_comments",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "data_mockdata_recurring_questions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "data_mockdata_sentiment_split",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "data_mockdata_unmet_needs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "data_mockdata_formatnumber",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "data_mockdata_scalecount",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "sentiment_sentimenttab_sentimenttabprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "sentiment_sentimenttab_signal_styles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "sentiment_sentimenttab_severity_styles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "sentiment_sentimenttab_container",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L70",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "sentiment_sentimenttab_item",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "src_components_sentiment_sentimenttab_tsx",
+      "target": "sentiment_sentimenttab_sentimenttab",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "src_components_sentiment_sentimenttab_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "sentiment_sentimenttab_sentimenttabprops",
+      "target": "data_mockdata_daterangekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "sentiment_sentimenttab_sentimenttab",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "sentiment_sentimenttab_sentimenttab",
+      "target": "data_mockdata_scalecount"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "L153",
+      "weight": 1.0,
+      "source": "sentiment_sentimenttab_sentimenttab",
+      "target": "data_mockdata_formatnumber"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_daterangekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_tabkey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_intentsignal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_severity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_brand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_brandstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_trendpoint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_intentcomment",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_unmetneed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_recurringquestion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_brands",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_competitors",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L80",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_getbrand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_date_ranges",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L90",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_range_multiplier",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L96",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_scalecount",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L100",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_base_stats_30d",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L151",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_getbrandstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L160",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_engagementof",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L164",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_sov_trends",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L190",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_kpi_meta",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L228",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_sentiment_split",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L238",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_intent_base_counts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L245",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_intent_comments",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L321",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_unmet_needs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L433",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_recurring_questions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L493",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_formatnumber",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/data/mockData.ts",
+      "source_location": "L500",
+      "weight": 1.0,
+      "source": "src_data_mockdata_ts",
+      "target": "data_mockdata_formatpercent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "src_data_mockdata_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "data_mockdata_daterangekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "data_mockdata_tabkey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "data_mockdata_competitors",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_tsx",
+      "target": "pages_dashboard_dashboard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "package.json",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "package_root_manifest",
+      "target": "vite_config_defineConfig"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_getting_started",
+      "target": "package_root_manifest"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "src/package.json",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "package_src_manifest",
+      "target": "package_root_manifest"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "postcss.config.js",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "postcss_config",
+      "target": "tailwind_config"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tailwind.config.js",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "tailwind_config",
+      "target": "index_html_root"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tsconfig.json",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "tsconfig_main",
+      "target": "tsconfig_node"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tsconfig.node.json",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "tsconfig_node",
+      "target": "vite_config_defineConfig"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/index.tsx",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "index_entry_render",
+      "target": "app_App"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/App.tsx",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "app_App",
+      "target": "dashboard_Dashboard"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/canvas.manifest.js",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "canvas_manifest_manifest",
+      "target": "dashboard_Dashboard"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.3,
+      "source_file": "src/useScreenInit.js",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "useScreenInit_useScreenInit",
+      "target": "dashboard_Dashboard"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "Dashboard",
+      "weight": 1.0,
+      "source": "dashboard_Dashboard",
+      "target": "usescreeninit_useScreenInit"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "Dashboard JSX",
+      "weight": 1.0,
+      "source": "dashboard_Dashboard",
+      "target": "dashboardheader_DashboardHeader"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "Dashboard JSX",
+      "weight": 1.0,
+      "source": "dashboard_Dashboard",
+      "target": "kpicards_KpiCards"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "Dashboard JSX",
+      "weight": 1.0,
+      "source": "dashboard_Dashboard",
+      "target": "tabbar_TabBar"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "Dashboard JSX (market-share tab)",
+      "weight": 1.0,
+      "source": "dashboard_Dashboard",
+      "target": "marketsharetab_MarketShareTab"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "Dashboard JSX (sentiment tab)",
+      "weight": 1.0,
+      "source": "dashboard_Dashboard",
+      "target": "sentimenttab_SentimentTab"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "selectedCompetitors initial state",
+      "weight": 1.0,
+      "source": "dashboard_Dashboard",
+      "target": "mockdata_COMPETITORS"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/useScreenInit.js",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "useScreenInit_useScreenInit",
+      "target": "canvas_manifest_manifest"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/canvas.manifest.js",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "canvas_manifest_manifest",
+      "target": "concept_screen_state_init"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/index.tsx",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "index_entry_render",
+      "target": "index_html_root"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/useScreenInit.js",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "useScreenInit_useScreenInit",
+      "target": "concept_screen_state_init"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "competitor multi-select",
+      "weight": 1.0,
+      "source": "dashboardheader_DashboardHeader",
+      "target": "mockdata_COMPETITORS"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/DashboardHeader.tsx",
+      "source_location": "date range selector",
+      "weight": 1.0,
+      "source": "dashboardheader_DashboardHeader",
+      "target": "mockdata_DATE_RANGES"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "KpiCards",
+      "weight": 1.0,
+      "source": "kpicards_KpiCards",
+      "target": "mockdata_getBrandStats"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "KpiCards",
+      "weight": 1.0,
+      "source": "kpicards_KpiCards",
+      "target": "mockdata_engagementOf"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "intentVolume",
+      "weight": 1.0,
+      "source": "kpicards_KpiCards",
+      "target": "mockdata_scaleCount"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "Purchase-Intent KPI",
+      "weight": 1.0,
+      "source": "kpicards_KpiCards",
+      "target": "mockdata_formatNumber"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "KpiCards",
+      "weight": 1.0,
+      "source": "kpicards_KpiCards",
+      "target": "mockdata_KPI_META"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "intentVolume",
+      "weight": 1.0,
+      "source": "kpicards_KpiCards",
+      "target": "mockdata_INTENT_BASE_COUNTS"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "identical getBrandStats filter by SONALIKA_ID + selectedCompetitors",
+      "weight": 1.0,
+      "source": "kpicards_KpiCards",
+      "target": "marketsharetab_MarketShareTab"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "duplicated intent-total formula over INTENT_BASE_COUNTS three signals",
+      "weight": 1.0,
+      "source": "kpicards_KpiCards",
+      "target": "sentimenttab_SentimentTab"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "categoryAvgRate formula duplicated as categoryAvg (competitor publishRate mean excluding Sonalika)",
+      "weight": 1.0,
+      "source": "kpicards_KpiCards",
+      "target": "contentfrequencychart_ContentFrequencyChart"
+    },
+    {
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "sov computation",
+      "weight": 1.0,
+      "source": "kpicards_KpiCards",
+      "target": "concept_share_of_voice"
+    },
+    {
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/components/KpiCards.tsx",
+      "source_location": "soe computation",
+      "weight": 1.0,
+      "source": "kpicards_KpiCards",
+      "target": "concept_share_of_engagement"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "CompetitorTable JSX",
+      "weight": 1.0,
+      "source": "competitortable_CompetitorTable",
+      "target": "sectioncard_SectionCard"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "ContentFrequencyChart JSX",
+      "weight": 1.0,
+      "source": "contentfrequencychart_ContentFrequencyChart",
+      "target": "sectioncard_SectionCard"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "EngagementTrendChart JSX",
+      "weight": 1.0,
+      "source": "engagementtrendchart_EngagementTrendChart",
+      "target": "sectioncard_SectionCard"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "ShareOfVoiceCharts JSX",
+      "weight": 1.0,
+      "source": "shareofvoicecharts_ShareOfVoiceCharts",
+      "target": "sectioncard_SectionCard"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "SentimentTab JSX",
+      "weight": 1.0,
+      "source": "sentimenttab_SentimentTab",
+      "target": "sectioncard_SectionCard"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "MarketShareTab JSX",
+      "weight": 1.0,
+      "source": "marketsharetab_MarketShareTab",
+      "target": "competitortable_CompetitorTable"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "rows useMemo",
+      "weight": 1.0,
+      "source": "competitortable_CompetitorTable",
+      "target": "mockdata_engagementOf"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "row rendering",
+      "weight": 1.0,
+      "source": "competitortable_CompetitorTable",
+      "target": "mockdata_getBrand"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "cell rendering",
+      "weight": 1.0,
+      "source": "competitortable_CompetitorTable",
+      "target": "mockdata_formatNumber"
+    },
+    {
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/components/market-share/CompetitorTable.tsx",
+      "source_location": "engShare column",
+      "weight": 1.0,
+      "source": "competitortable_CompetitorTable",
+      "target": "concept_share_of_engagement"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "MarketShareTab JSX",
+      "weight": 1.0,
+      "source": "marketsharetab_MarketShareTab",
+      "target": "contentfrequencychart_ContentFrequencyChart"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/ContentFrequencyChart.tsx",
+      "source_location": "data mapping",
+      "weight": 1.0,
+      "source": "contentfrequencychart_ContentFrequencyChart",
+      "target": "mockdata_getBrand"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "MarketShareTab JSX",
+      "weight": 1.0,
+      "source": "marketsharetab_MarketShareTab",
+      "target": "engagementtrendchart_EngagementTrendChart"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "data = SOV_TRENDS[dateRange]",
+      "weight": 1.0,
+      "source": "engagementtrendchart_EngagementTrendChart",
+      "target": "mockdata_SOV_TRENDS"
+    },
+    {
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "src/components/market-share/EngagementTrendChart.tsx",
+      "source_location": "sov line series",
+      "weight": 1.0,
+      "source": "engagementtrendchart_EngagementTrendChart",
+      "target": "concept_share_of_voice"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "MarketShareTab",
+      "weight": 1.0,
+      "source": "marketsharetab_MarketShareTab",
+      "target": "mockdata_getBrandStats"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/MarketShareTab.tsx",
+      "source_location": "MarketShareTab JSX",
+      "weight": 1.0,
+      "source": "marketsharetab_MarketShareTab",
+      "target": "shareofvoicecharts_ShareOfVoiceCharts"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "data mapping & legend",
+      "weight": 1.0,
+      "source": "shareofvoicecharts_ShareOfVoiceCharts",
+      "target": "mockdata_getBrand"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "tooltip & totals",
+      "weight": 1.0,
+      "source": "shareofvoicecharts_ShareOfVoiceCharts",
+      "target": "mockdata_formatNumber"
+    },
+    {
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/components/market-share/ShareOfVoiceCharts.tsx",
+      "source_location": "sonalikaShare donut charts",
+      "weight": 1.0,
+      "source": "shareofvoicecharts_ShareOfVoiceCharts",
+      "target": "concept_share_of_voice"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "intentTotal, signalDist, mentions",
+      "weight": 1.0,
+      "source": "sentimenttab_SentimentTab",
+      "target": "mockdata_scaleCount"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "summary cards & tooltip",
+      "weight": 1.0,
+      "source": "sentimenttab_SentimentTab",
+      "target": "mockdata_formatNumber"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "split = SENTIMENT_SPLIT[dateRange]",
+      "weight": 1.0,
+      "source": "sentimenttab_SentimentTab",
+      "target": "mockdata_SENTIMENT_SPLIT"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "intentTotal & signalDist",
+      "weight": 1.0,
+      "source": "sentimenttab_SentimentTab",
+      "target": "mockdata_INTENT_BASE_COUNTS"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "Purchase Intent Signals list",
+      "weight": 1.0,
+      "source": "sentimenttab_SentimentTab",
+      "target": "mockdata_INTENT_COMMENTS"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "Unmet Needs accordion",
+      "weight": 1.0,
+      "source": "sentimenttab_SentimentTab",
+      "target": "mockdata_UNMET_NEEDS"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/sentiment/SentimentTab.tsx",
+      "source_location": "Recurring Questions table",
+      "weight": 1.0,
+      "source": "sentimenttab_SentimentTab",
+      "target": "mockdata_RECURRING_QUESTIONS"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/data/mockData.ts",
+      "source_location": "getBrandStats",
+      "weight": 1.0,
+      "source": "mockdata_getBrandStats",
+      "target": "mockdata_scaleCount"
+    },
+    {
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/data/mockData.ts",
+      "source_location": "getBrandStats",
+      "weight": 1.0,
+      "source": "mockdata_getBrandStats",
+      "target": "concept_range_scaling"
+    },
+    {
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/data/mockData.ts",
+      "source_location": "engagementOf",
+      "weight": 1.0,
+      "source": "mockdata_engagementOf",
+      "target": "concept_share_of_engagement"
+    },
+    {
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "src/data/mockData.ts",
+      "source_location": "scaleCount",
+      "weight": 1.0,
+      "source": "mockdata_scaleCount",
+      "target": "concept_range_scaling"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/data/mockData.ts",
+      "source_location": "COMPETITORS = BRANDS.filter",
+      "weight": 1.0,
+      "source": "mockdata_COMPETITORS",
+      "target": "mockdata_BRANDS"
+    },
+    {
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "src/data/mockData.ts",
+      "source_location": "SOV_TRENDS",
+      "weight": 1.0,
+      "source": "mockdata_SOV_TRENDS",
+      "target": "concept_share_of_voice"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "src/data/mockData.ts",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "concept_own_brand_highlight",
+      "target": "concept_share_of_voice"
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "vite_build_toolchain",
+      "label": "Vite + TypeScript + Tailwind Build Toolchain",
+      "nodes": [
+        "package_root_manifest",
+        "vite_config_defineConfig",
+        "tsconfig_main",
+        "tsconfig_node",
+        "postcss_config",
+        "tailwind_config"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "package.json"
+    },
+    {
+      "id": "magic_patterns_screen_flow",
+      "label": "Magic Patterns Canvas Screen-State Flow",
+      "nodes": [
+        "canvas_manifest_manifest",
+        "useScreenInit_useScreenInit",
+        "dashboard_Dashboard",
+        "concept_screen_state_init"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "src/useScreenInit.js"
+    },
+    {
+      "id": "app_bootstrap_chain",
+      "label": "App Bootstrap Chain (HTML -> entry -> App -> Dashboard)",
+      "nodes": [
+        "index_html_root",
+        "index_entry_render",
+        "app_App",
+        "dashboard_Dashboard"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/index.tsx"
+    },
+    {
+      "id": "date_range_state_flow",
+      "label": "Date-Range Filter State Flow",
+      "nodes": [
+        "dashboard_Dashboard",
+        "dashboardheader_DashboardHeader",
+        "kpicards_KpiCards",
+        "marketsharetab_MarketShareTab",
+        "sentimenttab_SentimentTab",
+        "engagementtrendchart_EngagementTrendChart"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/Dashboard.tsx"
+    },
+    {
+      "id": "staggered_entrance_animation",
+      "label": "Duplicated Framer-Motion Stagger Animation Pattern",
+      "nodes": [
+        "kpicards_KpiCards",
+        "marketsharetab_MarketShareTab",
+        "sentimenttab_SentimentTab"
+      ],
+      "relation": "implement",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "src/components/KpiCards.tsx"
+    },
+    {
+      "id": "own_brand_highlighting",
+      "label": "Sonalika Own-Brand Highlighting via SONALIKA_ID",
+      "nodes": [
+        "kpicards_KpiCards",
+        "competitortable_CompetitorTable",
+        "contentfrequencychart_ContentFrequencyChart",
+        "shareofvoicecharts_ShareOfVoiceCharts",
+        "marketsharetab_MarketShareTab"
+      ],
+      "relation": "implement",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "src/data/mockData.ts"
+    }
+  ]
+}

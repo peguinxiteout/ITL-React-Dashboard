@@ -1,0 +1,119 @@
+import React from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { SectionCard } from '../SectionCard';
+import {
+  BrandStats,
+  SONALIKA_ID,
+  formatNumber,
+  getBrand } from
+'../../data/mockData';
+interface ShareOfVoiceChartsProps {
+  stats: BrandStats[];
+}
+type MetricKey = 'videos' | 'views' | 'comments';
+const METRICS: {
+  key: MetricKey;
+  label: string;
+}[] = [
+{
+  key: 'videos',
+  label: 'Video Volume'
+},
+{
+  key: 'views',
+  label: 'Views'
+},
+{
+  key: 'comments',
+  label: 'Comments'
+}];
+
+export function ShareOfVoiceCharts({ stats }: ShareOfVoiceChartsProps) {
+  return (
+    <SectionCard
+      title="Share of Voice"
+      subtitle="Sonalika's proportion of category video volume, views and comments">
+      
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        {METRICS.map((metric) => {
+          const total = stats.reduce((acc, s) => acc + s[metric.key], 0);
+          const sonalikaShare =
+          (stats.find((s) => s.brandId === SONALIKA_ID)?.[metric.key] ?? 0) /
+          total *
+          100;
+          const data = stats.map((s) => ({
+            name: getBrand(s.brandId).name,
+            value: s[metric.key],
+            color: getBrand(s.brandId).color
+          }));
+          return (
+            <div key={metric.key} className="flex flex-col items-center">
+              <div className="relative h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={data}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={52}
+                      outerRadius={72}
+                      paddingAngle={2}
+                      strokeWidth={0}>
+                      
+                      {data.map((d) =>
+                      <Cell key={d.name} fill={d.color} />
+                      )}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number, name: string) => [
+                      formatNumber(value),
+                      name]
+                      }
+                      contentStyle={{
+                        fontSize: 12,
+                        borderRadius: 8,
+                        border: '1px solid #e2e8f0'
+                      }} />
+                    
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-xl font-bold text-slate-900">
+                    {sonalikaShare.toFixed(1)}%
+                  </span>
+                  <span className="text-[11px] text-slate-500">Sonalika</span>
+                </div>
+              </div>
+              <p className="mt-1 text-sm font-medium text-slate-700">
+                {metric.label}
+              </p>
+              <p className="text-xs text-slate-500">
+                {formatNumber(total)} total in category
+              </p>
+            </div>);
+
+        })}
+      </div>
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 border-t border-slate-100 pt-4">
+        {stats.map((s) => {
+          const brand = getBrand(s.brandId);
+          return (
+            <span
+              key={s.brandId}
+              className="flex items-center gap-1.5 text-xs text-slate-600">
+              
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{
+                  backgroundColor: brand.color
+                }}
+                aria-hidden="true" />
+              
+              {brand.name}
+            </span>);
+
+        })}
+      </div>
+    </SectionCard>);
+
+}

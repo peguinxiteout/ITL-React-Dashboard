@@ -1,0 +1,127 @@
+{
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\package.json": {
+    "mtime": 1781237086.0512476,
+    "ast_hash": "d6276c23c7e94c3089c0f786c8748d2e",
+    "semantic_hash": "d6276c23c7e94c3089c0f786c8748d2e"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\postcss.config.js": {
+    "mtime": 1781237086.0378132,
+    "ast_hash": "ef3ba2a81ba19f8ea5ddf625521e96f0",
+    "semantic_hash": "ef3ba2a81ba19f8ea5ddf625521e96f0"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\tailwind.config.js": {
+    "mtime": 1781237086.2545435,
+    "ast_hash": "e9198de247e055c007658390cab142b4",
+    "semantic_hash": "e9198de247e055c007658390cab142b4"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\tsconfig.json": {
+    "mtime": 1781237085.967834,
+    "ast_hash": "468c4a26d22e95a911cbe5ff0ed9ca27",
+    "semantic_hash": "468c4a26d22e95a911cbe5ff0ed9ca27"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\tsconfig.node.json": {
+    "mtime": 1781237085.9773674,
+    "ast_hash": "df562a73dce2f53f022bc93ee20099c2",
+    "semantic_hash": "df562a73dce2f53f022bc93ee20099c2"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\vite.config.ts": {
+    "mtime": 1781237085.9536884,
+    "ast_hash": "ac605e4b540846227ec125e13f24f3e2",
+    "semantic_hash": "ac605e4b540846227ec125e13f24f3e2"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\App.tsx": {
+    "mtime": 1781237086.0721083,
+    "ast_hash": "b13bb1a5b72033e89109eef71aeac7ea",
+    "semantic_hash": "b13bb1a5b72033e89109eef71aeac7ea"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\canvas.manifest.js": {
+    "mtime": 1781237086.106925,
+    "ast_hash": "cf75754c0cbbafe8ca57a7f306ccf242",
+    "semantic_hash": "cf75754c0cbbafe8ca57a7f306ccf242"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\index.tsx": {
+    "mtime": 1781237086.0651822,
+    "ast_hash": "0577c81c79cdaf9d8efb2380a0d84b1d",
+    "semantic_hash": "0577c81c79cdaf9d8efb2380a0d84b1d"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\package.json": {
+    "mtime": 1781237086.086449,
+    "ast_hash": "6318c683e54f06fae9c5b7ce2eb88dc3",
+    "semantic_hash": "6318c683e54f06fae9c5b7ce2eb88dc3"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\useScreenInit.js": {
+    "mtime": 1781237086.113994,
+    "ast_hash": "67d9c74ac182c657166f9c8d685fe1bb",
+    "semantic_hash": "67d9c74ac182c657166f9c8d685fe1bb"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\components\\DashboardHeader.tsx": {
+    "mtime": 1781237086.1473427,
+    "ast_hash": "2ef25960f1f16edc83295dc7ca4d110b",
+    "semantic_hash": "2ef25960f1f16edc83295dc7ca4d110b"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\components\\KpiCards.tsx": {
+    "mtime": 1781237086.1544871,
+    "ast_hash": "35c71a2b7a2bcbd703d6de121c09c280",
+    "semantic_hash": "35c71a2b7a2bcbd703d6de121c09c280"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\components\\SectionCard.tsx": {
+    "mtime": 1781237086.170534,
+    "ast_hash": "53df23e725136197878d1076765c4bb7",
+    "semantic_hash": "53df23e725136197878d1076765c4bb7"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\components\\TabBar.tsx": {
+    "mtime": 1781237086.1544871,
+    "ast_hash": "9ed67516737a0adbe94b28e70135f64b",
+    "semantic_hash": "9ed67516737a0adbe94b28e70135f64b"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\components\\market-share\\CompetitorTable.tsx": {
+    "mtime": 1781237086.2063704,
+    "ast_hash": "4b71abb4798d5656b58cd20bf318d4b9",
+    "semantic_hash": "4b71abb4798d5656b58cd20bf318d4b9"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\components\\market-share\\ContentFrequencyChart.tsx": {
+    "mtime": 1781237086.2063704,
+    "ast_hash": "fcc81acbc1fdafa88abf6f408da80892",
+    "semantic_hash": "fcc81acbc1fdafa88abf6f408da80892"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\components\\market-share\\EngagementTrendChart.tsx": {
+    "mtime": 1781237086.1931286,
+    "ast_hash": "8f6a39796da57c310355b4b68884bb5d",
+    "semantic_hash": "8f6a39796da57c310355b4b68884bb5d"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\components\\market-share\\MarketShareTab.tsx": {
+    "mtime": 1781237086.2198813,
+    "ast_hash": "fe82adfa5ac9c1021f6966856b25c539",
+    "semantic_hash": "fe82adfa5ac9c1021f6966856b25c539"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\components\\market-share\\ShareOfVoiceCharts.tsx": {
+    "mtime": 1781237086.1850262,
+    "ast_hash": "347c1fc284fc402f74eaa32195f91a43",
+    "semantic_hash": "347c1fc284fc402f74eaa32195f91a43"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\components\\sentiment\\SentimentTab.tsx": {
+    "mtime": 1781237086.2324836,
+    "ast_hash": "f898a58c0e0e42c9d7aaf3fcdee17d9f",
+    "semantic_hash": "f898a58c0e0e42c9d7aaf3fcdee17d9f"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\data\\mockData.ts": {
+    "mtime": 1781237086.1276736,
+    "ast_hash": "ede9f3495ba986f4ae25897cd061143e",
+    "semantic_hash": "ede9f3495ba986f4ae25897cd061143e"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\src\\pages\\Dashboard.tsx": {
+    "mtime": 1781237086.2445824,
+    "ast_hash": "87097347b76c16998ed8798c3df36461",
+    "semantic_hash": "87097347b76c16998ed8798c3df36461"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\index.html": {
+    "mtime": 1781237085.9330165,
+    "ast_hash": "d2a1776cf5da375868eee83a0e7c9bf5",
+    "semantic_hash": "d2a1776cf5da375868eee83a0e7c9bf5"
+  },
+  "D:\\IXO\\Projects\\ITL (YT data processing and insights) - IXO001\\Dashboard v2\\README.md": {
+    "mtime": 1781248186.468362,
+    "ast_hash": "fcae05891417a61fe240c0d727c31c8a",
+    "semantic_hash": "fcae05891417a61fe240c0d727c31c8a"
+  }
+}
