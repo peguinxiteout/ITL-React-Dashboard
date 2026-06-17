@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { DashboardHeader } from '../components/DashboardHeader';
 import { KpiCards } from '../components/KpiCards';
+import { CompetitorTable } from '../components/market-share/CompetitorTable';
 import { MarketShareTab } from '../components/market-share/MarketShareTab';
 import { SentimentTab } from '../components/sentiment/SentimentTab';
 import { UnderDevelopment } from '../components/UnderDevelopment';
-import { COMPETITORS, DateRangeKey, TabKey } from '../data/mockData';
+import { COMPETITORS, DateRangeKey, TabKey, getBrandStats } from '../data/mockData';
 import { useScreenInit } from '../useScreenInit.js';
 const UNDER_DEV_TITLES: Partial<Record<TabKey, string>> = {
   influencer: 'Voice of Influencer',
@@ -43,6 +44,10 @@ export function Dashboard() {
             <KpiCards
             dateRange={dateRange}
             selectedCompetitors={selectedCompetitors} />
+
+            <div style={{ borderTop: '1px solid #e2e8f0', margin: '2rem 0' }} />
+
+            <CompetitorTable stats={getBrandStats(dateRange)} />
 
           </div> :
 

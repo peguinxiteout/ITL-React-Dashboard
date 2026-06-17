@@ -5,7 +5,6 @@ import { ShareOfVoiceCharts } from './ShareOfVoiceCharts';
 import { ShareOfEngagementCard } from './ShareOfEngagementCard';
 import { ShareTrendCharts } from './ShareTrendCharts';
 import { ContentFrequencyChart } from './ContentFrequencyChart';
-import { CompetitorTable } from './CompetitorTable';
 import { BrandFilterButton } from './BrandFilterButton';
 import { WeekPresetSelector } from './WeekPresetSelector';
 import {
@@ -64,23 +63,24 @@ export function MarketShareTab({ selectedCompetitors }: MarketShareTabProps) {
       animate="show"
       className="space-y-5">
 
-      <motion.div variants={item}>
+      <motion.div
+        variants={item}
+        className="flex items-end justify-between gap-4">
+
         <SectionHeader
           title="Content Market Share"
           descriptor="Organic creator content - Indian tractor market"
           meta={dataContext} />
-      </motion.div>
-      <motion.div
-        variants={item}
-        className="flex flex-wrap items-center justify-end gap-2">
 
-        <WeekPresetSelector
-          value={selectedWeeks}
-          onChange={setSelectedWeeks} />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <WeekPresetSelector
+            value={selectedWeeks}
+            onChange={setSelectedWeeks} />
 
-        <BrandFilterButton
-          selectedBrands={selectedBrands}
-          onChange={setSelectedBrands} />
+          <BrandFilterButton
+            selectedBrands={selectedBrands}
+            onChange={setSelectedBrands} />
+        </div>
       </motion.div>
       <motion.div variants={item}>
         <ShareOfVoiceCharts stats={stats} />
@@ -96,10 +96,9 @@ export function MarketShareTab({ selectedCompetitors }: MarketShareTabProps) {
           selectedBrands={selectedBrands} />
       </motion.div>
       <motion.div variants={item}>
-        <ContentFrequencyChart stats={brandFilteredStats} />
-      </motion.div>
-      <motion.div variants={item}>
-        <CompetitorTable stats={brandFilteredStats} />
+        <ContentFrequencyChart
+          selectedWeeks={selectedWeeks}
+          selectedBrands={selectedBrands} />
       </motion.div>
     </motion.div>);
 

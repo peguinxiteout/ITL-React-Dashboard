@@ -3,14 +3,13 @@ import { WeekPreset } from '../../data/mockData';
 
 type SovMode = 'views' | 'videoCount';
 
-const SUMMARY: Record<WeekPreset, { sonalika: number; avg: number; gap: number }> = {
-  1:  { sonalika: 14.8, avg: 14.3, gap: 0.5 },
-  4:  { sonalika: 15.5, avg: 14.3, gap: 1.2 },
-  8:  { sonalika: 15.9, avg: 14.3, gap: 1.6 },
-  12: { sonalika: 16.2, avg: 14.3, gap: 1.9 },
+const SUMMARY: Record<WeekPreset, { soe: number; gap: number }> = {
+  1:  { soe: 14.8, gap: -1.4 },
+  4:  { soe: 15.5, gap: -1.2 },
+  8:  { soe: 15.9, gap: -1.0 },
+  12: { soe: 16.2, gap: -0.9 },
 };
 
-const BASE_SOE_12 = 16.2;
 
 const BASE_VIEWS: { brand: string; sov: number; soe: number }[] = [
   { brand: 'Sonalika',        sov: 17.1, soe: 16.2 },
@@ -55,7 +54,7 @@ export function ShareOfEngagementCard({ selectedWeeks, selectedBrands }: Props) 
 
   const summary  = SUMMARY[selectedWeeks];
   const sovScale = SOV_SCALE[selectedWeeks];
-  const soeScale = summary.sonalika / BASE_SOE_12;
+  const soeScale = summary.soe / 16.2;
 
   const baseData = mode === 'views' ? BASE_VIEWS : BASE_VIDEO_COUNT;
   const rows = baseData
@@ -81,33 +80,30 @@ export function ShareOfEngagementCard({ selectedWeeks, selectedBrands }: Props) 
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-2 gap-4 mb-5">
         <div
-          className="rounded-lg p-3"
+          className="rounded-lg p-4"
           style={{ backgroundColor: '#FFF8EE', border: '1px solid #F5D8A0' }}
         >
-          <p className="text-xs mb-1" style={{ color: '#A16207' }}>
+          <p className="text-xs mb-2" style={{ color: '#A16207' }}>
             Sonalika SoE — Combined
           </p>
-          <p className="text-2xl font-bold" style={{ color: '#EF9F27' }}>
-            {summary.sonalika.toFixed(1)}%
+          <p className="text-3xl font-bold mb-1" style={{ color: '#EF9F27' }}>
+            {summary.soe.toFixed(1)}%
           </p>
+          <p className="text-xs text-slate-500">share of total category engagement</p>
         </div>
 
-        <div className="rounded-lg p-3 bg-slate-50 border border-slate-200">
-          <p className="text-xs text-slate-500 mb-1">Category average per brand</p>
-          <p className="text-2xl font-bold text-slate-900">{summary.avg.toFixed(1)}%</p>
-        </div>
-
-        <div className="rounded-lg p-3 bg-slate-50 border border-slate-200">
-          <p className="text-xs text-slate-500 mb-1">Gap vs average</p>
+        <div className="rounded-lg p-4 bg-slate-50 border border-slate-200">
+          <p className="text-xs text-slate-500 mb-2">SoV – SoE Gap</p>
           <p
-            className="text-2xl font-bold"
-            style={{ color: summary.gap >= 0 ? '#16a34a' : '#dc2626' }}
+            className="text-3xl font-bold mb-1"
+            style={{ color: summary.gap >= 0 ? '#16a34a' : '#E55F5F' }}
           >
             {summary.gap >= 0 ? '+' : ''}
             {summary.gap.toFixed(1)} pp
           </p>
+          <p className="text-xs text-slate-500">negative = content under-delivers on engagement vs presence</p>
         </div>
       </div>
 
