@@ -1,10 +1,19 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+
 import { DashboardHeader } from '../components/DashboardHeader';
 import { KpiCards } from '../components/KpiCards';
+import { CompetitorTable } from '../components/market-share/CompetitorTable';
 import { MarketShareTab } from '../components/market-share/MarketShareTab';
 import { SentimentTab } from '../components/sentiment/SentimentTab';
-import { COMPETITORS, DateRangeKey, TabKey } from '../data/mockData';
+
+import {
+  COMPETITORS,
+  DateRangeKey,
+  TabKey,
+  getBrandStats,
+} from '../data/mockData';
+
 import VoiceInfluencerTab from '../components/influencer/VoiceInfluencerTab';
 import CompetitivePositioningTab from '../components/positioning/CompetitivePositioningTab';
 import { useScreenInit } from '../useScreenInit';
@@ -25,10 +34,16 @@ export function Dashboard() {
   const renderActiveTab = () => {
     if (activeTab === 'overview') {
       return (
-        <KpiCards
-          dateRange={dateRange}
-          selectedCompetitors={selectedCompetitors}
-        />
+        <>
+          <KpiCards
+            dateRange={dateRange}
+            selectedCompetitors={selectedCompetitors}
+          />
+
+          <div style={{ borderTop: '1px solid #e2e8f0', margin: '2rem 0' }} />
+
+          <CompetitorTable stats={getBrandStats(dateRange)} />
+        </>
       );
     }
 
@@ -40,16 +55,16 @@ export function Dashboard() {
       );
     }
 
+    if (activeTab === 'sentiment') {
+      return <SentimentTab dateRange={dateRange} />;
+    }
+
     if (activeTab === 'influencer') {
       return <VoiceInfluencerTab />;
     }
 
     if (activeTab === 'positioning') {
       return <CompetitivePositioningTab />;
-    }
-
-    if (activeTab === 'sentiment') {
-      return <SentimentTab dateRange={dateRange} />;
     }
 
     return null;

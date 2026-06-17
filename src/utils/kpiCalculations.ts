@@ -23,6 +23,7 @@ export interface SentimentSummaryRow {
   Neutral: number;
   Negative: number;
   total_mentions: number;
+  video_count: number;
   Positive_pct: number;
   Neutral_pct: number;
   Negative_pct: number;
@@ -200,6 +201,9 @@ function normalizeBrandName(value: unknown): string {
     force: 'Force',
     preet: 'Preet',
     'indo farm': 'Indo Farm',
+    powertrac: 'Powertrac',
+    captain: 'Captain',
+    vst: 'VST',
   };
 
   return mapping[key] || text;
@@ -433,6 +437,7 @@ function buildSentimentSummary<T extends 'brand' | 'feature' | 'geo_region' | 'w
   getKeyValue: (record: SentimentRecord) => string
 ): SentimentSummaryRow[] {
   const grouped = new Map<string, SentimentSummaryRow>();
+  const videoKeysByGroup = new Map<string, Set<string>>();
 
   records.forEach((record) => {
     const keyValue = getKeyValue(record);
@@ -446,19 +451,33 @@ function buildSentimentSummary<T extends 'brand' | 'feature' | 'geo_region' | 'w
         Neutral: 0,
         Negative: 0,
         total_mentions: 0,
+        video_count: 0,
         Positive_pct: 0,
         Neutral_pct: 0,
         Negative_pct: 0,
       } as SentimentSummaryRow);
     }
 
+    if (!videoKeysByGroup.has(keyValue)) {
+      videoKeysByGroup.set(keyValue, new Set<string>());
+    }
+
     const item = grouped.get(keyValue)!;
     item[record.sentiment] += 1;
     item.total_mentions += 1;
+
+    if (record.videoKey) {
+      videoKeysByGroup.get(keyValue)!.add(record.videoKey);
+    }
   });
 
   return Array.from(grouped.values())
     .map((item) => {
+      const keyValue =
+        item.brand || item.feature || item.geo_region || item.week || '';
+
+      item.video_count = videoKeysByGroup.get(keyValue)?.size || 0;
+
       item.Positive_pct =
         item.total_mentions > 0
           ? Number(((item.Positive / item.total_mentions) * 100).toFixed(2))
@@ -908,7 +927,6 @@ export function calculateGeoCreatorRankings(rows: KpiRow[]): GeoCreatorRankingRo
     })
     .sort((a, b) => b.sonalika_video_count - a.sonalika_video_count);
 }
-
 
 export interface VoiceInfluencerKpiCards {
   videos_analyzed: number;
