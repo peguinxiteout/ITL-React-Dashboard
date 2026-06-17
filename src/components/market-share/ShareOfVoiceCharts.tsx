@@ -1,50 +1,54 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { SectionCard } from '../SectionCard';
-import {
-  BrandStats,
-  SONALIKA_ID,
-  formatNumber,
-  getBrand } from
-'../../data/mockData';
-interface ShareOfVoiceChartsProps {
-  stats: BrandStats[];
+import { formatNumber } from '../../data/mockData';
+
+interface BrandSummary {
+  brand: string;
+  video_count: number;
+  total_views: number;
+  total_comments: number;
+  color: string;
+  isOwn: boolean;
 }
-type MetricKey = 'videos' | 'views' | 'comments';
+interface ShareOfVoiceChartsProps {
+  summary: BrandSummary[];
+}
+type MetricKey = 'video_count' | 'total_views' | 'total_comments';
 const METRICS: {
   key: MetricKey;
   label: string;
 }[] = [
 {
-  key: 'videos',
+  key: 'video_count',
   label: 'Video Volume'
 },
 {
-  key: 'views',
+  key: 'total_views',
   label: 'Views'
 },
 {
-  key: 'comments',
+  key: 'total_comments',
   label: 'Comments'
 }];
 
-export function ShareOfVoiceCharts({ stats }: ShareOfVoiceChartsProps) {
+export function ShareOfVoiceCharts({ summary }: ShareOfVoiceChartsProps) {
   return (
     <SectionCard
       title="Share of Voice"
       subtitle="Sonalika's proportion of category video volume, views and comments">
-      
+
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         {METRICS.map((metric) => {
-          const total = stats.reduce((acc, s) => acc + s[metric.key], 0);
+          const total = summary.reduce((acc, s) => acc + s[metric.key], 0);
           const sonalikaShare =
-          (stats.find((s) => s.brandId === SONALIKA_ID)?.[metric.key] ?? 0) /
-          total *
-          100;
-          const data = stats.map((s) => ({
-            name: getBrand(s.brandId).name,
+          total > 0 ?
+          (summary.find((s) => s.isOwn)?.[metric.key] ?? 0) / total * 100 :
+          0;
+          const data = summary.map((s) => ({
+            name: s.brand,
             value: s[metric.key],
-            color: getBrand(s.brandId).color
+            color: s.color
           }));
           return (
             <div key={metric.key} className="flex flex-col items-center">
@@ -59,7 +63,7 @@ export function ShareOfVoiceCharts({ stats }: ShareOfVoiceChartsProps) {
                       outerRadius={72}
                       paddingAngle={2}
                       strokeWidth={0}>
-                      
+
                       {data.map((d) =>
                       <Cell key={d.name} fill={d.color} />
                       )}
@@ -74,7 +78,7 @@ export function ShareOfVoiceCharts({ stats }: ShareOfVoiceChartsProps) {
                         borderRadius: 8,
                         border: '1px solid #e2e8f0'
                       }} />
-                    
+
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
@@ -95,24 +99,21 @@ export function ShareOfVoiceCharts({ stats }: ShareOfVoiceChartsProps) {
         })}
       </div>
       <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 border-t border-slate-100 pt-4">
-        {stats.map((s) => {
-          const brand = getBrand(s.brandId);
-          return (
-            <span
-              key={s.brandId}
-              className="flex items-center gap-1.5 text-xs text-slate-600">
-              
-              <span
-                className="h-2.5 w-2.5 rounded-full"
-                style={{
-                  backgroundColor: brand.color
-                }}
-                aria-hidden="true" />
-              
-              {brand.name}
-            </span>);
+        {summary.map((s) =>
+        <span
+          key={s.brand}
+          className="flex items-center gap-1.5 text-xs text-slate-600">
 
-        })}
+          <span
+            className="h-2.5 w-2.5 rounded-full"
+            style={{
+              backgroundColor: s.color
+            }}
+            aria-hidden="true" />
+
+          {s.brand}
+        </span>
+        )}
       </div>
     </SectionCard>);
 

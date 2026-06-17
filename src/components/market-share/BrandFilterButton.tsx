@@ -4,10 +4,14 @@ import { BRANDS, SONALIKA_ID } from '../../data/mockData';
 interface BrandFilterButtonProps {
   selectedBrands: string[];
   onChange: (brands: string[]) => void;
+  includeShorts: boolean;
+  onShortsChange: (v: boolean) => void;
 }
 export function BrandFilterButton({
   selectedBrands,
-  onChange
+  onChange,
+  includeShorts,
+  onShortsChange
 }: BrandFilterButtonProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -108,6 +112,23 @@ export function BrandFilterButton({
 
           })}
           </ul>
+
+          {/* Shorts toggle */}
+          <div style={{ borderTop: '1px solid #e2e8f0', marginTop: 8, paddingTop: 8 }}>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={includeShorts}
+                onChange={(e) => onShortsChange(e.target.checked)}
+                className="h-4 w-4 accent-blue-700 mt-0.5 flex-shrink-0" />
+              <div>
+                <span className="text-sm text-slate-700">Include YouTube Shorts</span>
+                <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                  Shorts: videos ≤60s always flagged; 61–180s flagged only if tagged #Shorts
+                </p>
+              </div>
+            </label>
+          </div>
         </div>
       }
     </div>);

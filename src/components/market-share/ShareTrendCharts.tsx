@@ -9,59 +9,48 @@ import {
   ResponsiveContainer } from
 'recharts';
 import { SectionCard } from '../SectionCard';
-import {
-  BRANDS,
-  Brand,
-  SONALIKA_ID,
-  ShareMetric,
-  WeekPreset,
-  getWeeklyShareTrends } from
-'../../data/mockData';
+
 // Sonalika's line color in the trend charts (distinct from its donut/table blue)
 const SONALIKA_TREND_COLOR = '#EF9F27';
-const lineColor = (brand: Brand): string =>
-brand.id === SONALIKA_ID ? SONALIKA_TREND_COLOR : brand.color;
-interface ShareTrendChartsProps {
-  weeks: WeekPreset;
-  selectedBrands: string[];
-}
-const SOV_METRICS: {
-  key: ShareMetric;
-  label: string;
-}[] = [
-{
-  key: 'views',
-  label: 'Views'
-},
-{
-  key: 'videos',
-  label: 'Video Count'
-},
-{
-  key: 'comments',
-  label: 'Comments'
-}];
 
-const SOE_METRICS: {
-  key: ShareMetric;
-  label: string;
-}[] = [
-{
-  key: 'combined',
-  label: 'Combined'
-},
-{
-  key: 'views',
-  label: 'Views'
-},
-{
-  key: 'likes',
-  label: 'Likes'
-},
-{
-  key: 'comments',
-  label: 'Comments'
-}];
+interface TrendBrand {
+  name: string;
+  color: string;
+  isOwn: boolean;
+}
+interface WeeklyShareRow {
+  brand: string;
+  week: string;
+  sov_views: number;
+  sov_videos: number;
+  sov_comments: number;
+  sov_likes: number;
+  soe: number;
+}
+interface ShareTrendChartsProps {
+  weeks: string[];
+  weeklySoV: WeeklyShareRow[];
+  brands: TrendBrand[];
+}
+
+// Maps each metric pill to the share column it reads from weeklySoV.
+type ShareField = keyof Omit<WeeklyShareRow, 'brand' | 'week'>;
+const SOV_METRICS: { key: ShareField; label: string }[] = [
+{ key: 'sov_views', label: 'Views' },
+{ key: 'sov_videos', label: 'Video Count' },
+{ key: 'sov_comments', label: 'Comments' }];
+
+const SOE_METRICS: { key: ShareField; label: string }[] = [
+{ key: 'soe', label: 'Combined' },
+{ key: 'sov_views', label: 'Views' },
+{ key: 'sov_likes', label: 'Likes' },
+{ key: 'sov_comments', label: 'Comments' }];
+
+const lineColor = (brand: TrendBrand): string =>
+brand.isOwn ? SONALIKA_TREND_COLOR : brand.color;
+
+// "2026-W24" → "W24"
+const weekLabel = (week: string): string => week.replace(/^\d{4}-/, '');
 
 function MetricPills({
   options,
@@ -72,7 +61,7 @@ function MetricPills({
 
 
 
-}: {options: {key: ShareMetric;label: string;}[];value: ShareMetric;onChange: (m: ShareMetric) => void;groupLabel: string;}) {
+}: {options: {key: ShareField;label: string;}[];value: ShareField;onChange: (m: ShareField) => void;groupLabel: string;}) {
   return (
     <div
       className="mb-3 flex flex-wrap items-center gap-1.5"
@@ -96,15 +85,27 @@ function MetricPills({
     </div>);
 
 }
+
 function TrendChart({
   weeks,
-  metric,
+  weeklySoV,
+  field,
   brands
 
 
 
-}: {weeks: WeekPreset;metric: ShareMetric;brands: Brand[];}) {
-  const data = getWeeklyShareTrends(weeks, metric);
+
+}: {weeks: string[];weeklySoV: WeeklyShareRow[];field: ShareField;brands: TrendBrand[];}) {
+  // Pivot: one row per week, one column per brand holding that week's share.
+  const byKey = new Map<string, number>();
+  weeklySoV.forEach((r) => byKey.set(`${r.brand}__${r.week}`, r[field]));
+  const data = weeks.map((w) => {
+    const point: { [k: string]: number | string } = { label: weekLabel(w) };
+    brands.forEach((b) => {
+      point[b.name] = byKey.get(`${b.name}__${w}`) ?? 0;
+    });
+    return point;
+  });
   // With a single data point no line segments exist — show dots for every
   // brand so the chart isn't empty on the 1-week preset.
   const singlePoint = data.length === 1;
@@ -154,12 +155,12 @@ function TrendChart({
             }} />
 
           {brands.map((brand) => {
-            const isOwn = brand.id === SONALIKA_ID;
+            const isOwn = brand.isOwn;
             return (
               <Line
-                key={brand.id}
+                key={brand.name}
                 type="monotone"
-                dataKey={brand.id}
+                dataKey={brand.name}
                 name={brand.name}
                 stroke={lineColor(brand)}
                 strokeWidth={isOwn ? 2.5 : 1.5}
@@ -188,11 +189,11 @@ function TrendChart({
 }
 export function ShareTrendCharts({
   weeks,
-  selectedBrands
+  weeklySoV,
+  brands
 }: ShareTrendChartsProps) {
-  const [sovMetric, setSovMetric] = useState<ShareMetric>('views');
-  const [soeMetric, setSoeMetric] = useState<ShareMetric>('combined');
-  const brands = BRANDS.filter((b) => selectedBrands.includes(b.name));
+  const [sovMetric, setSovMetric] = useState<ShareField>('sov_views');
+  const [soeMetric, setSoeMetric] = useState<ShareField>('soe');
   return (
     <SectionCard title="Share trends" subtitle="Weekly SoV and SoE by brand">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_auto_1fr] lg:gap-5">
@@ -207,7 +208,7 @@ export function ShareTrendCharts({
             onChange={setSovMetric}
             groupLabel="Share of Voice metric" />
 
-          <TrendChart weeks={weeks} metric={sovMetric} brands={brands} />
+          <TrendChart weeks={weeks} weeklySoV={weeklySoV} field={sovMetric} brands={brands} />
         </div>
 
         {/* Vertical divider */}
@@ -230,32 +231,29 @@ export function ShareTrendCharts({
             onChange={setSoeMetric}
             groupLabel="Share of Engagement metric" />
 
-          <TrendChart weeks={weeks} metric={soeMetric} brands={brands} />
+          <TrendChart weeks={weeks} weeklySoV={weeklySoV} field={soeMetric} brands={brands} />
         </div>
       </div>
 
       {/* Shared brand legend spanning the full card width */}
       <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-slate-100 pt-3">
-        {brands.map((brand) => {
-          const isOwn = brand.id === SONALIKA_ID;
-          return (
-            <span
-              key={brand.id}
-              className="flex items-center gap-1.5 text-xs text-slate-600">
+        {brands.map((brand) =>
+        <span
+          key={brand.name}
+          className="flex items-center gap-1.5 text-xs text-slate-600">
 
-              <span
-                style={{
-                  width: 18,
-                  height: isOwn ? 3 : 2,
-                  borderRadius: 2,
-                  backgroundColor: lineColor(brand)
-                }}
-                aria-hidden="true" />
+          <span
+            style={{
+              width: 18,
+              height: brand.isOwn ? 3 : 2,
+              borderRadius: 2,
+              backgroundColor: lineColor(brand)
+            }}
+            aria-hidden="true" />
 
-              {brand.name}
-            </span>);
-
-        })}
+          {brand.name}
+        </span>
+        )}
       </div>
     </SectionCard>);
 
