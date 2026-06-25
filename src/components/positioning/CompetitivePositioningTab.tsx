@@ -10,18 +10,74 @@ import {
 } from 'recharts';
 import { SectionCard } from '../SectionCard';
 import { useKpiData } from '../../hooks/useKpiData';
-import { calculateCompetitorMentionsInSonalikaVideos } from '../../utils/kpiCalculations';
+import {
+  calculateCompetitiveMtpComparison,
+  calculateCompetitiveTrendTable,
+  calculateCompetitorMentionsInSonalikaVideos,
+} from '../../utils/kpiCalculations';
 
 const CHART_COLOR = '#2563EB';
+const SONALIKA_COLOR = '#FACC15';
+const SONALIKA_PANEL_COLOR = '#DBEAFE';
 
-export default function CompetitivePositioningTab(_props: {
-  globalDateRange?: { startDate: string; endDate: string };
-  setGlobalDateRange?: (v: any) => void;
-} = {}) {
+const EmptyState = ({ message }: { message: string }) => (
+  <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
+    {message}
+  </div>
+);
+
+const TrendArrow = ({ trend }: { trend: 'up' | 'down' | 'flat' }) => {
+  if (trend === 'up') {
+    return <span className="text-2xl font-bold text-green-600">▲</span>;
+  }
+
+  if (trend === 'down') {
+    return <span className="text-2xl font-bold text-red-600">▼</span>;
+  }
+
+  return <span className="text-2xl font-bold text-slate-900">▬</span>;
+};
+
+const MtpNodeCard = ({
+  title,
+  points,
+  side,
+}: {
+  title: string;
+  points: string[];
+  side: 'sonalika' | 'other';
+}) => (
+  <div
+    className={`rounded-xl border p-4 shadow-sm ${
+      side === 'sonalika'
+        ? 'border-blue-200 bg-white'
+        : 'border-blue-200 bg-white'
+    }`}
+  >
+    <h4 className="text-center text-sm font-bold text-slate-950">{title}</h4>
+    <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs leading-5 text-slate-700">
+      {points.map((point) => (
+        <li key={point}>{point}</li>
+      ))}
+    </ol>
+  </div>
+);
+
+export default function CompetitivePositioningTab() {
   const { rows, loading, error } = useKpiData();
 
   const competitorMentions = useMemo(
     () => calculateCompetitorMentionsInSonalikaVideos(rows),
+    [rows]
+  );
+
+  const mtpComparison = useMemo(
+    () => calculateCompetitiveMtpComparison(rows),
+    [rows]
+  );
+
+  const trendTableRows = useMemo(
+    () => calculateCompetitiveTrendTable(rows),
     [rows]
   );
 
@@ -58,9 +114,7 @@ export default function CompetitivePositioningTab(_props: {
         <h1 className="text-3xl font-bold text-gray-900">
           Competitive Positioning
         </h1>
-        <p className="mt-2 text-gray-600">
-          Competitor mention frequency within Sonalika-related tractor videos.
-        </p>
+        
         <p className="mt-2 inline-flex rounded-md bg-slate-100 px-3 py-1 text-sm text-slate-600">
           {rows.length} KPI rows loaded
         </p>
@@ -100,10 +154,7 @@ export default function CompetitivePositioningTab(_props: {
         </div>
       </div>
 
-      <SectionCard
-        title="1. Competitor Mention Frequency"
-        subtitle="Number of Sonalika-related videos where each competitor brand is mentioned."
-      >
+      <SectionCard title="1. Competitor Mention Frequency">
         {competitorMentions.length > 0 ? (
           <div className="h-[360px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -151,16 +202,11 @@ export default function CompetitivePositioningTab(_props: {
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
-            No competitor mentions were detected in the current Sonalika-related videos.
-          </div>
+          <EmptyState message="No competitor mentions were detected in the current Sonalika-related videos." />
         )}
       </SectionCard>
 
-      <SectionCard
-        title="2. Competitor Positioning Summary"
-        subtitle="Tabular view of competitor mention counts and share within total competitor mentions."
-      >
+      <SectionCard title="2. Competitor Positioning Summary">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50">
@@ -217,12 +263,131 @@ export default function CompetitivePositioningTab(_props: {
           </div>
         )}
       </SectionCard>
+<SectionCard
+        title="3. Major Talking Points (MTP)"
+        subtitle="Sonalika vs other tractor brands across key tractor-content themes."
+      >
+        {mtpComparison.sonalika.length > 0 || mtpComparison.otherBrands.length > 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-5 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+              <div className="text-center">
+                <span
+                  className="inline-flex rounded px-2 py-1 text-base font-extrabold text-slate-950"
+                  style={{ backgroundColor: SONALIKA_COLOR }}
+                >
+                  Sonalika
+                </span>
+              </div>
+              <div className="text-xl font-extrabold text-slate-950">VS</div>
+              <div className="text-center">
+                <span
+                  className="inline-flex rounded px-2 py-1 text-base font-extrabold text-slate-950"
+                  style={{ backgroundColor: SONALIKA_COLOR }}
+                >
+                  Other Brands
+                </span>
+              </div>
+            </div>
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-        <b>How this is calculated:</b> only Sonalika-related videos are considered.
-        The transcript, detected brand fields, title, filename and extracted brand metadata are scanned
-        for competitor brand names. Each competitor is counted once per matching video.
-      </div>
-    </div>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_auto_1fr]">
+              <div
+                className="relative rounded-2xl border border-blue-100 p-4"
+                style={{ backgroundColor: SONALIKA_PANEL_COLOR }}
+              >
+                <div className="absolute left-1/2 top-4 hidden h-[calc(100%-32px)] w-px -translate-x-1/2 bg-slate-300 lg:block" />
+                <div className="relative grid gap-4">
+                  {mtpComparison.sonalika.map((item, index) => (
+                    <div
+                      key={item.title}
+                      className={index % 2 === 0 ? 'lg:pr-16' : 'lg:pl-16'}
+                    >
+                      <MtpNodeCard
+                        title={item.title}
+                        points={item.points}
+                        side="sonalika"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="hidden w-8 items-center justify-center lg:flex">
+                <div className="h-full w-px bg-slate-300" />
+              </div>
+
+              <div className="relative rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="absolute left-1/2 top-4 hidden h-[calc(100%-32px)] w-px -translate-x-1/2 bg-slate-300 lg:block" />
+                <div className="relative grid gap-4">
+                  {mtpComparison.otherBrands.map((item, index) => (
+                    <div
+                      key={item.title}
+                      className={index % 2 === 0 ? 'lg:pl-16' : 'lg:pr-16'}
+                    >
+                      <MtpNodeCard
+                        title={item.title}
+                        points={item.points}
+                        side="other"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <EmptyState message="No tractor-category talking points are available for the current data." />
+        )}
+      </SectionCard>
+
+      <SectionCard
+        title="4. Two-Week Competitive Trend Summary"
+        subtitle="Baseline is 1 Mar – 8 Mar. Current week is 9 Mar – 15 Mar."
+      >
+        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="min-w-full divide-y divide-slate-200 text-sm">
+            <thead style={{ backgroundColor: '#FFF200' }}>
+              <tr>
+                <th className="border border-slate-700 px-4 py-3 text-left text-base font-extrabold text-slate-950">
+                  KPI / Strategic Metric
+                </th>
+                <th className="border border-slate-700 px-4 py-3 text-center text-base font-extrabold text-slate-950">
+                  Baseline (1st Mar - 8th Mar)
+                </th>
+                <th className="border border-slate-700 px-4 py-3 text-center text-base font-extrabold text-slate-950">
+                  Current Week
+                </th>
+                <th className="border border-slate-700 px-4 py-3 text-center text-base font-extrabold text-slate-950">
+                  Trend
+                </th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-slate-200 bg-white">
+              {trendTableRows.map((row) => (
+                <tr key={row.metric}>
+                  <td className="border border-slate-700 px-4 py-3 font-bold text-slate-900">
+                    {row.metric}
+                  </td>
+                  <td className="border border-slate-700 px-4 py-3 text-center text-slate-800">
+                    {row.baseline}
+                  </td>
+                  <td className="border border-slate-700 px-4 py-3 text-center text-slate-800">
+                    {row.currentWeek}
+                  </td>
+                  <td className="border border-slate-700 px-4 py-3 text-center">
+                    <TrendArrow trend={row.trend} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="mt-3 text-xs text-slate-500">
+          Tractor Content Density = tractor videos / all videos. Brand Mention Share = Sonalika-related tractor videos / tractor videos. Sentiment is calculated from Sonalika sentiment mentions.
+        </p>
+      </SectionCard>
+
+          </div>
   );
 }
