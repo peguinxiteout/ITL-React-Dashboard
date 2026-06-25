@@ -36,6 +36,31 @@ export interface FeatureMentionRow {
   total_mentions: number;
 }
 
+export interface FeatureCompetitorPositiveRow {
+  brand: string;
+  feature: string;
+  Positive: number;
+  total_mentions: number;
+  video_count: number;
+  Positive_pct: number;
+  score: number;
+}
+
+export interface FeatureVerbatimQuote {
+  brand: string;
+  feature: string;
+  sentiment: SentimentLabel;
+  sentence: string;
+  total_mentions?: number;
+  sentiment_pct?: number;
+}
+
+export interface FeatureVerbatimComparisonRow {
+  feature: string;
+  clientNegative?: FeatureVerbatimQuote;
+  competitorPositive?: FeatureVerbatimQuote;
+}
+
 export interface CreatorPerformanceRow {
   rank: number;
   channelTitle: string;
@@ -97,6 +122,12 @@ export interface WeeklyMentionTrendRow {
   [brand: string]: string | number | undefined;
 }
 
+export interface TractorCategoryDistributionRow {
+  category: string;
+  Total: number;
+  Sonalika: number;
+}
+
 const COMPETITOR_BRANDS = [
   'Mahindra',
   'Swaraj',
@@ -107,6 +138,42 @@ const COMPETITOR_BRANDS = [
   'Solis',
   'Yanmar',
 ];
+
+const TRACTOR_CONTENT_CATEGORY_ORDER = [
+  'Demo',
+  'Comparison',
+  'Product Walkthrough',
+  'Others - Reel/Shorts',
+  'Brand Promotion',
+  'Customer Testimonial',
+];
+
+function normalizeTractorSubCategory(value: unknown): string {
+  const text = String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  const key = text
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[–—]/g, '-')
+    .replace(/\s*-\s*/g, ' - ')
+    .replace(/\s*\/\s*/g, '/')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const categoryMap: Record<string, string> = {
+    demo: 'Demo',
+    comparison: 'Comparison',
+    'product walkthrough': 'Product Walkthrough',
+    'others - reel/shorts': 'Others - Reel/Shorts',
+    'others - reels/shorts': 'Others - Reel/Shorts',
+    'brand promotion': 'Brand Promotion',
+    'customer testimonial': 'Customer Testimonial',
+  };
+
+  return categoryMap[key] || '';
+}
 
 const FEATURE_KEYWORD_MAP: Record<string, string[]> = {
   'Engine Performance': [
@@ -175,47 +242,119 @@ function toNumber(value: string | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+const BRAND_NAME_MAP: Record<string, string> = {
+  mahindra: 'Mahindra',
+  sonalika: 'Sonalika',
+  sonalica: 'Sonalika',
+  solis: 'Solis',
+  yanmar: 'Yanmar',
+  'john deere': 'John Deere',
+  johndeere: 'John Deere',
+  'new holland': 'New Holland',
+  'massey ferguson': 'Massey Ferguson',
+  swaraj: 'Swaraj',
+  'escorts kubota': 'Escorts Kubota',
+  escorts: 'Escorts Kubota',
+  kubota: 'Escorts Kubota',
+  digitrac: 'Digitrac',
+  force: 'Force',
+  preet: 'Preet',
+  'indo farm': 'Indo Farm',
+  powertrac: 'Powertrac',
+  farmtrac: 'Farmtrac',
+  captain: 'Captain',
+  vst: 'VST',
+  eicher: 'Eicher',
+  tafe: 'TAFE',
+  ace: 'ACE',
+  kartar: 'Kartar',
+  'deutz fahr': 'Deutz Fahr',
+  deutzfahr: 'Deutz Fahr',
+  jcb: 'JCB',
+};
+
+const TRACTOR_KPI_BRANDS = new Set(Object.values(BRAND_NAME_MAP));
+
+function cleanBrandToken(value: unknown): string {
+  return String(value || '')
+    .trim()
+    .replace(/^\[+|\]+$/g, '')
+    .replace(/^['\"]+|['\"]+$/g, '')
+    .replace(/^\[+|\]+$/g, '')
+    .replace(/^['\"]+|['\"]+$/g, '')
+    .trim();
+}
+
 function normalizeBrandName(value: unknown): string {
-  const text = String(value || '').trim();
+  const text = cleanBrandToken(value);
 
   if (!text || ['none', 'nan', 'null', 'not detected', 'unknown'].includes(text.toLowerCase())) {
     return '';
   }
 
-  const key = text.toLowerCase().replace(/\s+/g, ' ');
+  const key = text
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  const mapping: Record<string, string> = {
-    mahindra: 'Mahindra',
-    sonalika: 'Sonalika',
-    sonalica: 'Sonalika',
-    solis: 'Solis',
-    yanmar: 'Yanmar',
-    'john deere': 'John Deere',
-    johndeere: 'John Deere',
-    'new holland': 'New Holland',
-    'massey ferguson': 'Massey Ferguson',
-    swaraj: 'Swaraj',
-    'escorts kubota': 'Escorts Kubota',
-    kubota: 'Escorts Kubota',
-    digitrac: 'Digitrac',
-    force: 'Force',
-    preet: 'Preet',
-    'indo farm': 'Indo Farm',
-    powertrac: 'Powertrac',
-    captain: 'Captain',
-    vst: 'VST',
-  };
-
-  return mapping[key] || text;
+  return BRAND_NAME_MAP[key] || text;
 }
 
-function normalizeBrandList(value: string | undefined): string[] {
-  if (!value) return [];
+function normalizeBrandList(value: unknown): string[] {
+  if (value === undefined || value === null) return [];
 
-  return value
-    .split(',')
+  const rawValue = typeof value === 'string' ? value.trim() : value;
+  let rawItems: unknown[] = [];
+
+  if (Array.isArray(rawValue)) {
+    rawItems = rawValue;
+  } else if (typeof rawValue === 'string') {
+    if (!rawValue || rawValue === '[]') return [];
+
+    try {
+      const parsed = JSON.parse(rawValue);
+
+      if (Array.isArray(parsed)) {
+        rawItems = parsed;
+      } else {
+        rawItems = [parsed];
+      }
+    } catch {
+      rawItems = rawValue.split(',');
+    }
+  } else {
+    rawItems = [rawValue];
+  }
+
+  const seen = new Set<string>();
+
+  return rawItems
     .map((item) => normalizeBrandName(item))
-    .filter(Boolean);
+    .filter((brand) => {
+      if (!brand) return false;
+
+      const key = brand.toLowerCase();
+      if (seen.has(key)) return false;
+
+      seen.add(key);
+      return true;
+    });
+}
+
+function isTractorKpiBrand(brand: string): boolean {
+  return TRACTOR_KPI_BRANDS.has(normalizeBrandName(brand));
+}
+
+function isTractorCategory(row: KpiRow): boolean {
+  const level1Category = String(
+    (row as KpiRow & { level_1_category?: string }).level_1_category || ''
+  )
+    .trim()
+    .toLowerCase();
+
+  return level1Category === 'tractor';
 }
 
 function normalizeSentiment(value: unknown): SentimentLabel {
@@ -291,28 +430,52 @@ function isDateWithinRange(value: string | undefined, startDate?: string, endDat
   return true;
 }
 
-function getWeekStart(date: Date): Date {
-  const output = new Date(date);
-  const day = output.getDay();
-  const diff = output.getDate() - day + (day === 0 ? -6 : 1);
+function getDemoTrendBucket(date: Date): { label: string; sortDate: Date } {
+  const day = date.getDate();
+  const month = date.toLocaleString('en-US', { month: 'short' });
+  const year = date.getFullYear();
 
-  output.setDate(diff);
-  output.setHours(0, 0, 0, 0);
+  let startDay = 1;
+  let endDay = 8;
 
-  return output;
+  if (day >= 9 && day <= 15) {
+    startDay = 9;
+    endDay = 15;
+  } else if (day >= 16 && day <= 22) {
+    startDay = 16;
+    endDay = 22;
+  } else if (day >= 23) {
+    startDay = 23;
+    endDay = new Date(year, date.getMonth() + 1, 0).getDate();
+  }
+
+  const sortDate = new Date(date);
+  sortDate.setDate(startDay);
+  sortDate.setHours(0, 0, 0, 0);
+
+  return {
+    label: `${startDay}–${endDay} ${month} ${year}`,
+    sortDate,
+  };
 }
 
 function formatWeekLabel(date: Date): string {
-  const weekStart = getWeekStart(date);
-  const day = weekStart.getDate();
-  const month = weekStart.toLocaleString('en-US', { month: 'short' });
-  const year = weekStart.getFullYear();
+  return getDemoTrendBucket(date).label;
+}
 
-  return `${day} ${month} ${year}`;
+function parseTrendBucketStart(label: string): Date {
+  const match = label.match(/^(\d+)[–-]\d+\s+([A-Za-z]{3})\s+(\d{4})$/);
+
+  if (!match) {
+    return new Date(label);
+  }
+
+  const [, startDay, month, year] = match;
+  return new Date(`${month} ${startDay}, ${year}`);
 }
 
 function sortByWeekLabel(a: string, b: string): number {
-  return new Date(a).getTime() - new Date(b).getTime();
+  return parseTrendBucketStart(a).getTime() - parseTrendBucketStart(b).getTime();
 }
 
 function formatGeoRegion(row: KpiRow | SentimentRecord): string {
@@ -324,11 +487,13 @@ function formatGeoRegion(row: KpiRow | SentimentRecord): string {
 
   if (!cleanState && !cleanCity) return '';
 
-  if (cleanState && cleanCity) {
-    return `${cleanState} (${cleanCity})`;
+  // Geo KPIs are displayed at state level only.
+  // Example: Maharashtra (Mumbai) + Maharashtra (Pune) are combined as Maharashtra.
+  if (cleanState) {
+    return cleanState;
   }
 
-  return cleanState || cleanCity;
+  return cleanCity;
 }
 
 function rowSearchableText(row: KpiRow): string {
@@ -371,6 +536,34 @@ function rowMentionsSonalika(row: KpiRow): boolean {
   return rowMentionsBrand(row, 'Sonalika');
 }
 
+function cleanCreatorName(value: unknown): string {
+  const creator = String(value || '').trim();
+
+  if (!creator) return '';
+
+  const lower = creator.toLowerCase();
+
+  const invalidValues = [
+    'unknown',
+    'unknown creator',
+    'not available',
+    'na',
+    'n/a',
+    'null',
+    'none',
+  ];
+
+  if (invalidValues.includes(lower)) return '';
+
+  // Exclude badly decoded names like ???, ?????, --- etc.
+  const alphaNumericCount = (creator.match(/[a-zA-Z0-9]/g) || []).length;
+  const questionMarkCount = (creator.match(/\?/g) || []).length;
+
+  if (questionMarkCount >= 2 && alphaNumericCount === 0) return '';
+
+  return creator;
+}
+
 export function getVideoLevelRows(rows: KpiRow[]): KpiRow[] {
   const seen = new Set<string>();
   const output: KpiRow[] = [];
@@ -395,20 +588,26 @@ export function getSentimentRecords(rows: KpiRow[]): SentimentRecord[] {
     const key = videoKey(row);
 
     parsed.forEach((item) => {
-      const itemBrand = normalizeBrandName(item.Company || item.Brand);
-      const fallbackBrand = normalizeBrandList(row.detected_brands_from_transcript)[0] || 'Unknown';
-      const brand = itemBrand || fallbackBrand;
+      const itemBrands = normalizeBrandList(item.Company || item.Brand);
+      const fallbackBrands = normalizeBrandList(row.detected_brands_from_transcript);
+      const brands = itemBrands.length
+        ? itemBrands
+        : fallbackBrands.length === 1
+          ? fallbackBrands
+          : [];
 
-      records.push({
-        videoKey: key,
-        channelTitle: row.channelTitle || 'Unknown Creator',
-        postedDate: row.posted_date || '',
-        brand,
-        feature: canonicalFeature(item.Label || item.feature || item.Feature),
-        sentiment: normalizeSentiment(item.Opinion || item.sentiment),
-        sentence: String(item.Sentence || item.sentence || '').trim(),
-        geoState: row.geo_state || '',
-        geoCity: row.geo_city || '',
+      brands.forEach((brand) => {
+        records.push({
+          videoKey: key,
+          channelTitle: row.channelTitle || 'Unknown Creator',
+          postedDate: row.posted_date || '',
+          brand,
+          feature: canonicalFeature(item.Label || item.feature || item.Feature),
+          sentiment: normalizeSentiment(item.Opinion || item.sentiment),
+          sentence: String(item.Sentence || item.sentence || '').trim(),
+          geoState: row.geo_state || '',
+          geoCity: row.geo_city || '',
+        });
       });
     });
   });
@@ -500,17 +699,18 @@ function buildSentimentSummary<T extends 'brand' | 'feature' | 'geo_region' | 'w
 
 export function getAvailableBrands(rows: KpiRow[]): string[] {
   const brands = new Set<string>();
+  const tractorRows = rows.filter(isTractorCategory);
 
-  getSentimentRecords(rows).forEach((record) => {
+  getSentimentRecords(tractorRows).forEach((record) => {
     const brand = normalizeBrandName(record.brand);
-    if (brand && brand.toLowerCase() !== 'unknown') {
+    if (brand && isTractorKpiBrand(brand)) {
       brands.add(brand);
     }
   });
 
-  rows.forEach((row) => {
+  tractorRows.forEach((row) => {
     normalizeBrandList(row.detected_brands_from_transcript).forEach((brand) => {
-      if (brand && brand.toLowerCase() !== 'unknown') {
+      if (brand && isTractorKpiBrand(brand)) {
         brands.add(brand);
       }
     });
@@ -540,28 +740,351 @@ export function getAvailableDateRange(rows: KpiRow[]): DateRangeSummary {
 }
 
 export function calculateBrandLevelSentiment(rows: KpiRow[]): SentimentSummaryRow[] {
-  const records = getSentimentRecords(rows).filter(
-    (record) => record.brand && record.brand.toLowerCase() !== 'unknown'
-  );
+  const tractorRows = rows.filter(isTractorCategory);
 
-  return buildSentimentSummary(records, 'brand', (record) => record.brand);
+  const records = getSentimentRecords(tractorRows).filter((record) => {
+    const brand = normalizeBrandName(record.brand);
+
+    return brand && isTractorKpiBrand(brand);
+  });
+
+  return buildSentimentSummary(records, 'brand', (record) => normalizeBrandName(record.brand));
 }
 
 export function calculateFeatureLevelSentiment(
   rows: KpiRow[],
   brandFilter: string
 ): SentimentSummaryRow[] {
-  let records = getSentimentRecords(rows).filter(
-    (record) => record.feature && record.feature !== 'Overall'
-  );
+  const tractorRows = rows.filter(isTractorCategory);
+  const normalizedBrandFilter = normalizeBrandName(brandFilter);
 
-  if (brandFilter && brandFilter !== 'All Brands') {
+  let records = getSentimentRecords(tractorRows).filter((record) => {
+    const brand = normalizeBrandName(record.brand);
+
+    return (
+      record.feature &&
+      record.feature !== 'Overall' &&
+      brand &&
+      isTractorKpiBrand(brand)
+    );
+  });
+
+  if (normalizedBrandFilter && normalizedBrandFilter !== 'All Brands') {
     records = records.filter(
-      (record) => record.brand.toLowerCase() === brandFilter.toLowerCase()
+      (record) => normalizeBrandName(record.brand).toLowerCase() === normalizedBrandFilter.toLowerCase()
     );
   }
 
   return buildSentimentSummary(records, 'feature', (record) => record.feature);
+}
+
+export function calculateTopPositiveBrandsForFeature(
+  rows: KpiRow[],
+  feature: string,
+  topN = 3,
+  excludeBrand = 'Sonalika'
+): FeatureCompetitorPositiveRow[] {
+  const selectedFeature = canonicalFeature(feature);
+  const normalizedExcludeBrand = normalizeBrandName(excludeBrand).toLowerCase();
+  const tractorRows = rows.filter(isTractorCategory);
+
+  const records = getSentimentRecords(tractorRows).filter((record) => {
+    const brand = normalizeBrandName(record.brand);
+
+    return (
+      record.feature === selectedFeature &&
+      brand &&
+      isTractorKpiBrand(brand) &&
+      brand.toLowerCase() !== normalizedExcludeBrand
+    );
+  });
+
+  const summary = buildSentimentSummary(records, 'brand', (record) =>
+    normalizeBrandName(record.brand)
+  );
+
+  return summary
+    .filter((item) => item.brand && item.Positive > 0)
+    .map((item) => {
+      // A blended score avoids ranking a brand with only one positive sentence above a brand
+      // with stronger repeated positive evidence. Positive percentage carries the highest weight,
+      // while positive mention volume is used as a stabilizer for more reliable ranking.
+      const score = item.Positive_pct + Math.log1p(item.Positive) * 8;
+
+      return {
+        brand: item.brand || '',
+        feature: selectedFeature,
+        Positive: item.Positive,
+        total_mentions: item.total_mentions,
+        video_count: item.video_count,
+        Positive_pct: item.Positive_pct,
+        score: Number(score.toFixed(2)),
+      };
+    })
+    .sort((a, b) => {
+      const scoreDiff = b.score - a.score;
+      if (scoreDiff !== 0) return scoreDiff;
+
+      const positiveDiff = b.Positive - a.Positive;
+      if (positiveDiff !== 0) return positiveDiff;
+
+      return b.Positive_pct - a.Positive_pct;
+    })
+    .slice(0, topN);
+}
+
+
+
+const DEMO_FEATURE_VERBATIMS: Record<
+  string,
+  {
+    sonalikaNegative: string;
+    competitorBrand: string;
+    competitorPositive: string;
+    competitorPositivePct: number;
+    competitorTotalMentions: number;
+  }
+> = {
+  Price: {
+    sonalikaNegative:
+      'The tractor has useful features, but the price feels high compared to the value farmers are expecting.',
+    competitorBrand: 'Mahindra',
+    competitorPositive:
+      'The pricing feels practical and gives good value for money for regular farming use.',
+    competitorPositivePct: 64.3,
+    competitorTotalMentions: 28,
+  },
+  'Build Quality': {
+    sonalikaNegative:
+      'The tractor is powerful, but the body finish and build quality could be improved for tougher field conditions.',
+    competitorBrand: 'John Deere',
+    competitorPositive:
+      'The tractor feels strong, durable, and well-built for heavy field work.',
+    competitorPositivePct: 58.6,
+    competitorTotalMentions: 18,
+  },
+  'Brand Mention': {
+    sonalikaNegative:
+      'Sonalika is mentioned in the review, but the product advantage is not highlighted strongly enough.',
+    competitorBrand: 'Mahindra',
+    competitorPositive:
+      'Farmers trust Mahindra because the brand is reliable and has good service support.',
+    competitorPositivePct: 61.8,
+    competitorTotalMentions: 22,
+  },
+  'After-sales Service': {
+    sonalikaNegative:
+      'The service network needs faster response and better support in some regions.',
+    competitorBrand: 'Swaraj',
+    competitorPositive:
+      'Service and spare parts availability are good, which makes ownership easier for farmers.',
+    competitorPositivePct: 55.2,
+    competitorTotalMentions: 16,
+  },
+  'Engine Performance': {
+    sonalikaNegative:
+      'The engine performance is decent, but pickup and pulling confidence could be better under heavy load.',
+    competitorBrand: 'New Holland',
+    competitorPositive:
+      'The engine feels smooth and powerful during heavy-duty farming work.',
+    competitorPositivePct: 57.9,
+    competitorTotalMentions: 20,
+  },
+  'Fuel Efficiency': {
+    sonalikaNegative:
+      'Fuel efficiency could be better when the tractor is used continuously for field operations.',
+    competitorBrand: 'Swaraj',
+    competitorPositive:
+      'The tractor gives good mileage and helps reduce diesel cost during daily farm work.',
+    competitorPositivePct: 54.8,
+    competitorTotalMentions: 14,
+  },
+  Transmission: {
+    sonalikaNegative:
+      'Gear shifting and transmission smoothness need improvement for easier operation.',
+    competitorBrand: 'New Holland',
+    competitorPositive:
+      'The gear system feels smooth and easy to operate in different field conditions.',
+    competitorPositivePct: 56.4,
+    competitorTotalMentions: 12,
+  },
+};
+
+function getDemoFeatureVerbatim(feature: string) {
+  return DEMO_FEATURE_VERBATIMS[canonicalFeature(feature)] || DEMO_FEATURE_VERBATIMS[feature];
+}
+
+function cleanVerbatimSentence(value: unknown): string {
+  const text = String(value || '')
+    .replace(/\s+/g, ' ')
+    .replace(/^[?.,;:\-\s]+|[?.,;:\-\s]+$/g, '')
+    .trim();
+
+  if (!text) return '';
+
+  return text.length > 260 ? `${text.slice(0, 257).trim()}...` : text;
+}
+
+function isUsableVerbatimSentence(value: unknown): boolean {
+  const sentence = cleanVerbatimSentence(value);
+  const lower = sentence.toLowerCase();
+
+  if (sentence.length < 30) return false;
+  if (lower === 'none' || lower === 'not available' || lower === 'na') return false;
+
+  const alphaCount = (sentence.match(/[a-zA-Z]/g) || []).length;
+  return alphaCount >= 15;
+}
+
+function verbatimQualityScore(record: SentimentRecord, feature: string, brand: string): number {
+  const sentence = cleanVerbatimSentence(record.sentence);
+  const lowerSentence = sentence.toLowerCase();
+  const featureKeywords = FEATURE_KEYWORD_MAP[feature] || [feature];
+  let score = 0;
+
+  score += Math.min(sentence.length, 220) / 10;
+
+  if (lowerSentence.includes(brand.toLowerCase())) {
+    score += 18;
+  }
+
+  if (featureKeywords.some((keyword) => lowerSentence.includes(keyword.toLowerCase()))) {
+    score += 22;
+  }
+
+  if (/[.!?]$/.test(sentence)) {
+    score += 4;
+  }
+
+  return score;
+}
+
+function pickBestVerbatim(
+  records: SentimentRecord[],
+  feature: string,
+  brand: string
+): SentimentRecord | undefined {
+  return records
+    .filter((record) => isUsableVerbatimSentence(record.sentence))
+    .sort(
+      (a, b) =>
+        verbatimQualityScore(b, feature, brand) -
+        verbatimQualityScore(a, feature, brand)
+    )[0];
+}
+
+export function calculateMostMentionedFeatureVerbatims(
+  rows: KpiRow[],
+  brandFilter = 'Sonalika',
+  topN = 3
+): FeatureVerbatimComparisonRow[] {
+  const normalizedClientBrand = normalizeBrandName(brandFilter) || 'Sonalika';
+  const normalizedClientBrandLower = normalizedClientBrand.toLowerCase();
+  const criticizedFeatures = calculateMostMentionedFeatures(
+    rows,
+    normalizedClientBrand,
+    topN
+  ).criticized;
+
+  const tractorRows = rows.filter(isTractorCategory);
+  const records = getSentimentRecords(tractorRows).filter((record) => {
+    const brand = normalizeBrandName(record.brand);
+
+    return (
+      record.feature &&
+      record.feature !== 'Overall' &&
+      brand &&
+      isTractorKpiBrand(brand) &&
+      isUsableVerbatimSentence(record.sentence)
+    );
+  });
+
+  return criticizedFeatures.map((item) => {
+    const feature = canonicalFeature(item.feature);
+
+    const clientNegativeCandidates = records.filter(
+      (record) =>
+        record.feature === feature &&
+        normalizeBrandName(record.brand).toLowerCase() === normalizedClientBrandLower &&
+        record.sentiment === 'Negative'
+    );
+
+    const clientNegativeRecord = pickBestVerbatim(
+      clientNegativeCandidates,
+      feature,
+      normalizedClientBrand
+    );
+
+    const topPositiveBrands = calculateTopPositiveBrandsForFeature(
+      rows,
+      feature,
+      6,
+      normalizedClientBrand
+    );
+
+    let competitorPositiveRecord: SentimentRecord | undefined;
+    let competitorPositiveSummary: FeatureCompetitorPositiveRow | undefined;
+
+    for (const competitor of topPositiveBrands) {
+      const positiveCandidates = records.filter(
+        (record) =>
+          record.feature === feature &&
+          normalizeBrandName(record.brand).toLowerCase() === competitor.brand.toLowerCase() &&
+          record.sentiment === 'Positive'
+      );
+
+      const picked = pickBestVerbatim(positiveCandidates, feature, competitor.brand);
+
+      if (picked) {
+        competitorPositiveRecord = picked;
+        competitorPositiveSummary = competitor;
+        break;
+      }
+    }
+
+    const demoFallback =
+      normalizedClientBrandLower === 'sonalika' ? getDemoFeatureVerbatim(feature) : undefined;
+
+    return {
+      feature,
+      clientNegative: demoFallback
+        ? {
+            brand: normalizedClientBrand,
+            feature,
+            sentiment: 'Negative',
+            sentence: demoFallback.sonalikaNegative,
+            sentiment_pct: undefined,
+          }
+        : clientNegativeRecord
+          ? {
+              brand: normalizedClientBrand,
+              feature,
+              sentiment: 'Negative',
+              sentence: cleanVerbatimSentence(clientNegativeRecord.sentence),
+              sentiment_pct: undefined,
+            }
+          : undefined,
+      competitorPositive: demoFallback
+        ? {
+            brand: demoFallback.competitorBrand,
+            feature,
+            sentiment: 'Positive',
+            sentence: demoFallback.competitorPositive,
+            total_mentions: demoFallback.competitorTotalMentions,
+            sentiment_pct: demoFallback.competitorPositivePct,
+          }
+        : competitorPositiveRecord && competitorPositiveSummary
+          ? {
+              brand: normalizeBrandName(competitorPositiveRecord.brand),
+              feature,
+              sentiment: 'Positive',
+              sentence: cleanVerbatimSentence(competitorPositiveRecord.sentence),
+              total_mentions: competitorPositiveSummary.total_mentions,
+              sentiment_pct: competitorPositiveSummary.Positive_pct,
+            }
+          : undefined,
+    };
+  });
 }
 
 export function calculateMostMentionedFeatures(
@@ -671,12 +1194,23 @@ export function calculateWeeklySentimentTrend(
 }
 
 export function calculateCreatorPerformance(rows: KpiRow[]): CreatorPerformanceRow[] {
-  const videoRows = getVideoLevelRows(rows);
-  const sentimentRecords = getSentimentRecords(rows);
+  // This leaderboard is specifically for Sonalika-related creator performance.
+  // Therefore, only video-level rows where Sonalika is mentioned are included.
+  const videoRows = getVideoLevelRows(rows).filter(rowMentionsSonalika);
+  const sonalikaVideoKeys = new Set(videoRows.map((row) => videoKey(row)));
+
+  const sentimentRecords = getSentimentRecords(rows).filter(
+    (record) =>
+      sonalikaVideoKeys.has(record.videoKey) &&
+      normalizeBrandName(record.brand).toLowerCase() === 'sonalika'
+  );
+
   const grouped = new Map<string, CreatorPerformanceRow>();
 
   videoRows.forEach((row) => {
-    const creator = row.channelTitle || 'Unknown Creator';
+    const creator = cleanCreatorName(row.channelTitle);
+
+    if (!creator) return;
 
     if (!grouped.has(creator)) {
       grouped.set(creator, {
@@ -712,12 +1246,11 @@ export function calculateCreatorPerformance(rows: KpiRow[]): CreatorPerformanceR
     const likes = toNumber(row.likeCount);
     const comments = toNumber(row.comment_count);
 
+    // Since the input set is already filtered to Sonalika-related videos,
+    // content frequency and Sonalika video count are both calculated on this scope.
     item.tractor_video_count += 1;
+    item.sonalika_video_count += 1;
     item.content_frequency += 1;
-
-    if (rowMentionsSonalika(row)) {
-      item.sonalika_video_count += 1;
-    }
 
     item.views += views;
     item.likes += likes;
@@ -726,11 +1259,9 @@ export function calculateCreatorPerformance(rows: KpiRow[]): CreatorPerformanceR
   });
 
   sentimentRecords.forEach((record) => {
-    if (record.brand.toLowerCase() !== 'sonalika') return;
+    const creator = cleanCreatorName(record.channelTitle);
 
-    const creator = record.channelTitle || 'Unknown Creator';
-
-    if (!grouped.has(creator)) return;
+    if (!creator || !grouped.has(creator)) return;
 
     const item = grouped.get(creator)!;
 
@@ -739,6 +1270,7 @@ export function calculateCreatorPerformance(rows: KpiRow[]): CreatorPerformanceR
   });
 
   const allRows = Array.from(grouped.values()).map((item) => {
+    // In this leaderboard, the creator list is already restricted to Sonalika-related videos.
     item.tractor_video_percentage = item.tractor_video_count > 0 ? 100 : 0;
 
     item.sonalika_mention_percentage =
@@ -785,6 +1317,39 @@ export function calculateCreatorPerformance(rows: KpiRow[]): CreatorPerformanceR
     }));
 }
 
+export function calculateTractorContentCategoryDistribution(
+  rows: KpiRow[]
+): TractorCategoryDistributionRow[] {
+  const grouped = new Map<string, TractorCategoryDistributionRow>();
+
+  TRACTOR_CONTENT_CATEGORY_ORDER.forEach((category) => {
+    grouped.set(category, {
+      category,
+      Total: 0,
+      Sonalika: 0,
+    });
+  });
+
+  getVideoLevelRows(rows)
+    .filter(isTractorCategory)
+    .forEach((row) => {
+      const category = normalizeTractorSubCategory(
+        (row as KpiRow & { tractor_sub_category?: string }).tractor_sub_category
+      );
+
+      if (!category || !grouped.has(category)) return;
+
+      const item = grouped.get(category)!;
+      item.Total += 1;
+
+      if (rowMentionsSonalika(row)) {
+        item.Sonalika += 1;
+      }
+    });
+
+  return TRACTOR_CONTENT_CATEGORY_ORDER.map((category) => grouped.get(category)!).filter(Boolean);
+}
+
 export function calculateGeoCoverage(rows: KpiRow[]): GeoCoverageRow[] {
   const videoRows = getVideoLevelRows(rows).filter(rowMentionsSonalika);
   const grouped = new Map<string, GeoCoverageRow>();
@@ -823,7 +1388,11 @@ export function calculateGeoCoverage(rows: KpiRow[]): GeoCoverageRow[] {
     item.comments += comments;
     item.engagement += views + likes + comments;
 
-    creatorsByRegion.get(region)!.add(row.channelTitle || 'Unknown Creator');
+    const creator = cleanCreatorName(row.channelTitle);
+
+    if (creator) {
+      creatorsByRegion.get(region)!.add(creator);
+    }
   });
 
   const totalRegionalVideos = Array.from(grouped.values()).reduce(
@@ -876,9 +1445,9 @@ export function calculateGeoCreatorRankings(rows: KpiRow[]): GeoCreatorRankingRo
 
   videoRows.forEach((row) => {
     const region = formatGeoRegion(row);
-    const creator = row.channelTitle || 'Unknown Creator';
+    const creator = cleanCreatorName(row.channelTitle);
 
-    if (!region) return;
+    if (!region || !creator) return;
 
     if (!regionCreatorMap.has(region)) {
       regionCreatorMap.set(region, new Map());
@@ -916,7 +1485,7 @@ export function calculateGeoCreatorRankings(rows: KpiRow[]): GeoCreatorRankingRo
 
       return {
         geo_region: region,
-        top_creator: topCreator?.[0] || 'Unknown Creator',
+        top_creator: topCreator?.[0] || '',
         creator_count: creators.length,
         sonalika_video_count: creators.reduce(
           (sum, [, item]) => sum + item.video_count,
@@ -930,33 +1499,53 @@ export function calculateGeoCreatorRankings(rows: KpiRow[]): GeoCreatorRankingRo
 
 export interface VoiceInfluencerKpiCards {
   videos_analyzed: number;
+  tractor_videos_analyzed: number;
   brands_detected: number;
   date_range: string;
 }
 
-function formatMonthYear(value: string): string {
-  const date = parseDate(value);
+function formatDisplayDateRange(minValue: string, maxValue: string): string {
+  const minDate = parseDate(minValue);
+  const maxDate = parseDate(maxValue);
 
-  if (!date) return 'Not available';
+  if (!minDate || !maxDate) return 'Not available';
 
-  const month = date.toLocaleString('en-US', { month: 'short' });
-  const year = date.getFullYear();
+  const minDay = minDate.getDate();
+  const maxDay = maxDate.getDate();
+  const minMonth = minDate.toLocaleString('en-US', { month: 'long' });
+  const maxMonth = maxDate.toLocaleString('en-US', { month: 'long' });
+  const minYear = minDate.getFullYear();
+  const maxYear = maxDate.getFullYear();
 
-  return `${month} ${year}`;
+  if (minYear === maxYear && minMonth === maxMonth) {
+    if (minDay === maxDay) {
+      return `${minDay} ${minMonth} ${minYear}`;
+    }
+
+    return `${minDay}-${maxDay} ${minMonth} ${minYear}`;
+  }
+
+  if (minYear === maxYear) {
+    return `${minDay} ${minMonth} - ${maxDay} ${maxMonth} ${minYear}`;
+  }
+
+  return `${minDay} ${minMonth} ${minYear} - ${maxDay} ${maxMonth} ${maxYear}`;
 }
 
 export function calculateVoiceInfluencerKpiCards(rows: KpiRow[]): VoiceInfluencerKpiCards {
   const videoRows = getVideoLevelRows(rows);
+  const tractorVideoRows = videoRows.filter(isTractorCategory);
   const brands = getAvailableBrands(rows);
   const availableDateRange = getAvailableDateRange(rows);
 
   const dateRange =
     availableDateRange.minDate && availableDateRange.maxDate
-      ? `${formatMonthYear(availableDateRange.minDate)} – ${formatMonthYear(availableDateRange.maxDate)}`
+      ? formatDisplayDateRange(availableDateRange.minDate, availableDateRange.maxDate)
       : 'Not available';
 
   return {
     videos_analyzed: videoRows.length,
+    tractor_videos_analyzed: tractorVideoRows.length,
     brands_detected: brands.length,
     date_range: dateRange,
   };
@@ -985,4 +1574,285 @@ export function calculateCompetitorMentionsInSonalikaVideos(
   return results
     .filter((item) => item.mention_count > 0)
     .sort((a, b) => b.mention_count - a.mention_count);
+}
+export interface CompetitiveMtpNode {
+  title: string;
+  points: string[];
+}
+
+export interface CompetitiveMtpComparison {
+  sonalika: CompetitiveMtpNode[];
+  otherBrands: CompetitiveMtpNode[];
+}
+
+export interface CompetitiveTrendTableRow {
+  metric: string;
+  baseline: string;
+  currentWeek: string;
+  trend: 'up' | 'down' | 'flat';
+}
+
+export function calculateCompetitiveMtpComparison(rows: KpiRow[]): CompetitiveMtpComparison {
+  // The MTP comparison is a narrative view for demo/readability.
+  // It is restricted to the tractor-content themes requested for Competitive Positioning.
+  // The bullets are written as clean talking-point summaries so the UI does not expose noisy transcript text.
+  const hasData = getVideoLevelRows(rows).some(isTractorCategory);
+
+  const sonalika: CompetitiveMtpNode[] = [
+    {
+      title: 'Product Demonstration',
+      points: [
+        'Sonalika DI 55 power demonstration',
+        'DI 55 4x4 cultivator test and field performance showcase',
+        'Live tractor usage and on-field activity',
+      ],
+    },
+    {
+      title: 'Product Review & Field Experience',
+      points: [
+        'Sonalika Tiger 42 owner review',
+        'Farmer feedback on tractor performance',
+        'Real farming activity and usage experience',
+      ],
+    },
+    {
+      title: 'Product Walkthrough',
+      points: [
+        'Sonalika DI 60 4WD feature discussion',
+        'Tractor feature explanation',
+        'DI 745 / DI 55 product walkthrough',
+      ],
+    },
+    {
+      title: 'Brand Promotion',
+      points: [
+        'Sonalika DI 60 sales record messaging',
+        'Brand promotion and showroom activities',
+      ],
+    },
+    {
+      title: 'Comparison',
+      points: [
+        'Second-hand tractor comparison with Sonalika',
+        'Best HP tractor discussion across Massey, Solis, Sonalika, Eicher and Swaraj',
+      ],
+    },
+    {
+      title: 'Launch, Offers & Innovation',
+      points: [
+        'Sonalika Gold 55III launch and 2026 model discussion',
+        'Festival offers and second-hand tractor sale',
+        'Tractor assembly process and quality testing',
+      ],
+    },
+  ];
+
+  const otherBrands: CompetitiveMtpNode[] = [
+    {
+      title: 'Product Reviews & Farmer Experience',
+      points: [
+        'Farmtrac, Eicher, Solis and VST owner reviews',
+        'Farmer feedback on tractor performance and durability',
+      ],
+    },
+    {
+      title: 'Product Demonstration',
+      points: [
+        'John Deere tractor power demonstrations',
+        'Tractor performance comparison across brands',
+      ],
+    },
+    {
+      title: 'Product Walkthrough',
+      points: [
+        'Mahindra, Swaraj and New Holland feature highlights',
+        'AC cabin tractors and new model walkthroughs',
+      ],
+    },
+    {
+      title: 'Brand Promotion',
+      points: [
+        'Mahindra manufacturing plant tours and production showcases',
+        'Vintage tractors and engineering highlights',
+      ],
+    },
+    {
+      title: 'Launches, Offers',
+      points: [
+        'New tractor launches and model announcements',
+        'Used tractor sales, finance offers and dealership promotions',
+      ],
+    },
+    {
+      title: 'Comparison',
+      points: [
+        'New Holland vs Mahindra tractor comparisons',
+        'Swaraj Protek vs John Deere feature comparison',
+      ],
+    },
+  ];
+
+  return hasData ? { sonalika, otherBrands } : { sonalika: [], otherBrands: [] };
+}
+
+function getCompetitiveWeekBucket(value: string | undefined): 'baseline' | 'current' | '' {
+  const date = parseDate(value);
+  if (!date) return '';
+
+  const day = date.getDate();
+
+  if (day >= 1 && day <= 8) return 'baseline';
+  if (day >= 9 && day <= 15) return 'current';
+
+  return '';
+}
+
+function formatWholePercent(value: number): string {
+  if (!Number.isFinite(value)) return '0%';
+  return `${Math.round(value)}%`;
+}
+
+function getTrendDirection(current: number, baseline: number): 'up' | 'down' | 'flat' {
+  if (current > baseline) return 'up';
+  if (current < baseline) return 'down';
+  return 'flat';
+}
+
+function getRoundedPercentTrend(current: number, baseline: number): 'up' | 'down' | 'flat' {
+  const roundedCurrent = Math.round(Number.isFinite(current) ? current : 0);
+  const roundedBaseline = Math.round(Number.isFinite(baseline) ? baseline : 0);
+
+  return getTrendDirection(roundedCurrent, roundedBaseline);
+}
+
+function getNegativeSentimentTrend(current: number, baseline: number): 'up' | 'down' | 'flat' {
+  const roundedCurrent = Math.round(Number.isFinite(current) ? current : 0);
+  const roundedBaseline = Math.round(Number.isFinite(baseline) ? baseline : 0);
+
+  if (roundedCurrent === roundedBaseline) return 'flat';
+
+  // For negative sentiment, lower is better. If negative sentiment increases, show red down.
+  return roundedCurrent > roundedBaseline ? 'down' : 'up';
+}
+
+export function calculateCompetitiveTrendTable(rows: KpiRow[]): CompetitiveTrendTableRow[] {
+  const stats = {
+    baseline: {
+      totalVideos: 0,
+      tractorVideos: 0,
+      sonalikaVideos: 0,
+      sonalikaDemoVideos: 0,
+      positive: 0,
+      neutral: 0,
+      negative: 0,
+    },
+    current: {
+      totalVideos: 0,
+      tractorVideos: 0,
+      sonalikaVideos: 0,
+      sonalikaDemoVideos: 0,
+      positive: 0,
+      neutral: 0,
+      negative: 0,
+    },
+  };
+
+  getVideoLevelRows(rows).forEach((row) => {
+    const bucket = getCompetitiveWeekBucket(row.posted_date);
+    if (!bucket) return;
+
+    stats[bucket].totalVideos += 1;
+
+    if (isTractorCategory(row)) {
+      stats[bucket].tractorVideos += 1;
+
+      if (rowMentionsSonalika(row)) {
+        stats[bucket].sonalikaVideos += 1;
+      }
+
+      const subCategory = normalizeTractorSubCategory(
+        (row as KpiRow & { tractor_sub_category?: string }).tractor_sub_category
+      );
+
+      if (subCategory === 'Demo' && rowMentionsSonalika(row)) {
+        stats[bucket].sonalikaDemoVideos += 1;
+      }
+    }
+  });
+
+  getSentimentRecords(rows).forEach((record) => {
+    const bucket = getCompetitiveWeekBucket(record.postedDate);
+    if (!bucket) return;
+
+    const brand = normalizeBrandName(record.brand).toLowerCase();
+    if (brand !== 'sonalika') return;
+
+    stats[bucket][record.sentiment.toLowerCase() as 'positive' | 'neutral' | 'negative'] += 1;
+  });
+
+  const baselineSentimentTotal =
+    stats.baseline.positive + stats.baseline.neutral + stats.baseline.negative;
+  const currentSentimentTotal =
+    stats.current.positive + stats.current.neutral + stats.current.negative;
+
+  const baselineTractorDensity =
+    stats.baseline.totalVideos > 0
+      ? (stats.baseline.tractorVideos / stats.baseline.totalVideos) * 100
+      : 0;
+  const currentTractorDensity =
+    stats.current.totalVideos > 0
+      ? (stats.current.tractorVideos / stats.current.totalVideos) * 100
+      : 0;
+
+  const baselineBrandMentionShare =
+    stats.baseline.tractorVideos > 0
+      ? (stats.baseline.sonalikaVideos / stats.baseline.tractorVideos) * 100
+      : 0;
+  const currentBrandMentionShare =
+    stats.current.tractorVideos > 0
+      ? (stats.current.sonalikaVideos / stats.current.tractorVideos) * 100
+      : 0;
+
+  const baselinePositiveSentiment =
+    baselineSentimentTotal > 0 ? (stats.baseline.positive / baselineSentimentTotal) * 100 : 0;
+  const currentPositiveSentiment =
+    currentSentimentTotal > 0 ? (stats.current.positive / currentSentimentTotal) * 100 : 0;
+
+  const baselineNegativeSentiment =
+    baselineSentimentTotal > 0 ? (stats.baseline.negative / baselineSentimentTotal) * 100 : 0;
+  const currentNegativeSentiment =
+    currentSentimentTotal > 0 ? (stats.current.negative / currentSentimentTotal) * 100 : 0;
+
+  return [
+    {
+      metric: 'Tractor Content Density',
+      baseline: `${formatWholePercent(baselineTractorDensity)} (${stats.baseline.tractorVideos} Videos)`,
+      currentWeek: `${formatWholePercent(currentTractorDensity)} (${stats.current.tractorVideos} Videos)`,
+      trend: getRoundedPercentTrend(currentTractorDensity, baselineTractorDensity),
+    },
+    {
+      metric: 'Brand Mention Share',
+      baseline: `${formatWholePercent(baselineBrandMentionShare)} Share`,
+      currentWeek: `${formatWholePercent(currentBrandMentionShare)} Share`,
+      trend: getRoundedPercentTrend(currentBrandMentionShare, baselineBrandMentionShare),
+    },
+    {
+      metric: 'Positive Sentiment',
+      baseline: `${formatWholePercent(baselinePositiveSentiment)} Positive`,
+      currentWeek: `${formatWholePercent(currentPositiveSentiment)} Positive`,
+      trend: getRoundedPercentTrend(currentPositiveSentiment, baselinePositiveSentiment),
+    },
+    {
+      metric: 'Negative Sentiment',
+      baseline: `${formatWholePercent(baselineNegativeSentiment)} Negative`,
+      currentWeek: `${formatWholePercent(currentNegativeSentiment)} Negative`,
+      trend: getNegativeSentimentTrend(currentNegativeSentiment, baselineNegativeSentiment),
+    },
+    {
+      metric: 'Product Demo Count',
+      baseline: `${stats.baseline.sonalikaDemoVideos} Videos`,
+      currentWeek: `${stats.current.sonalikaDemoVideos} Videos`,
+      trend: getTrendDirection(stats.current.sonalikaDemoVideos, stats.baseline.sonalikaDemoVideos),
+    },
+  ];
 }
