@@ -17,6 +17,9 @@ export const CMS_BRAND_META = {
 
 export const SONALIKA_BRAND = 'Sonalika';
 
+// Update when the full channel registry is integrated.
+export const TOTAL_MONITORED_CHANNELS = 52;
+
 const round2 = (n) => Math.round(n * 100) / 100;
 const num = (v) => (typeof v === 'number' && !Number.isNaN(v) ? v : 0);
 const pct = (part, total) => (total > 0 ? round2((part / total) * 100) : 0);
@@ -26,17 +29,17 @@ const brandMeta = (brand) =>
 
 // ─── Aggregation helpers (pure) ──────────────────────────────────────────────
 
-// One summary object per brand across the supplied rows. SoV / SoE percentages
-// are each brand's share of the total across exactly the brands present in
-// `rows` — so passing a filtered subset re-bases the shares automatically.
 export function summarizeBrands(rows) {
+  const allVideoIds = new Set();
   const byBrand = new Map();
   for (const r of rows) {
     const brand = r.attributed_brand;
+    allVideoIds.add(r.video_id);
     if (!byBrand.has(brand)) {
       byBrand.set(brand, {
         brand,
         videoIds: new Set(),
+        row_count: 0,
         total_views: 0,
         total_likes: 0,
         total_comments: 0
@@ -44,6 +47,7 @@ export function summarizeBrands(rows) {
     }
     const b = byBrand.get(brand);
     b.videoIds.add(r.video_id);
+    b.row_count++;
     b.total_views += num(r.view_count);
     b.total_likes += num(r.like_count);
     b.total_comments += num(r.comment_count);
@@ -55,6 +59,7 @@ export function summarizeBrands(rows) {
     return {
       brand: b.brand,
       video_count,
+      row_count: b.row_count,
       total_views: b.total_views,
       total_likes: b.total_likes,
       total_comments: b.total_comments,
@@ -64,9 +69,10 @@ export function summarizeBrands(rows) {
   });
 
   const sumViews = base.reduce((a, s) => a + s.total_views, 0);
-  const sumVideos = base.reduce((a, s) => a + s.video_count, 0);
   const sumComments = base.reduce((a, s) => a + s.total_comments, 0);
   const sumEngagement = base.reduce((a, s) => a + s.total_engagement, 0);
+  // sov_videos: row count per brand / total attribution rows (not unique video count)
+  const totalRows = rows.length;
 
   return base
     .map((s) => {
@@ -74,7 +80,7 @@ export function summarizeBrands(rows) {
       return {
         ...s,
         sov_views: pct(s.total_views, sumViews),
-        sov_videos: pct(s.video_count, sumVideos),
+        sov_videos: pct(s.row_count, totalRows),
         sov_comments: pct(s.total_comments, sumComments),
         soe: pct(s.total_engagement, sumEngagement),
         color: meta.color,
@@ -85,7 +91,6 @@ export function summarizeBrands(rows) {
     .sort((a, b) => b.sov_views - a.sov_views);
 }
 
-// One object per brand-week combination: raw aggregates only (no shares).
 export function buildWeeklyData(rows) {
   const byKey = new Map();
   for (const r of rows) {
@@ -118,8 +123,6 @@ export function buildWeeklyData(rows) {
   }));
 }
 
-// weeklyData + per-week share columns. Each brand's share is computed against
-// the all-brand total for that same week.
 export function buildWeeklySoV(weeklyData) {
   const weekTotals = new Map();
   for (const d of weeklyData) {
@@ -163,15 +166,126 @@ function buildVideoList(rows) {
   }));
 }
 
-// Sorted ascending list of unique weeks present in the rows.
 export const uniqueWeeks = (rows) =>
   [...new Set(rows.map((r) => r.publish_week))].filter(Boolean).sort();
 
-// Most recent `n` weeks (ascending) from a sorted week list.
 export const recentWeeks = (weeks, n) => weeks.slice(Math.max(0, weeks.length - n));
+
+// ─── Overview stats (date-range filtered, uses full raw data) ─────────────────
+// Returns five counts used by the Intelligence Overview metric cards.
+// allData: all rows from the CSV (no is_tractor / brand filter).
+export function computeOverviewStats(allData, startDate, endDate) {
+  const inRange = allData.filter(
+    (r) => r.publish_date >= startDate && r.publish_date <= endDate
+  );
+
+  const totalVideos = new Set(inRange.map((r) => r.video_id)).size;
+
+  const tractorRows = inRange.filter((r) => r.is_tractor_content === 1);
+  const tractorVideos = new Set(tractorRows.map((r) => r.video_id)).size;
+
+  const brandedRows = tractorRows.filter(
+    (r) => r.attributed_brand && r.attributed_brand !== 'unattributed'
+  );
+
+  // Count distinct brands per video to separate direct (1 brand) from multi-brand (2+)
+  const brandsPerVideo = new Map();
+  for (const r of brandedRows) {
+    if (!brandsPerVideo.has(r.video_id)) brandsPerVideo.set(r.video_id, new Set());
+    brandsPerVideo.get(r.video_id).add(r.attributed_brand);
+  }
+
+  const brandMentioned = brandsPerVideo.size;
+  let directVideos = 0;
+  let comparisonVideos = 0;
+  for (const brands of brandsPerVideo.values()) {
+    if (brands.size === 1) directVideos++;
+    else comparisonVideos++;
+  }
+
+  return { totalVideos, tractorVideos, brandMentioned, directVideos, comparisonVideos };
+}
+
+// ─── Category breakdown ───────────────────────────────────────────────────────
+// Groups all rows (no brand/attribution filter) by video_category and counts
+// distinct video_ids. Returns array sorted descending by count.
+export function computeCategoryData(allData, startDate, endDate) {
+  const inRange = allData.filter(
+    (r) => r.publish_date >= startDate && r.publish_date <= endDate
+  );
+  const byCategory = new Map();
+  for (const r of inRange) {
+    const cat = r.video_category || (r.is_tractor_content === 1 ? 'Tractor' : 'Non-Tractor');
+    if (!byCategory.has(cat)) byCategory.set(cat, new Set());
+    byCategory.get(cat).add(r.video_id);
+  }
+  const totalVideos = new Set(inRange.map((r) => r.video_id)).size;
+  return [...byCategory.entries()]
+    .map(([category, ids]) => ({
+      category,
+      count: ids.size,
+      percentage: totalVideos > 0 ? Math.round((ids.size / totalVideos) * 1000) / 10 : 0
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+// ─── Channel coverage ─────────────────────────────────────────────────────────
+// tractorChannels: distinct channels publishing tractor content in window.
+// activeChannels:  distinct channels publishing any content in window.
+// inactiveChannelNames: channels in full dataset that published nothing in window.
+export function computeChannelCoverage(allData, startDate, endDate) {
+  const allChannelSet = new Set(allData.map((r) => r.channel_name).filter(Boolean));
+  const inRange = allData.filter(
+    (r) => r.publish_date >= startDate && r.publish_date <= endDate
+  );
+  const activeChannelSet = new Set(inRange.map((r) => r.channel_name).filter(Boolean));
+  const activeChannels = activeChannelSet.size;
+  const tractorInRange = inRange.filter((r) => r.is_tractor_content === 1);
+  const tractorChannelSet = new Set(tractorInRange.map((r) => r.channel_name).filter(Boolean));
+  const tractorChannels = tractorChannelSet.size;
+  const inactiveChannelNames = [...allChannelSet]
+    .filter((ch) => !activeChannelSet.has(ch))
+    .sort();
+  return { tractorChannels, activeChannels, inactiveChannelNames };
+}
+
+// ─── Brand × Channel matrix ───────────────────────────────────────────────────
+// Computes pivot: rows = channels, brandCounts = { [brand]: distinctVideoCount }.
+// Uses cmsData (already filtered to tractor + attributed). Sorted by total desc.
+export function computeBrandChannelMatrix(cmsData, startDate, endDate) {
+  const inRange = cmsData.filter(
+    (r) => r.publish_date >= startDate && r.publish_date <= endDate
+  );
+  const matrix = new Map();
+  for (const r of inRange) {
+    const ch = r.channel_name;
+    const brand = r.attributed_brand;
+    if (!ch || !brand) continue;
+    if (!matrix.has(ch)) matrix.set(ch, new Map());
+    const brandMap = matrix.get(ch);
+    if (!brandMap.has(brand)) brandMap.set(brand, new Set());
+    brandMap.get(brand).add(r.video_id);
+  }
+  return [...matrix.entries()]
+    .map(([channelName, brandMap]) => {
+      const brandCounts = {};
+      for (const [brand, videoIds] of brandMap.entries()) {
+        brandCounts[brand] = videoIds.size;
+      }
+      const total = Object.values(brandCounts).reduce((a, b) => a + b, 0);
+      return { channelName, total, brandCounts };
+    })
+    .sort((a, b) => {
+      const sonalikaDiff = (b.brandCounts['Sonalika'] ?? 0) - (a.brandCounts['Sonalika'] ?? 0);
+      return sonalikaDiff !== 0 ? sonalikaDiff : b.total - a.total;
+    });
+}
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 export function useCMSData() {
+  // allData: every row from the CSV with a valid video_id (no tractor/brand filter).
+  // cmsData: the subset that is tractor content with a named brand attribution.
+  const [allData, setAllData] = useState([]);
   const [cmsData, setCmsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -189,15 +303,21 @@ export function useCMSData() {
           dynamicTyping: true,
           skipEmptyLines: true
         });
-        const filtered = parsed.data.filter(
+        const allRows = parsed.data
+          .filter((r) => r && r.video_id)
+          .map((r) => ({
+            ...r,
+            video_category: r.is_tractor_content === 1 ? 'Tractor' : 'Non-Tractor'
+          }));
+        const branded = allRows.filter(
           (r) =>
-            r &&
             r.is_tractor_content === 1 &&
             r.attributed_brand &&
             r.attributed_brand !== 'unattributed'
         );
         if (!cancelled) {
-          setCmsData(filtered);
+          setAllData(allRows);
+          setCmsData(branded);
           setLoading(false);
         }
       })
@@ -225,10 +345,12 @@ export function useCMSData() {
     () => (sonalikaStats ? round2(sonalikaStats.sov_views - sonalikaStats.soe) : 0),
     [sonalikaStats]
   );
+  const totalMonitored = TOTAL_MONITORED_CHANNELS;
 
   return {
     loading,
     error,
+    allData,
     cmsData,
     brandSummary,
     weeklyData,
@@ -236,6 +358,7 @@ export function useCMSData() {
     videoList,
     weeks,
     sonalikaStats,
-    sovSeGap
+    sovSeGap,
+    totalMonitored
   };
 }

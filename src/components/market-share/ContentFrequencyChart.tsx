@@ -1,6 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { SectionCard } from '../SectionCard';
 
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function formatDayLabel(isoDate: string): string {
+  const [, m, d] = isoDate.split('-');
+  return `${d} ${MONTHS[parseInt(m, 10) - 1]}`;
+}
+
 interface HeatmapRow {
   name: string;
   isSonalika: boolean;
@@ -136,7 +142,7 @@ export function ContentFrequencyChart({
   return (
     <SectionCard
       title="Content Frequency"
-      subtitle="Unique videos per brand per week — creator coverage across the monitored period">
+      subtitle="Unique videos per brand per day — creator coverage across the monitored period">
 
       <div ref={tableRef} style={{ position: 'relative' }}>
         <table
@@ -172,7 +178,7 @@ export function ContentFrequencyChart({
                   textOverflow: 'ellipsis'
                 }}>
 
-                {w}
+                {formatDayLabel(w)}
                 </th>
               )}
               <th style={{ width: '50px', textAlign: 'center', fontWeight: 600, fontSize: '11px', color: '#334155', height: '44px', verticalAlign: 'middle', borderBottom: '1px solid #e2e8f0' }}>Videos</th>
@@ -350,7 +356,7 @@ export function ContentFrequencyChart({
             whiteSpace: 'nowrap'
           }}>
 
-            <div style={{ fontWeight: 500 }}>Week: {tooltip.week}</div>
+            <div style={{ fontWeight: 500 }}>Date: {formatDayLabel(tooltip.week)}</div>
             <div>Brand: {tooltip.brandName}</div>
             <div>{tooltip.value} videos published</div>
             {tooltip.weekIdx > 0 &&
@@ -360,11 +366,11 @@ export function ContentFrequencyChart({
             tooltip.value > tooltip.prevValue! ?
             `▲ Increased by ${tooltip.value - tooltip.prevValue!}` :
             `▼ Decreased by ${Math.abs(tooltip.value - tooltip.prevValue!)}`}{' '}
-                vs previous week
+                vs previous day
               </div>
           }
             {tooltip.isSonalika && tooltip.value === 0 &&
-          <div>Coverage gap — no creator published Sonalika content this week</div>
+          <div>Coverage gap — no creator published Sonalika content this day</div>
           }
           </div>
         }
@@ -375,18 +381,18 @@ export function ContentFrequencyChart({
 
       {/* Summary row */}
       <div style={{ display: 'flex', gap: 8, fontSize: 12, color: '#64748b' }}>
-        <span>Sonalika active weeks: {sonalikaActiveWeeks} of {sonalikaTotalWeeks}</span>
+        <span>Sonalika active days: {sonalikaActiveWeeks} of {sonalikaTotalWeeks}</span>
         <span>·</span>
-        <span>Sonalika avg videos/week: {sonalikaAvg.toFixed(1)}</span>
+        <span>Sonalika avg videos/day: {sonalikaAvg.toFixed(1)}</span>
         <span>·</span>
         <span>
-          Most active competitor: {mostActiveCompetitor?.name} ({mostActiveAvg.toFixed(1)}/wk)
+          Most active competitor: {mostActiveCompetitor?.name} ({mostActiveAvg.toFixed(1)}/day)
         </span>
       </div>
 
       {/* Footer caption */}
       <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>
-        Unique videos per brand per week. Amber-outlined Sonalika row highlights coverage gaps (—) where no creator published Sonalika content that week.
+        Unique videos per brand per day. Amber-outlined Sonalika row highlights coverage gaps (—) where no creator published Sonalika content that day.
       </div>
     </SectionCard>);
 

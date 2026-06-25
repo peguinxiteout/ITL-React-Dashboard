@@ -27,6 +27,8 @@ import { useVSData } from '../../hooks/useVSData';
 
 interface SentimentTabProps {
   dateRange: DateRangeKey;
+  globalDateRange?: { startDate: string; endDate: string };
+  setGlobalDateRange?: (v: any) => void;
 }
 
 const SIGNAL_BADGE: Record<string, string> = {

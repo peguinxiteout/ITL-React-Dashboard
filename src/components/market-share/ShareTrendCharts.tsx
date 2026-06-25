@@ -13,6 +13,20 @@ import { SectionCard } from '../SectionCard';
 // Sonalika's line color in the trend charts (distinct from its donut/table blue)
 const SONALIKA_TREND_COLOR = '#EF9F27';
 
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// "YYYY-MM-DD" → "DD MMM"
+function formatShort(iso: string): string {
+  const [, m, d] = iso.split('-');
+  return `${d} ${MONTHS[parseInt(m, 10) - 1]}`;
+}
+
+// "YYYY-MM-DD" → "DD MMM YYYY"
+function formatFull(iso: string): string {
+  const [y, m, d] = iso.split('-');
+  return `${d} ${MONTHS[parseInt(m, 10) - 1]} ${y}`;
+}
+
 interface TrendBrand {
   name: string;
   color: string;
@@ -31,6 +45,9 @@ interface ShareTrendChartsProps {
   weeks: string[];
   weeklySoV: WeeklyShareRow[];
   brands: TrendBrand[];
+  weekFirstDates?: Record<string, string>;
+  startDate?: string;
+  endDate?: string;
 }
 
 // Maps each metric pill to the share column it reads from weeklySoV.
@@ -49,7 +66,7 @@ const SOE_METRICS: { key: ShareField; label: string }[] = [
 const lineColor = (brand: TrendBrand): string =>
 brand.isOwn ? SONALIKA_TREND_COLOR : brand.color;
 
-// "2026-W24" → "W24"
+// "2026-W24" → "W24" — fallback when no date map provided
 const weekLabel = (week: string): string => week.replace(/^\d{4}-/, '');
 
 function MetricPills({
@@ -90,69 +107,80 @@ function TrendChart({
   weeks,
   weeklySoV,
   field,
-  brands
+  brands,
+  weekFirstDates,
+  startDate,
+  endDate,
+}: {
+  weeks: string[];
+  weeklySoV: WeeklyShareRow[];
+  field: ShareField;
+  brands: TrendBrand[];
+  weekFirstDates?: Record<string, string>;
+  startDate?: string;
+  endDate?: string;
+}) {
+  // Keep only weeks whose first publish date falls within [startDate, endDate].
+  // Falls back to the full weeks array when no date map or range is available.
+  const filteredWeeks =
+    weekFirstDates && startDate && endDate
+      ? weeks.filter((w) => {
+          const d = weekFirstDates[w];
+          return d ? d >= startDate && d <= endDate : true;
+        })
+      : weeks;
 
+  // Show every other x-axis label when there are many weeks to avoid crowding.
+  const tickInterval = filteredWeeks.length > 4 ? 1 : 0;
 
-
-
-}: {weeks: string[];weeklySoV: WeeklyShareRow[];field: ShareField;brands: TrendBrand[];}) {
   // Pivot: one row per week, one column per brand holding that week's share.
   const byKey = new Map<string, number>();
   weeklySoV.forEach((r) => byKey.set(`${r.brand}__${r.week}`, r[field]));
-  const data = weeks.map((w) => {
-    const point: { [k: string]: number | string } = { label: weekLabel(w) };
+
+  // Build short-label→full-label map for the tooltip.
+  const labelToFull: Record<string, string> = {};
+  const data = filteredWeeks.map((w) => {
+    const iso = weekFirstDates?.[w];
+    const shortLabel = iso ? formatShort(iso) : weekLabel(w);
+    const fullLabel = iso ? formatFull(iso) : weekLabel(w);
+    labelToFull[shortLabel] = fullLabel;
+    const point: { [k: string]: number | string } = { label: shortLabel };
     brands.forEach((b) => {
       point[b.name] = byKey.get(`${b.name}__${w}`) ?? 0;
     });
     return point;
   });
+
   // With a single data point no line segments exist — show dots for every
   // brand so the chart isn't empty on the 1-week preset.
   const singlePoint = data.length === 1;
+
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          data={data}
-          margin={{
-            top: 4,
-            right: 8,
-            left: -16,
-            bottom: 0
-          }}>
-
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="#e2e8f0"
-            vertical={false} />
+        <LineChart data={data} margin={{ top: 8, right: 40, bottom: 0, left: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
 
           <XAxis
             dataKey="label"
-            tick={{
-              fontSize: 12,
-              fill: '#64748b'
-            }}
+            tick={{ fontSize: 12, fill: '#64748b' }}
             tickLine={false}
-            axisLine={{
-              stroke: '#e2e8f0'
-            }} />
+            axisLine={{ stroke: '#e2e8f0' }}
+            interval={tickInterval}
+          />
 
           <YAxis
-            tick={{
-              fontSize: 12,
-              fill: '#64748b'
-            }}
+            tick={{ fontSize: 12, fill: '#64748b' }}
             tickLine={false}
             axisLine={false}
-            unit="%" />
+            unit="%"
+          />
 
           <Tooltip
+            labelFormatter={(label: string) => labelToFull[label] ?? label}
             formatter={(value: number) => `${value.toFixed(1)}%`}
-            contentStyle={{
-              fontSize: 12,
-              borderRadius: 8,
-              border: '1px solid #e2e8f0'
-            }} />
+            contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
+          />
 
           {brands.map((brand) => {
             const isOwn = brand.isOwn;
@@ -166,31 +194,27 @@ function TrendChart({
                 strokeWidth={isOwn ? 2.5 : 1.5}
                 strokeOpacity={isOwn ? 1 : 0.6}
                 dot={
-                isOwn ?
-                {
-                  r: 3,
-                  fill: SONALIKA_TREND_COLOR
-                } :
-                singlePoint ?
-                {
-                  r: 2.5,
-                  fill: brand.color,
-                  fillOpacity: 0.6
-                } :
-                false
-                } />);
-
-
+                  isOwn
+                    ? { r: 3, fill: SONALIKA_TREND_COLOR }
+                    : singlePoint
+                    ? { r: 2.5, fill: brand.color, fillOpacity: 0.6 }
+                    : false
+                }
+              />
+            );
           })}
         </LineChart>
       </ResponsiveContainer>
-    </div>);
-
+    </div>
+  );
 }
 export function ShareTrendCharts({
   weeks,
   weeklySoV,
-  brands
+  brands,
+  weekFirstDates,
+  startDate,
+  endDate,
 }: ShareTrendChartsProps) {
   const [sovMetric, setSovMetric] = useState<ShareField>('sov_views');
   const [soeMetric, setSoeMetric] = useState<ShareField>('soe');
@@ -208,7 +232,7 @@ export function ShareTrendCharts({
             onChange={setSovMetric}
             groupLabel="Share of Voice metric" />
 
-          <TrendChart weeks={weeks} weeklySoV={weeklySoV} field={sovMetric} brands={brands} />
+          <TrendChart weeks={weeks} weeklySoV={weeklySoV} field={sovMetric} brands={brands} weekFirstDates={weekFirstDates} startDate={startDate} endDate={endDate} />
         </div>
 
         {/* Vertical divider */}
@@ -231,7 +255,7 @@ export function ShareTrendCharts({
             onChange={setSoeMetric}
             groupLabel="Share of Engagement metric" />
 
-          <TrendChart weeks={weeks} weeklySoV={weeklySoV} field={soeMetric} brands={brands} />
+          <TrendChart weeks={weeks} weeklySoV={weeklySoV} field={soeMetric} brands={brands} weekFirstDates={weekFirstDates} startDate={startDate} endDate={endDate} />
         </div>
       </div>
 

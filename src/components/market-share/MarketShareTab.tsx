@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { SectionHeader } from '../SectionHeader';
 import { ShareOfVoiceCharts } from './ShareOfVoiceCharts';
@@ -6,19 +6,25 @@ import { ShareOfEngagementCard } from './ShareOfEngagementCard';
 import { ShareTrendCharts } from './ShareTrendCharts';
 import { ContentFrequencyChart } from './ContentFrequencyChart';
 import { BrandFilterButton } from './BrandFilterButton';
-import { WeekPresetSelector } from './WeekPresetSelector';
-import { BRANDS, WeekPreset } from '../../data/mockData';
+import { BRANDS } from '../../data/mockData';
 import {
-  useCMSData,
   summarizeBrands,
   buildWeeklyData,
   buildWeeklySoV,
-  recentWeeks,
   SONALIKA_BRAND
 } from '../../hooks/useCMSData.js';
+import type { GlobalDateRange } from '../../pages/Dashboard';
+
 interface MarketShareTabProps {
   selectedCompetitors: string[];
+  globalDateRange: GlobalDateRange;
+  setGlobalDateRange: (value: GlobalDateRange | ((prev: GlobalDateRange) => GlobalDateRange)) => void;
+  allData: any[];
+  cmsData: any[];
+  loading: boolean;
+  error: string | null;
 }
+
 const container = {
   hidden: {},
   show: {
@@ -46,7 +52,7 @@ const MONTHS = [
 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-// "2026-03-06" → "Mar 06, 2026" (no timezone math — parsed straight from the string)
+// "2026-03-06" → "Mar 06, 2026" — no Date constructor, avoids timezone drift
 const formatDate = (iso: string): string => {
   if (!iso) return '';
   const [y, m, d] = iso.split('-');
@@ -54,72 +60,165 @@ const formatDate = (iso: string): string => {
   return `${MONTHS[mi] ?? m} ${d}, ${y}`;
 };
 
-export function MarketShareTab({ selectedCompetitors: _selectedCompetitors }: MarketShareTabProps) {
+// ISO date string arithmetic using UTC epoch to avoid timezone issues
+function dateToUtcMs(iso: string): number {
+  const [y, m, d] = iso.split('-').map(Number);
+  return Date.UTC(y, m - 1, d);
+}
+
+function utcMsToIso(ms: number): string {
+  const d = new Date(ms);
+  const y = d.getUTCFullYear();
+  const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const da = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${mo}-${da}`;
+}
+
+const MS_PER_DAY = 86400000;
+
+export function MarketShareTab({
+  selectedCompetitors: _selectedCompetitors,
+  globalDateRange,
+  setGlobalDateRange: _setGlobalDateRange,
+  allData,
+  cmsData,
+  loading,
+  error,
+}: MarketShareTabProps) {
   const [selectedBrands, setSelectedBrands] = useState<string[]>(
     BRANDS.map((b) => b.name)
   );
-  const [selectedWeeks, setSelectedWeeks] = useState<WeekPreset>(12);
-  const [includeShorts, setIncludeShorts] = useState<boolean>(false);
+  const [includeShorts, setIncludeShorts] = useState<boolean>(true);
 
-  const { loading, error, cmsData, weeks } = useCMSData();
+  const { startDate, endDate } = globalDateRange;
 
   const derived = useMemo(() => {
-    // Exclude Shorts (is_short === 1) by default; toggle re-includes them.
     const baseData = includeShorts
       ? cmsData
       : cmsData.filter((r: any) => r.is_short === 0);
 
-    // Most recent N weeks present in the real data — never hardcoded.
-    const windowWeeks = recentWeeks(weeks, selectedWeeks);
-    const windowWeekSet = new Set(windowWeeks);
-    const windowRows = baseData.filter((r: any) => windowWeekSet.has(r.publish_week));
+    // Filter by selected date range
+    const windowRows = baseData.filter(
+      (r: any) => r.publish_date >= startDate && r.publish_date <= endDate
+    );
 
-    // All charts, donuts, KPIs, and the data context line use only the
-    // selectedBrands subset — shares re-base to the filtered set.
     const brandRows = windowRows.filter((r: any) =>
       selectedBrands.includes(r.attributed_brand)
     );
     const brandSummary = summarizeBrands(brandRows);
     const sonalika = brandSummary.find((b: any) => b.brand === SONALIKA_BRAND) ?? null;
 
+    // Weeks present in the filtered window (for trend charts)
+    const windowWeeks = [...new Set(brandRows.map((r: any) => r.publish_week))]
+      .filter(Boolean)
+      .sort() as string[];
+
+    // Dates present in the filtered window (for heatmap)
+    const windowDates = [...new Set(brandRows.map((r: any) => r.publish_date))]
+      .filter(Boolean)
+      .sort() as string[];
+
+    // ── Period delta computation ──────────────────────────────────────────────
+    // Period length = endDate − startDate (day difference, not inclusive count)
+    const startMs = dateToUtcMs(startDate);
+    const endMs = dateToUtcMs(endDate);
+    const periodDays = Math.round((endMs - startMs) / MS_PER_DAY);
+    const prevEndMs = startMs - MS_PER_DAY;          // day before startDate
+    const prevStartMs = prevEndMs - periodDays * MS_PER_DAY;
+    const prevStartIso = utcMsToIso(prevStartMs);
+    const prevEndIso = utcMsToIso(prevEndMs);
+    const noData = prevStartIso < '2026-03-01';
+
+    let periodDeltas: {
+      videos: number | null;
+      views: number | null;
+      comments: number | null;
+      prevStart: string;
+      prevEnd: string;
+      noData: boolean;
+    };
+
+    if (noData) {
+      periodDeltas = {
+        videos: null,
+        views: null,
+        comments: null,
+        prevStart: prevStartIso,
+        prevEnd: prevEndIso,
+        noData: true,
+      };
+    } else {
+      const prevRows = baseData.filter(
+        (r: any) =>
+          r.publish_date >= prevStartIso &&
+          r.publish_date <= prevEndIso &&
+          selectedBrands.includes(r.attributed_brand)
+      );
+      const prevSummary = summarizeBrands(prevRows);
+      const prevSon = prevSummary.find((b: any) => b.brand === SONALIKA_BRAND);
+      const r1 = (n: number) => Math.round(n * 10) / 10;
+      periodDeltas = {
+        videos: r1((sonalika?.sov_videos ?? 0) - (prevSon?.sov_videos ?? 0)),
+        views: r1((sonalika?.sov_views ?? 0) - (prevSon?.sov_views ?? 0)),
+        comments: r1((sonalika?.sov_comments ?? 0) - (prevSon?.sov_comments ?? 0)),
+        prevStart: prevStartIso,
+        prevEnd: prevEndIso,
+        noData: false,
+      };
+    }
+
     const brandWeeklyData = buildWeeklyData(brandRows);
     const brandWeeklySoV = buildWeeklySoV(brandWeeklyData);
 
-    // Heatmap matrix: Sonalika first, then remaining selected brands by SoV.
     const ordered = [
       ...brandSummary.filter((b: any) => b.isOwn),
       ...brandSummary.filter((b: any) => !b.isOwn)
     ];
-    const countByKey = new Map<string, number>();
-    brandWeeklyData.forEach((d: any) => {
-      countByKey.set(`${d.brand}__${d.week}`, d.video_count);
-    });
+    // Daily distinct video count per brand × date for the heatmap
+    const dateVideoSets = new Map<string, Set<string>>();
+    for (const r of brandRows) {
+      const key = `${(r as any).attributed_brand}__${(r as any).publish_date}`;
+      if (!dateVideoSets.has(key)) dateVideoSets.set(key, new Set<string>());
+      dateVideoSets.get(key)!.add((r as any).video_id);
+    }
     const heatmapRows = ordered.map((b: any) => ({
       name: b.brand,
       isSonalika: b.isOwn,
-      data: windowWeeks.map((w: string) => countByKey.get(`${b.brand}__${w}`) ?? 0)
+      data: windowDates.map((d: string) => dateVideoSets.get(`${b.brand}__${d}`)?.size ?? 0)
     }));
 
-    // Data context line — counts from the brand-filtered window only.
     const videoCount = new Set(brandRows.map((r: any) => r.video_id)).size;
-    const channelCount = new Set(brandRows.map((r: any) => r.channel_name)).size;
-    const dates = brandRows.map((r: any) => r.publish_date).filter(Boolean).sort();
-    const dateRange =
-      dates.length > 0
-        ? `${formatDate(dates[0])} – ${formatDate(dates[dates.length - 1])}`
-        : '';
+    const tractorRows = allData.filter(
+      (r: any) => r.is_tractor_content === 1 && r.publish_date >= startDate && r.publish_date <= endDate
+    );
+    const channelCount = new Set(tractorRows.map((r: any) => r.channel_name)).size;
+    const totalRowCount = brandRows.length;
+
+    // Build week → minimum publish_date map for x-axis date labels in Share Trends.
+    const weekFirstDates: Record<string, string> = {};
+    for (const r of brandRows) {
+      const week = (r as any).publish_week as string;
+      const date = (r as any).publish_date as string;
+      if (week && date && (!weekFirstDates[week] || date < weekFirstDates[week])) {
+        weekFirstDates[week] = date;
+      }
+    }
 
     return {
       windowWeeks,
+      windowDates,
       brandSummary,
       sonalika,
       brandWeeklySoV,
       heatmapRows,
-      dataContext: `${videoCount} attributed videos · ${channelCount} channels · ${dateRange}`
+      videoCount,
+      totalRowCount,
+      periodDeltas,
+      weekFirstDates,
+      dataContext: `${videoCount} attributed videos · ${channelCount} channels · ${formatDate(startDate)} – ${formatDate(endDate)}`
     };
-  }, [cmsData, weeks, selectedWeeks, selectedBrands, includeShorts]);
+  }, [cmsData, startDate, endDate, selectedBrands, includeShorts]);
 
-  // Brand list (with colors) for the trend chart legend/lines — selected only.
   const trendBrands = derived.brandSummary.map((b: any) => ({
     name: b.brand,
     color: b.color,
@@ -145,10 +244,6 @@ export function MarketShareTab({ selectedCompetitors: _selectedCompetitors }: Ma
           meta={headerMeta} />
 
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <WeekPresetSelector
-            value={selectedWeeks}
-            onChange={setSelectedWeeks} />
-
           <BrandFilterButton
             selectedBrands={selectedBrands}
             onChange={setSelectedBrands}
@@ -168,7 +263,11 @@ export function MarketShareTab({ selectedCompetitors: _selectedCompetitors }: Ma
 
       <>
           <motion.div variants={item}>
-            <ShareOfVoiceCharts summary={derived.brandSummary} />
+            <ShareOfVoiceCharts
+              summary={derived.brandSummary}
+              totalUniqueVideos={derived.videoCount}
+              totalRowCount={derived.totalRowCount}
+              periodDeltas={derived.periodDeltas} />
           </motion.div>
           <motion.div variants={item}>
             <ShareOfEngagementCard
@@ -182,12 +281,15 @@ export function MarketShareTab({ selectedCompetitors: _selectedCompetitors }: Ma
             <ShareTrendCharts
             weeks={derived.windowWeeks}
             weeklySoV={derived.brandWeeklySoV}
-            brands={trendBrands} />
+            brands={trendBrands}
+            weekFirstDates={derived.weekFirstDates}
+            startDate={startDate}
+            endDate={endDate} />
 
           </motion.div>
           <motion.div variants={item}>
             <ContentFrequencyChart
-            weeks={derived.windowWeeks}
+            weeks={derived.windowDates}
             rows={derived.heatmapRows} />
 
           </motion.div>
