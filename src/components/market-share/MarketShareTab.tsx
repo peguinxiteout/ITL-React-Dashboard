@@ -95,7 +95,7 @@ export function MarketShareTab({
   const derived = useMemo(() => {
     const baseData = includeShorts
       ? cmsData
-      : cmsData.filter((r: any) => r.is_short === 0);
+      : cmsData.filter((r: any) => r.is_short === false);
 
     // Filter by selected date range
     const windowRows = baseData.filter(
@@ -189,7 +189,7 @@ export function MarketShareTab({
 
     const videoCount = new Set(brandRows.map((r: any) => r.video_id)).size;
     const tractorRows = allData.filter(
-      (r: any) => r.is_tractor_content === 1 && r.publish_date >= startDate && r.publish_date <= endDate
+      (r: any) => r.is_tractor_content === true && r.publish_date >= startDate && r.publish_date <= endDate
     );
     const channelCount = new Set(tractorRows.map((r: any) => r.channel_name)).size;
     const totalRowCount = brandRows.length;
@@ -215,7 +215,7 @@ export function MarketShareTab({
       totalRowCount,
       periodDeltas,
       weekFirstDates,
-      dataContext: `${videoCount} attributed videos · ${channelCount} channels · ${formatDate(startDate)} – ${formatDate(endDate)}`
+      dataContext: `${totalRowCount} attributed videos · ${channelCount} channels · ${formatDate(startDate)} – ${formatDate(endDate)}`
     };
   }, [cmsData, startDate, endDate, selectedBrands, includeShorts]);
 

@@ -179,7 +179,7 @@ export function computeOverviewStats(allData, startDate, endDate) {
 
   const totalVideos = new Set(inRange.map((r) => r.video_id)).size;
 
-  const tractorRows = inRange.filter((r) => r.is_tractor_content === 1);
+  const tractorRows = inRange.filter((r) => r.is_tractor_content === true);
   const tractorVideos = new Set(tractorRows.map((r) => r.video_id)).size;
 
   const brandedRows = tractorRows.filter(
@@ -213,7 +213,7 @@ export function computeCategoryData(allData, startDate, endDate) {
   );
   const byCategory = new Map();
   for (const r of inRange) {
-    const cat = r.video_category || (r.is_tractor_content === 1 ? 'Tractor' : 'Non-Tractor');
+    const cat = r.video_category || (r.is_tractor_content === true ? 'Tractor' : 'Non-Tractor');
     if (!byCategory.has(cat)) byCategory.set(cat, new Set());
     byCategory.get(cat).add(r.video_id);
   }
@@ -238,7 +238,7 @@ export function computeChannelCoverage(allData, startDate, endDate) {
   );
   const activeChannelSet = new Set(inRange.map((r) => r.channel_name).filter(Boolean));
   const activeChannels = activeChannelSet.size;
-  const tractorInRange = inRange.filter((r) => r.is_tractor_content === 1);
+  const tractorInRange = inRange.filter((r) => r.is_tractor_content === true);
   const tractorChannelSet = new Set(tractorInRange.map((r) => r.channel_name).filter(Boolean));
   const tractorChannels = tractorChannelSet.size;
   const inactiveChannelNames = [...allChannelSet]
@@ -279,9 +279,29 @@ export function computeBrandChannelMatrix(cmsData, startDate, endDate) {
     });
 }
 
+// ─── Brand expansion constants ────────────────────────────────────────────────
+const BRAND_NORMALIZE = {
+  Escorts: 'Escorts Kubota',
+  Kubota: 'Escorts Kubota',
+};
+
+const MONITORED_BRANDS = [
+  'Sonalika', 'Mahindra', 'Swaraj', 'John Deere',
+  'New Holland', 'Massey Ferguson', 'Escorts Kubota',
+];
+
+function getIsoWeek(isoDate) {
+  const d = new Date(isoDate + 'T00:00:00Z');
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+}
+
 // ─── Hook ────────────────────────────────────────────────────────────────────
 export function useCMSData() {
-  // allData: every row from the CSV with a valid video_id (no tractor/brand filter).
+  // allData: every expanded row from the CSV with a valid video_id (no tractor/brand filter).
   // cmsData: the subset that is tractor content with a named brand attribution.
   const [allData, setAllData] = useState([]);
   const [cmsData, setCmsData] = useState([]);
@@ -290,7 +310,7 @@ export function useCMSData() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/data/videos_export.csv')
+    fetch('/data/tractor_kpi_input.csv')
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.text();
@@ -298,23 +318,67 @@ export function useCMSData() {
       .then((text) => {
         const parsed = Papa.parse(text, {
           header: true,
-          dynamicTyping: true,
+          dynamicTyping: false,
           skipEmptyLines: true
         });
-        const allRows = parsed.data
-          .filter((r) => r && r.video_id)
-          .map((r) => ({
-            ...r,
-            video_category: r.is_tractor_content === 1 ? 'Tractor' : 'Non-Tractor'
-          }));
-        const branded = allRows.filter(
+
+        const expandedRows = [];
+        for (const raw of parsed.data) {
+          if (!raw || !raw.video_id) continue;
+
+          const publishDate = raw.posted_date
+            ? new Date(raw.posted_date).toISOString().split('T')[0]
+            : '';
+
+          const mapped = {
+            video_id: raw.video_id,
+            video_url: raw.video_url,
+            channel_id: raw.channel_id,
+            channel_name: raw.channelTitle,
+            title: raw.title,
+            publish_date: publishDate,
+            publish_week: raw.publish_week || (publishDate ? getIsoWeek(publishDate) : ''),
+            view_count: Number(raw.views) || 0,
+            like_count: Number(raw.likeCount) || 0,
+            comment_count: Number(raw.comment_count) || 0,
+            duration_seconds: Number(raw.duration_seconds) || 0,
+            is_short: raw.is_shorts_reel === 'true' || raw.is_shorts_reel === '1' || raw.is_shorts_reel === true,
+            is_tractor_content: raw.level_1_category === 'Tractor',
+            video_category: raw.level_1_category || 'Non-Tractor',
+          };
+
+          if (mapped.is_tractor_content) {
+            let brands = [];
+            try {
+              const detected = JSON.parse(raw.detected_brands_from_transcript || '[]');
+              const normalized = detected
+                .map((b) => (BRAND_NORMALIZE[b] !== undefined ? BRAND_NORMALIZE[b] : b))
+                .filter((b) => MONITORED_BRANDS.includes(b));
+              brands = [...new Set(normalized)];
+            } catch (e) {
+              brands = [];
+            }
+            if (brands.length > 0) {
+              for (const brand of brands) {
+                expandedRows.push({ ...mapped, attributed_brand: brand });
+              }
+            } else {
+              expandedRows.push({ ...mapped, attributed_brand: 'unattributed' });
+            }
+          } else {
+            expandedRows.push({ ...mapped, attributed_brand: 'unattributed' });
+          }
+        }
+
+        const branded = expandedRows.filter(
           (r) =>
-            r.is_tractor_content === 1 &&
+            r.is_tractor_content === true &&
             r.attributed_brand &&
             r.attributed_brand !== 'unattributed'
         );
+
         if (!cancelled) {
-          setAllData(allRows);
+          setAllData(expandedRows);
           setCmsData(branded);
           setLoading(false);
         }

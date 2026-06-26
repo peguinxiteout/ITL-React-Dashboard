@@ -453,7 +453,7 @@ function KeyInsightsCard({
     const topChCount = topChEntry?.[1]?.size || 0;
 
     const allWin = allData.filter((r) => r.publish_date >= startDate && r.publish_date <= endDate);
-    const tractorCount = allWin.filter((r) => r.is_tractor_content === 1).length;
+    const tractorCount = allWin.filter((r) => r.is_tractor_content === true).length;
     const tractorDensity = allWin.length > 0 ? (tractorCount / allWin.length) * 100 : 0;
     const activeChannelCount = new Set(allWin.map((r) => r.channel_name).filter(Boolean)).size;
     const inactiveCount = Math.max(0, 52 - activeChannelCount);
@@ -474,7 +474,7 @@ function KeyInsightsCard({
       prevSoe = pTotalEng > 0 ? (pSonEng / pTotalEng) * 100 : 0;
       prevPubRate = weeksInWin > 0 ? prevSonUnique / weeksInWin : 0;
       const prevAllWin = allData.filter((r) => r.publish_date >= prevStartIso && r.publish_date <= prevEndIso);
-      const prevTractorCount = prevAllWin.filter((r) => r.is_tractor_content === 1).length;
+      const prevTractorCount = prevAllWin.filter((r) => r.is_tractor_content === true).length;
       prevTractorDensity = prevAllWin.length > 0 ? (prevTractorCount / prevAllWin.length) * 100 : 0;
     }
 

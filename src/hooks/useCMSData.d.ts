@@ -50,7 +50,7 @@ export interface VideoListRow {
   comment_count: number;
   attributed_brand: string;
   duration_seconds: number;
-  is_short: number;
+  is_short: boolean;
 }
 
 export interface OverviewStats {
