@@ -28,10 +28,10 @@ interface ShareOfVoiceChartsProps {
   periodDeltas: PeriodDeltas;
 }
 
-type MetricKey = 'row_count' | 'total_views' | 'total_comments';
+type MetricKey = 'video_count' | 'total_views' | 'total_comments';
 
 const METRICS: { key: MetricKey; label: string; deltaKey: keyof Pick<PeriodDeltas, 'videos' | 'views' | 'comments'> }[] = [
-  { key: 'row_count',      label: 'Video Volume', deltaKey: 'videos'   },
+  { key: 'video_count',    label: 'Video Volume', deltaKey: 'videos'   },
   { key: 'total_views',    label: 'Views',        deltaKey: 'views'    },
   { key: 'total_comments', label: 'Comments',     deltaKey: 'comments' },
 ];
@@ -78,7 +78,7 @@ export function ShareOfVoiceCharts({ summary, totalUniqueVideos, totalRowCount, 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         {METRICS.map((metric) => {
           const rawTotal = summary.reduce((acc, s) => acc + s[metric.key], 0);
-          const total = metric.key === 'row_count' ? totalRowCount : rawTotal;
+          const total = metric.key === 'video_count' ? totalUniqueVideos : rawTotal;
           const sonalikaShare =
             total > 0 ? (summary.find((s) => s.isOwn)?.[metric.key] ?? 0) / total * 100 : 0;
           const data = summary.map((s) => ({
@@ -117,7 +117,7 @@ export function ShareOfVoiceCharts({ summary, totalUniqueVideos, totalRowCount, 
                 <p className="text-sm font-medium text-slate-700">{metric.label}</p>
                 <DeltaBadge value={periodDeltas[metric.deltaKey]} />
               </div>
-              {metric.key === 'row_count' ? (
+              {metric.key === 'video_count' ? (
                 <div className="text-center">
                   <p className="text-xs text-slate-500">{formatNumber(totalUniqueVideos)} attributed videos</p>
                   <p style={{ fontSize: 11, color: '#94a3b8' }}>{formatNumber(totalRowCount)} brand-attribution pairs</p>
@@ -146,7 +146,7 @@ export function ShareOfVoiceCharts({ summary, totalUniqueVideos, totalRowCount, 
       </p>
 
       <p style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', marginTop: 8, textAlign: 'center' }}>
-        SoV Video Count uses brand-attribution pairs as denominator. Views and Comments use sum across all attributed rows.
+        Percentages may exceed 100% in aggregate — multi-brand videos are counted for each featured brand.
       </p>
     </SectionCard>
   );

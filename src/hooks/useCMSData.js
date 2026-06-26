@@ -71,8 +71,6 @@ export function summarizeBrands(rows) {
   const sumViews = base.reduce((a, s) => a + s.total_views, 0);
   const sumComments = base.reduce((a, s) => a + s.total_comments, 0);
   const sumEngagement = base.reduce((a, s) => a + s.total_engagement, 0);
-  // sov_videos: row count per brand / total attribution rows (not unique video count)
-  const totalRows = rows.length;
 
   return base
     .map((s) => {
@@ -80,7 +78,7 @@ export function summarizeBrands(rows) {
       return {
         ...s,
         sov_views: pct(s.total_views, sumViews),
-        sov_videos: pct(s.row_count, totalRows),
+        sov_videos: pct(s.video_count, allVideoIds.size),
         sov_comments: pct(s.total_comments, sumComments),
         soe: pct(s.total_engagement, sumEngagement),
         color: meta.color,

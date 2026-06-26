@@ -124,7 +124,7 @@ export function KpiCards({ dateRange, selectedCompetitors }: KpiCardsProps) {
       animate="show"
       className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       
-      {kpis.map((kpi) => {
+      {kpis.filter(kpi => kpi.label !== 'Sentiment Score').map((kpi) => {
         const positive = kpi.delta >= 0;
         return (
           <motion.div
