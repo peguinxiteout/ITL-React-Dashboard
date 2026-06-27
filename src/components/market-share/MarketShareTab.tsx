@@ -215,7 +215,7 @@ export function MarketShareTab({
       totalRowCount,
       periodDeltas,
       weekFirstDates,
-      dataContext: `${totalRowCount} attributed videos · ${channelCount} channels · ${formatDate(startDate)} – ${formatDate(endDate)}`
+      dataContext: `${videoCount} attributed videos · ${channelCount} channels · ${formatDate(startDate)} – ${formatDate(endDate)}`
     };
   }, [cmsData, startDate, endDate, selectedBrands, includeShorts]);
 
@@ -266,7 +266,6 @@ export function MarketShareTab({
             <ShareOfVoiceCharts
               summary={derived.brandSummary}
               totalUniqueVideos={derived.videoCount}
-              totalRowCount={derived.totalRowCount}
               periodDeltas={derived.periodDeltas} />
           </motion.div>
           <motion.div variants={item}>

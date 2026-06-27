@@ -182,26 +182,18 @@ export function computeOverviewStats(allData, startDate, endDate) {
   const tractorRows = inRange.filter((r) => r.is_tractor_content === true);
   const tractorVideos = new Set(tractorRows.map((r) => r.video_id)).size;
 
-  const brandedRows = tractorRows.filter(
-    (r) => r.attributed_brand && r.attributed_brand !== 'unattributed'
-  );
+  const brandsPerVideo = {};
+  inRange
+    .filter((r) => r.is_tractor_content && r.attributed_brand !== 'unattributed')
+    .forEach((r) => {
+      if (!brandsPerVideo[r.video_id]) brandsPerVideo[r.video_id] = new Set();
+      brandsPerVideo[r.video_id].add(r.attributed_brand);
+    });
 
-  // Count distinct brands per video to separate direct (1 brand) from multi-brand (2+)
-  const brandsPerVideo = new Map();
-  for (const r of brandedRows) {
-    if (!brandsPerVideo.has(r.video_id)) brandsPerVideo.set(r.video_id, new Set());
-    brandsPerVideo.get(r.video_id).add(r.attributed_brand);
-  }
+  const direct = Object.values(brandsPerVideo).filter((s) => s.size === 1).length;
+  const multi = Object.values(brandsPerVideo).filter((s) => s.size >= 2).length;
 
-  const brandMentioned = brandsPerVideo.size;
-  let directVideos = 0;
-  let comparisonVideos = 0;
-  for (const brands of brandsPerVideo.values()) {
-    if (brands.size === 1) directVideos++;
-    else comparisonVideos++;
-  }
-
-  return { totalVideos, tractorVideos, brandMentioned, directVideos, comparisonVideos };
+  return { totalVideos, tractorVideos, brandMentioned: Object.keys(brandsPerVideo).length, directVideos: direct, comparisonVideos: multi };
 }
 
 // ─── Category breakdown ───────────────────────────────────────────────────────
@@ -322,8 +314,14 @@ export function useCMSData() {
           skipEmptyLines: true
         });
 
+        const cleanRows = parsed.data.filter(row =>
+          row.video_id &&
+          row.video_id !== 'NaN' &&
+          String(row.video_id).trim() !== ''
+        );
+
         const expandedRows = [];
-        for (const raw of parsed.data) {
+        for (const raw of cleanRows) {
           if (!raw || !raw.video_id) continue;
 
           const publishDate = raw.posted_date
@@ -345,6 +343,10 @@ export function useCMSData() {
             is_short: raw.is_shorts_reel === 'true' || raw.is_shorts_reel === '1' || raw.is_shorts_reel === true,
             is_tractor_content: raw.level_1_category === 'Tractor',
             video_category: raw.level_1_category || 'Non-Tractor',
+            detected_brands_from_transcript: raw.detected_brands_from_transcript || '',
+            tractor_sub_category: raw.tractor_sub_category || '',
+            sentiments: raw.sentiments || '',
+            company_brand_info: raw.company_brand_info || '',
           };
 
           if (mapped.is_tractor_content) {

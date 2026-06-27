@@ -24,7 +24,6 @@ export interface PeriodDeltas {
 interface ShareOfVoiceChartsProps {
   summary: BrandSummary[];
   totalUniqueVideos: number;
-  totalRowCount: number;
   periodDeltas: PeriodDeltas;
 }
 
@@ -67,7 +66,7 @@ function DeltaBadge({ value }: { value: number | null }) {
   );
 }
 
-export function ShareOfVoiceCharts({ summary, totalUniqueVideos, totalRowCount, periodDeltas }: ShareOfVoiceChartsProps) {
+export function ShareOfVoiceCharts({ summary, totalUniqueVideos, periodDeltas }: ShareOfVoiceChartsProps) {
   const comparisonNote = `vs ${formatDate(periodDeltas.prevStart)} – ${formatDate(periodDeltas.prevEnd)}`;
 
   return (
@@ -118,10 +117,7 @@ export function ShareOfVoiceCharts({ summary, totalUniqueVideos, totalRowCount, 
                 <DeltaBadge value={periodDeltas[metric.deltaKey]} />
               </div>
               {metric.key === 'video_count' ? (
-                <div className="text-center">
-                  <p className="text-xs text-slate-500">{formatNumber(totalUniqueVideos)} attributed videos</p>
-                  <p style={{ fontSize: 11, color: '#94a3b8' }}>{formatNumber(totalRowCount)} brand-attribution pairs</p>
-                </div>
+                <p className="text-xs text-slate-500">{formatNumber(totalUniqueVideos)} attributed videos</p>
               ) : (
                 <p className="text-xs text-slate-500">
                   {formatNumber(total)} total in category

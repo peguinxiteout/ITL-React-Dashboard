@@ -364,6 +364,28 @@ function KiSignalCard({
   );
 }
 
+function KiStateABullets({ items }: { items: { color: string; text: string }[] }) {
+  if (!items.length) return null;
+  return (
+    <div style={{ borderTop: '0.5px solid var(--color-border-tertiary, #e2e8f0)', marginTop: 12, paddingTop: 10 }}>
+      {items.map((item, idx) => (
+        <div
+          key={idx}
+          style={{
+            display: 'flex', alignItems: 'flex-start', gap: 6,
+            fontSize: 12, color: 'var(--color-text-primary, #334155)', lineHeight: 1.55,
+            padding: '5px 0',
+            borderBottom: idx < items.length - 1 ? '0.5px solid var(--color-border-tertiary, #e2e8f0)' : 'none',
+          }}
+        >
+          <span style={{ width: 7, height: 7, minWidth: 7, borderRadius: '50%', background: item.color, marginTop: 4, flexShrink: 0 }} />
+          <span>{item.text}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function KiModuleHeader({
   pillBg, pillText, moduleName, question, tabKey, setActiveTab,
 }: {
@@ -552,6 +574,179 @@ function KeyInsightsCard({
     return { rows: withDelta, s1, s2, s2IsNeg: !!bigNeg };
   }, [cms, hasPrevData]);
 
+  // ── State A bullet data ───────────────────────────────────────────────────────
+
+  const cmsStateA = useMemo(() => {
+    const allWin = allData.filter((r: any) => r.publish_date >= startDate && r.publish_date <= endDate);
+    const tractorCount = new Set(allWin.filter((r: any) => r.is_tractor_content).map((r: any) => r.video_id)).size;
+    const totalCount = new Set(allWin.map((r: any) => r.video_id)).size;
+    const densityPct = totalCount > 0 ? ((tractorCount / totalCount) * 100).toFixed(1) : '0.0';
+
+    const B_NRM: Record<string, string> = { Escorts: 'Escorts Kubota', Kubota: 'Escorts Kubota' };
+    const seenT = new Set<string>();
+    const brandVids: Record<string, Set<string>> = {};
+    const attributedVidSet = new Set<string>();
+    const seenSon = new Set<string>();
+    const subCats: Record<string, number> = {};
+
+    for (const r of allWin) {
+      if (!r.is_tractor_content) continue;
+      if (!seenT.has(r.video_id)) {
+        seenT.add(r.video_id);
+        try {
+          const det: string[] = JSON.parse(r.detected_brands_from_transcript || '[]');
+          if (det.length > 0) attributedVidSet.add(r.video_id);
+          for (const rawB of det) {
+            const b = B_NRM[rawB] || rawB;
+            if (!brandVids[b]) brandVids[b] = new Set();
+            brandVids[b].add(r.video_id);
+          }
+        } catch { }
+      }
+      if (r.attributed_brand === 'Sonalika' && !seenSon.has(r.video_id)) {
+        seenSon.add(r.video_id);
+        const cat = r.tractor_sub_category;
+        if (cat && cat !== '') subCats[cat] = (subCats[cat] || 0) + 1;
+      }
+    }
+
+    const totalAttrib = attributedVidSet.size;
+    const brandsSorted = Object.entries(brandVids)
+      .map(([brand, s]) => ({ brand, count: s.size }))
+      .sort((a, b) => b.count - a.count);
+    const totalBrands = brandsSorted.length;
+    const sonCount = brandVids['Sonalika']?.size || 0;
+    const sonalikaSoV = totalAttrib > 0 ? ((sonCount / totalAttrib) * 100).toFixed(1) : '0.0';
+    const sonRankIdx = brandsSorted.findIndex((b) => b.brand === 'Sonalika');
+    const sonRank = sonRankIdx >= 0 ? sonRankIdx + 1 : totalBrands + 1;
+    const leader = brandsSorted[0];
+    const leaderName = leader?.brand || '';
+    const leaderSoV = totalAttrib > 0 && leader ? ((leader.count / totalAttrib) * 100).toFixed(1) : '0.0';
+    const gap = Math.abs(parseFloat(leaderSoV) - parseFloat(sonalikaSoV)).toFixed(1);
+    const sonRankColor = sonRank <= 3 ? '#639922' : '#EF9F27';
+
+    const sonVideoCount = seenSon.size;
+    const topSubCatEntry = Object.entries(subCats).sort((a, b) => b[1] - a[1])[0];
+    const topSubCat = topSubCatEntry?.[0] || '';
+    const topSubCatPct = sonVideoCount > 0 && topSubCatEntry ? ((topSubCatEntry[1] / sonVideoCount) * 100).toFixed(1) : '0.0';
+
+    return { tractorCount, totalCount, densityPct, sonalikaSoV, sonRank, totalBrands, leaderName, leaderSoV, gap, sonRankColor, topSubCat, topSubCatPct };
+  }, [allData, startDate, endDate]);
+
+  const voiStateA = useMemo(() => {
+    const tractorWin = allData.filter((r: any) =>
+      r.is_tractor_content && r.publish_date >= startDate && r.publish_date <= endDate
+    );
+    const seenVids = new Set<string>();
+    let posCount = 0, negCount = 0, neuCount = 0;
+    const labelPos: Record<string, number> = {};
+    const labelNeg: Record<string, number> = {};
+
+    for (const r of tractorWin) {
+      if (seenVids.has(r.video_id)) continue;
+      seenVids.add(r.video_id);
+      try {
+        const entries: { Brand: string; Label: string; Opinion: string }[] = JSON.parse(r.sentiments || '[]');
+        for (const e of entries) {
+          if (e.Brand !== 'Sonalika') continue;
+          if (e.Opinion === 'Positive') { posCount++; if (e.Label) labelPos[e.Label] = (labelPos[e.Label] || 0) + 1; }
+          else if (e.Opinion === 'Negative') { negCount++; if (e.Label) labelNeg[e.Label] = (labelNeg[e.Label] || 0) + 1; }
+          else neuCount++;
+        }
+      } catch { }
+    }
+
+    const totalEntries = posCount + negCount + neuCount;
+    const positivePct = totalEntries > 0 ? Math.round((posCount / totalEntries) * 100) : 0;
+    const negativePct = totalEntries > 0 ? Math.round((negCount / totalEntries) * 100) : 0;
+    const sentColor = positivePct >= 50 ? '#639922' : positivePct >= 30 ? '#EF9F27' : '#E24B4A';
+
+    const topPraised = Object.entries(labelPos).sort((a, b) => b[1] - a[1])[0];
+    const topCriticised = Object.entries(labelNeg).sort((a, b) => b[1] - a[1])[0];
+
+    const activeCreators = new Set(
+      tractorWin
+        .filter((r: any) => r.attributed_brand === 'Sonalika' && r.channel_name)
+        .map((r: any) => r.channel_name)
+    ).size;
+
+    return {
+      positivePct, negativePct, totalEntries, sentColor,
+      topPraisedFeature: topPraised?.[0] || '',
+      topPraisedCount: topPraised?.[1] || 0,
+      topCriticisedFeature: topCriticised?.[0] || '',
+      topCriticisedCount: topCriticised?.[1] || 0,
+      activeCreators,
+    };
+  }, [allData, startDate, endDate]);
+
+  const cpStateA = useMemo(() => {
+    const tractorWin = allData.filter((r: any) =>
+      r.is_tractor_content && r.publish_date >= startDate && r.publish_date <= endDate
+    );
+    const seenVids = new Set<string>();
+    const brandMentions: Record<string, number> = {};
+
+    for (const r of tractorWin) {
+      if (seenVids.has(r.video_id)) continue;
+      seenVids.add(r.video_id);
+      try {
+        const info = JSON.parse(r.company_brand_info || '{}');
+        for (const brand of Object.keys(info)) {
+          brandMentions[brand] = (brandMentions[brand] || 0) + 1;
+        }
+      } catch { }
+    }
+
+    const uniqueBrands = Object.keys(brandMentions).length;
+    const totalMentions = Object.values(brandMentions).reduce((a, b) => a + b, 0);
+    const sonalikaMentions = brandMentions['Sonalika'] || 0;
+    const sonalikaPct = totalMentions > 0 ? ((sonalikaMentions / totalMentions) * 100).toFixed(1) : '0.0';
+    const brandsSorted = Object.entries(brandMentions).sort((a, b) => b[1] - a[1]);
+    const topComp = brandsSorted.find(([b]) => b !== 'Sonalika');
+    const topCompetitorName = topComp?.[0] || '';
+    const topCompetitorCount = topComp?.[1] || 0;
+    const competitorPct = totalMentions > 0 ? ((topCompetitorCount / totalMentions) * 100).toFixed(1) : '0.0';
+    const sonRankIdx = brandsSorted.findIndex(([b]) => b === 'Sonalika');
+    const sonRank = sonRankIdx >= 0 ? sonRankIdx + 1 : brandsSorted.length + 1;
+    const cpRankColor = sonRank <= 3 ? '#639922' : '#EF9F27';
+
+    return { uniqueBrands, totalMentions, sonalikaPct, topCompetitorName, competitorPct, sonRank, cpRankColor };
+  }, [allData, startDate, endDate]);
+
+  const vsStateA = useMemo(() => {
+    const isBoolV = (v: any) => v === true || v === 'True' || v === 'true';
+    const piRows = successRows.filter((r: any) => isBoolV(r.pi_detected));
+    const intentCount = piRows.length;
+    const piPct = successRows.length > 0 ? (intentCount / successRows.length) * 100 : 0;
+    const piDotColor = piPct >= 10 ? '#639922' : piPct >= 5 ? '#EF9F27' : '#E24B4A';
+
+    const stageCounts: Record<string, number> = {};
+    for (const r of piRows) {
+      const s = r.pi_stage;
+      if (s && s !== 'none' && s !== '' && s !== 'post_purchase') stageCounts[s] = (stageCounts[s] || 0) + 1;
+    }
+    const topStageEntry = Object.entries(stageCounts).sort((a, b) => b[1] - a[1])[0];
+    const VS_PI_LABELS: Record<string, string> = { dealer_inquiry: 'Dealer inquiry', consideration: 'Buying consideration', shortlisting: 'Shortlisting' };
+    const topStage = topStageEntry ? (VS_PI_LABELS[topStageEntry[0]] || topStageEntry[0].replace(/_/g, ' ')) : '';
+
+    const lostCount = successRows.filter((r: any) => isBoolV(r.pi_is_lost_sale)).length;
+    const lostDotColor = lostCount > 0 ? '#E24B4A' : '#639922';
+
+    const unTypeCounts: Record<string, number> = {};
+    for (const r of successRows) {
+      if (isBoolV(r.un_detected)) {
+        const t = r.un_need_type;
+        if (t && t !== 'none' && t !== '') unTypeCounts[t] = (unTypeCounts[t] || 0) + 1;
+      }
+    }
+    const topNeedEntry = Object.entries(unTypeCounts).sort((a, b) => b[1] - a[1])[0];
+    const topNeedType = topNeedEntry?.[0]?.replace(/_/g, ' ') || '';
+    const needCount = topNeedEntry?.[1] || 0;
+
+    return { intentCount, topStage, piDotColor, lostCount, lostDotColor, topNeedType, needCount };
+  }, [successRows]);
+
   const showCPStateB = startDate === '2026-03-09' && endDate === '2026-03-15';
 
   const cpTableRows: { kpi: string; prev: string; curr: string; arrow: string; color: string }[] = [
@@ -559,6 +754,31 @@ function KeyInsightsCard({
     { kpi: 'Positive sentiment', prev: '37%', curr: '16%', arrow: '▼', color: '#dc2626' },
     { kpi: 'Negative sentiment', prev: '4%', curr: '4%', arrow: '▬', color: '#94a3b8' },
     { kpi: 'Product demo count', prev: '0 videos', curr: '2 videos', arrow: '▲', color: '#16a34a' },
+  ];
+
+  const cmsBullets: { color: string; text: string }[] = [
+    { color: '#1D4ED8', text: `${cmsStateA.tractorCount} of ${cmsStateA.totalCount} tracked videos are tractor content this week (${cmsStateA.densityPct}%).` },
+    ...(cmsStateA.totalBrands > 0 ? [{ color: cmsStateA.sonRankColor, text: `Sonalika holds ${cmsStateA.sonalikaSoV}% content share, ranked ${cmsStateA.sonRank} of ${cmsStateA.totalBrands} brands — ${cmsStateA.leaderName} leads at ${cmsStateA.leaderSoV}%, a ${cmsStateA.gap}pp gap.` }] : []),
+    ...(cmsStateA.topSubCat ? [{ color: '#1D4ED8', text: `${cmsStateA.topSubCatPct}% of Sonalika's videos this week are ${cmsStateA.topSubCat} content.` }] : []),
+  ];
+
+  const voiBullets: { color: string; text: string }[] = [
+    { color: voiStateA.sentColor, text: `Sonalika's creator sentiment is ${voiStateA.positivePct}% positive and ${voiStateA.negativePct}% negative across ${voiStateA.totalEntries} sentiment signals.` },
+    ...(voiStateA.topPraisedFeature ? [{ color: '#639922', text: `${voiStateA.topPraisedFeature} is the most praised feature — ${voiStateA.topPraisedCount} positive signal${voiStateA.topPraisedCount !== 1 ? 's' : ''} from creators this week.` }] : []),
+    ...(voiStateA.topCriticisedCount > 0 ? [{ color: '#EF9F27', text: `${voiStateA.topCriticisedFeature} has the most critical signals — ${voiStateA.topCriticisedCount} negative mention${voiStateA.topCriticisedCount !== 1 ? 's' : ''} flagged this week.` }] : []),
+    { color: '#1D4ED8', text: `${voiStateA.activeCreators} creator${voiStateA.activeCreators !== 1 ? 's' : ''} mentioned Sonalika in tractor content this week.` },
+  ];
+
+  const cpBullets: { color: string; text: string }[] = [
+    { color: '#1D4ED8', text: `${cpStateA.uniqueBrands} brands detected across ${cpStateA.totalMentions} mentions — Sonalika accounts for ${cpStateA.sonalikaPct}% of all brand mentions.` },
+    ...(cpStateA.topCompetitorName ? [{ color: '#EF9F27', text: `${cpStateA.topCompetitorName} is the most mentioned brand at ${cpStateA.competitorPct}% — the primary comparison point for Sonalika content.` }] : []),
+    { color: cpStateA.cpRankColor, text: `Sonalika ranks ${cpStateA.sonRank} of ${cpStateA.uniqueBrands} brands by mention frequency in tractor creator content.` },
+  ];
+
+  const vsBullets: { color: string; text: string }[] = [
+    { color: vsStateA.piDotColor, text: `${vsStateA.intentCount} buyer-intent comment${vsStateA.intentCount !== 1 ? 's' : ''} detected${vsStateA.topStage ? ` — ${vsStateA.topStage} is the dominant signal` : ''}.` },
+    { color: vsStateA.lostDotColor, text: vsStateA.lostCount > 0 ? `${vsStateA.lostCount} lost-sale signal${vsStateA.lostCount !== 1 ? 's' : ''} detected — viewers citing competitor purchase decisions.` : 'No lost-sale signals detected — all purchase-intent comments are acquisition-positive.' },
+    ...(vsStateA.needCount > 0 ? [{ color: '#EF9F27', text: `Top unmet need: ${vsStateA.topNeedType} — ${vsStateA.needCount} comment${vsStateA.needCount !== 1 ? 's' : ''} flagged this.` }] : []),
   ];
 
   const kiDivider = <div style={{ borderTop: '0.5px solid var(--color-border-tertiary, #e2e8f0)', margin: '20px 0' }} />;
@@ -621,6 +841,7 @@ function KeyInsightsCard({
               sub={`${cms.inactiveCount} of 52 channels inactive this window`}
             />
           </div>
+          {!cmsTrend && <KiStateABullets items={cmsBullets} />}
           {cmsTrend && (
             <>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginBottom: 10 }}>
@@ -677,6 +898,7 @@ function KeyInsightsCard({
         <KiSignalCard bg="#E6F1FB" textColor="#0C447C" icon={<VideoIcon size={14} />} headline="Top creator: Amaan Mirza Rides" sub="Highest engagement score · 100% Sonalika relevance" />
         <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<MegaphoneIcon size={14} />} headline="North India dominates coverage" sub="UP, Haryana, Punjab channels highest Sonalika density" />
       </div>
+      {!hasPrevData && <KiStateABullets items={voiBullets} />}
 
       {kiDivider}
 
@@ -693,6 +915,7 @@ function KeyInsightsCard({
         <KiSignalCard bg="#EAF3DE" textColor="#085041" icon={<TrendingUpIcon size={14} />} headline="Price wins in direct comparisons" sub="Cited favourably vs Mahindra & Swaraj" />
         <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<TrendingDownIcon size={14} />} headline="Build quality gap vs competitors" sub="Competitors score higher on build quality in comparisons" />
       </div>
+      {!showCPStateB && <KiStateABullets items={cpBullets} />}
       {showCPStateB && (
         <>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginBottom: 10 }}>
@@ -769,6 +992,7 @@ function KeyInsightsCard({
               sub={vs.topUn && vs.topUnCount > 0 ? `${vs.topUnCount} comment${vs.topUnCount !== 1 ? 's' : ''} flagged this need` : ''}
             />
           </div>
+          {!hasPrevData && <KiStateABullets items={vsBullets} />}
         </>
       )}
     </section>
