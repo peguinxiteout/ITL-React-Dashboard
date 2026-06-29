@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { SectionHeader } from '../SectionHeader';
 import { ShareOfVoiceCharts } from './ShareOfVoiceCharts';
@@ -6,12 +6,12 @@ import { ShareOfEngagementCard } from './ShareOfEngagementCard';
 import { ShareTrendCharts } from './ShareTrendCharts';
 import { ContentFrequencyChart } from './ContentFrequencyChart';
 import { BrandFilterButton } from './BrandFilterButton';
-import { BRANDS } from '../../data/mockData';
 import {
   summarizeBrands,
   buildWeeklyData,
   buildWeeklySoV,
-  SONALIKA_BRAND
+  SONALIKA_BRAND,
+  getBrandColor,
 } from '../../hooks/useCMSData.js';
 import type { GlobalDateRange } from '../../pages/Dashboard';
 
@@ -85,12 +85,54 @@ export function MarketShareTab({
   loading,
   error,
 }: MarketShareTabProps) {
-  const [selectedBrands, setSelectedBrands] = useState<string[]>(
-    BRANDS.map((b) => b.name)
-  );
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [includeShorts, setIncludeShorts] = useState<boolean>(true);
 
   const { startDate, endDate } = globalDateRange;
+
+  // All attributed tractor rows in the current date window (not filtered by selectedBrands)
+  const windowBrandedRows = useMemo(() => {
+    const baseData = includeShorts
+      ? cmsData
+      : cmsData.filter((r: any) => r.is_short === false);
+    return baseData.filter(
+      (r: any) => r.publish_date >= startDate && r.publish_date <= endDate
+    );
+  }, [cmsData, startDate, endDate, includeShorts]);
+
+  // Brands with >1 unique attributed video in the window; Sonalika pinned first, rest alphabetical
+  const availableBrands = useMemo(() => {
+    const brandVideoCounts: Record<string, Set<string>> = {};
+    windowBrandedRows.forEach((r: any) => {
+      if (!brandVideoCounts[r.attributed_brand]) {
+        brandVideoCounts[r.attributed_brand] = new Set();
+      }
+      brandVideoCounts[r.attributed_brand].add(r.video_id);
+    });
+    return Object.entries(brandVideoCounts)
+      .filter(([, videos]) => (videos as Set<string>).size > 1)
+      .map(([brand]) => brand)
+      .sort((a: string, b: string) => {
+        if (a === 'Sonalika') return -1;
+        if (b === 'Sonalika') return 1;
+        return a.localeCompare(b);
+      });
+  }, [windowBrandedRows]);
+
+  // Shape for BrandFilterButton — name + color + isOwn flag
+  const brandItems = useMemo(() =>
+    availableBrands.map((name: string) => ({
+      name,
+      isOwn: name === 'Sonalika',
+      color: getBrandColor(name),
+    })),
+    [availableBrands]
+  );
+
+  // Reset selection whenever the available brand list changes (new date window)
+  useEffect(() => {
+    setSelectedBrands(availableBrands);
+  }, [availableBrands]);
 
   const derived = useMemo(() => {
     const baseData = includeShorts
@@ -105,7 +147,9 @@ export function MarketShareTab({
     const brandRows = windowRows.filter((r: any) =>
       selectedBrands.includes(r.attributed_brand)
     );
-    const brandSummary = summarizeBrands(brandRows);
+    // Pass windowRows as denominator so SoV/SoE are relative to ALL attributed
+    // videos in the window, not just the selectedBrands-filtered subset.
+    const brandSummary = summarizeBrands(brandRows, windowRows);
     const sonalika = brandSummary.find((b: any) => b.brand === SONALIKA_BRAND) ?? null;
 
     // Dates present in the filtered window (for trend charts)
@@ -187,7 +231,8 @@ export function MarketShareTab({
       data: windowDates.map((d: string) => dateVideoSets.get(`${b.brand}__${d}`)?.size ?? 0)
     }));
 
-    const videoCount = new Set(brandRows.map((r: any) => r.video_id)).size;
+    // Count all attributed unique videos in the window (denominator for context line)
+    const videoCount = new Set(windowRows.map((r: any) => r.video_id)).size;
     const tractorRows = allData.filter(
       (r: any) => r.is_tractor_content === true && r.publish_date >= startDate && r.publish_date <= endDate
     );
@@ -242,6 +287,7 @@ export function MarketShareTab({
 
         <div className="flex flex-wrap items-center justify-end gap-2">
           <BrandFilterButton
+            brands={brandItems}
             selectedBrands={selectedBrands}
             onChange={setSelectedBrands}
             includeShorts={includeShorts}

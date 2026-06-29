@@ -6,14 +6,26 @@ import Papa from 'papaparse';
 // brand palette in mockData.ts so the Content Market Share visuals stay
 // consistent with the rest of the dashboard.
 export const CMS_BRAND_META = {
-  Sonalika: { short: 'SON', color: '#1D4ED8', isOwn: true },
-  Mahindra: { short: 'MAH', color: '#DC2626' },
-  Swaraj: { short: 'SWJ', color: '#D97706' },
-  'John Deere': { short: 'JD', color: '#16A34A' },
-  'New Holland': { short: 'NH', color: '#0EA5E9' },
-  'Massey Ferguson': { short: 'MF', color: '#7C3AED' },
-  'Escorts Kubota': { short: 'EK', color: '#DB2777' }
+  Sonalika: { short: 'SON', isOwn: true },
+  Mahindra: { short: 'MAH' },
+  Swaraj: { short: 'SWJ' },
+  'John Deere': { short: 'JD' },
+  'New Holland': { short: 'NH' },
+  'Massey Ferguson': { short: 'MF' },
+  'Escorts Kubota': { short: 'EK' },
 };
+
+export const BRAND_COLORS = {
+  'Sonalika': '#EF9F27',
+  'Mahindra': '#5DCAA5',
+  'Swaraj': '#85B7EB',
+  'John Deere': '#97C459',
+  'New Holland': '#AFA9EC',
+  'Massey Ferguson': '#F0997B',
+  'Escorts Kubota': '#ED93B1',
+};
+
+export const getBrandColor = (brand) => BRAND_COLORS[brand] || '#9CA3AF';
 
 export const SONALIKA_BRAND = 'Sonalika';
 
@@ -24,17 +36,39 @@ const round2 = (n) => Math.round(n * 100) / 100;
 const num = (v) => (typeof v === 'number' && !Number.isNaN(v) ? v : 0);
 const pct = (part, total) => (total > 0 ? round2((part / total) * 100) : 0);
 
-const brandMeta = (brand) =>
-  CMS_BRAND_META[brand] || { short: brand.slice(0, 3).toUpperCase(), color: '#94a3b8' };
+const brandMeta = (brand) => {
+  const meta = CMS_BRAND_META[brand];
+  return {
+    short: meta ? meta.short : brand.slice(0, 3).toUpperCase(),
+    color: getBrandColor(brand),
+    isOwn: !!(meta && meta.isOwn),
+  };
+};
 
 // ─── Aggregation helpers (pure) ──────────────────────────────────────────────
 
-export function summarizeBrands(rows) {
+// denomRows: optional full-window pool used exclusively for denominators (sov_videos,
+// sov_views, sov_comments, soe). When omitted, rows is used for both per-brand metrics
+// and denominators — the original behaviour. Pass denomRows when rows has been
+// pre-filtered (e.g. by selectedBrands) so that single-brand videos that fall outside
+// the filter are still counted in the total.
+export function summarizeBrands(rows, denomRows) {
+  const poolForDenom = denomRows || rows;
+
+  // Build denominators from the full pool (unfiltered by selectedBrands)
   const allVideoIds = new Set();
+  let sumViews = 0, sumComments = 0, sumEngagement = 0;
+  for (const r of poolForDenom) {
+    allVideoIds.add(r.video_id);
+    sumViews += num(r.view_count);
+    sumComments += num(r.comment_count);
+    sumEngagement += num(r.view_count) + num(r.like_count) + num(r.comment_count);
+  }
+
+  // Build per-brand metrics from the display rows only
   const byBrand = new Map();
   for (const r of rows) {
     const brand = r.attributed_brand;
-    allVideoIds.add(r.video_id);
     if (!byBrand.has(brand)) {
       byBrand.set(brand, {
         brand,
@@ -67,10 +101,6 @@ export function summarizeBrands(rows) {
       avg_views_per_video: video_count > 0 ? Math.round(b.total_views / video_count) : 0
     };
   });
-
-  const sumViews = base.reduce((a, s) => a + s.total_views, 0);
-  const sumComments = base.reduce((a, s) => a + s.total_comments, 0);
-  const sumEngagement = base.reduce((a, s) => a + s.total_engagement, 0);
 
   return base
     .map((s) => {
@@ -277,10 +307,6 @@ const BRAND_NORMALIZE = {
   Kubota: 'Escorts Kubota',
 };
 
-const MONITORED_BRANDS = [
-  'Sonalika', 'Mahindra', 'Swaraj', 'John Deere',
-  'New Holland', 'Massey Ferguson', 'Escorts Kubota',
-];
 
 function getIsoWeek(isoDate) {
   const d = new Date(isoDate + 'T00:00:00Z');
@@ -355,7 +381,7 @@ export function useCMSData() {
               const detected = JSON.parse(raw.detected_brands_from_transcript || '[]');
               const normalized = detected
                 .map((b) => (BRAND_NORMALIZE[b] !== undefined ? BRAND_NORMALIZE[b] : b))
-                .filter((b) => MONITORED_BRANDS.includes(b));
+                .filter(Boolean);
               brands = [...new Set(normalized)];
             } catch (e) {
               brands = [];

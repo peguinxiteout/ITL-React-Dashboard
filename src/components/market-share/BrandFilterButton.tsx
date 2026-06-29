@@ -1,13 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FilterIcon } from 'lucide-react';
-import { BRANDS, SONALIKA_ID } from '../../data/mockData';
+interface BrandItem {
+  name: string;
+  color: string;
+  isOwn?: boolean;
+}
 interface BrandFilterButtonProps {
+  brands: BrandItem[];
   selectedBrands: string[];
   onChange: (brands: string[]) => void;
   includeShorts: boolean;
   onShortsChange: (v: boolean) => void;
 }
 export function BrandFilterButton({
+  brands,
   selectedBrands,
   onChange,
   includeShorts,
@@ -24,7 +30,7 @@ export function BrandFilterButton({
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
-  const allSelected = selectedBrands.length === BRANDS.length;
+  const allSelected = selectedBrands.length === brands.length;
   const toggle = (name: string) => {
     if (selectedBrands.includes(name)) {
       onChange(selectedBrands.filter((n) => n !== name));
@@ -57,7 +63,7 @@ export function BrandFilterButton({
         <FilterIcon className="h-3.5 w-3.5" aria-hidden="true" />
         {allSelected ?
         'Filters' :
-        `Filters · ${selectedBrands.length} of ${BRANDS.length}`}
+        `Filters · ${selectedBrands.length} of ${brands.length}`}
       </button>
       {open &&
       <div
@@ -78,17 +84,17 @@ export function BrandFilterButton({
             </span>
             <button
             type="button"
-            onClick={() => onChange(BRANDS.map((b) => b.name))}
+            onClick={() => onChange(brands.map((b: BrandItem) => b.name))}
             className="text-xs font-medium text-blue-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
               Reset all
             </button>
           </div>
           <ul className="space-y-1">
-            {BRANDS.map((brand) => {
-            const isOwn = brand.id === SONALIKA_ID;
+            {brands.map((brand: BrandItem) => {
+            const isOwn = !!brand.isOwn;
             const checked = isOwn || selectedBrands.includes(brand.name);
             return (
-              <li key={brand.id}>
+              <li key={brand.name}>
                   <label
                   className={`flex items-center gap-2 rounded-md px-1.5 py-1 text-sm text-slate-700 ${isOwn ? '' : 'cursor-pointer hover:bg-slate-50'}`}>
 
