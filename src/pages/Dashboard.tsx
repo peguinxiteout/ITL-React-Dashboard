@@ -582,56 +582,43 @@ function KeyInsightsCard({
     const totalCount = new Set(allWin.map((r: any) => r.video_id)).size;
     const densityPct = totalCount > 0 ? ((tractorCount / totalCount) * 100).toFixed(1) : '0.0';
 
-    const B_NRM: Record<string, string> = { Escorts: 'Escorts Kubota', Kubota: 'Escorts Kubota' };
-    const seenT = new Set<string>();
-    const brandVids: Record<string, Set<string>> = {};
-    const attributedVidSet = new Set<string>();
-    const seenSon = new Set<string>();
-    const subCats: Record<string, number> = {};
-
-    for (const r of allWin) {
-      if (!r.is_tractor_content) continue;
-      if (!seenT.has(r.video_id)) {
-        seenT.add(r.video_id);
-        try {
-          const det: string[] = JSON.parse(r.detected_brands_from_transcript || '[]');
-          if (det.length > 0) attributedVidSet.add(r.video_id);
-          for (const rawB of det) {
-            const b = B_NRM[rawB] || rawB;
-            if (!brandVids[b]) brandVids[b] = new Set();
-            brandVids[b].add(r.video_id);
-          }
-        } catch { }
-      }
-      if (r.attributed_brand === 'Sonalika' && !seenSon.has(r.video_id)) {
-        seenSon.add(r.video_id);
-        const cat = r.tractor_sub_category;
-        if (cat && cat !== '') subCats[cat] = (subCats[cat] || 0) + 1;
-      }
+    // Brand SoV — read from hook's cmsData (NON_TRACTOR already excluded by useCMSData)
+    const winBranded = cmsData.filter((r: any) => r.publish_date >= startDate && r.publish_date <= endDate);
+    const brandVidMap = new Map<string, Set<string>>();
+    for (const r of winBranded) {
+      if (!brandVidMap.has(r.attributed_brand)) brandVidMap.set(r.attributed_brand, new Set());
+      brandVidMap.get(r.attributed_brand)!.add(r.video_id);
     }
-
-    const totalAttrib = attributedVidSet.size;
-    const brandsSorted = Object.entries(brandVids)
-      .map(([brand, s]) => ({ brand, count: s.size }))
+    const totalAttrib = new Set(winBranded.map((r: any) => r.video_id)).size;
+    const brandSoVRanked = [...brandVidMap.entries()]
+      .map(([brand, vids]) => ({ brand, count: vids.size, sov: totalAttrib > 0 ? (vids.size / totalAttrib) * 100 : 0 }))
       .sort((a, b) => b.count - a.count);
-    const totalBrands = brandsSorted.length;
-    const sonCount = brandVids['Sonalika']?.size || 0;
-    const sonalikaSoV = totalAttrib > 0 ? ((sonCount / totalAttrib) * 100).toFixed(1) : '0.0';
-    const sonRankIdx = brandsSorted.findIndex((b) => b.brand === 'Sonalika');
+    const totalBrands = brandSoVRanked.length;
+    const sonalikaSoV = (brandSoVRanked.find((b) => b.brand === 'Sonalika')?.sov ?? 0).toFixed(1);
+    const sonRankIdx = brandSoVRanked.findIndex((b) => b.brand === 'Sonalika');
     const sonRank = sonRankIdx >= 0 ? sonRankIdx + 1 : totalBrands + 1;
-    const leader = brandsSorted[0];
+    const leader = brandSoVRanked[0];
     const leaderName = leader?.brand || '';
-    const leaderSoV = totalAttrib > 0 && leader ? ((leader.count / totalAttrib) * 100).toFixed(1) : '0.0';
+    const leaderSoV = (leader?.sov ?? 0).toFixed(1);
     const gap = Math.abs(parseFloat(leaderSoV) - parseFloat(sonalikaSoV)).toFixed(1);
     const sonRankColor = sonRank <= 3 ? '#639922' : '#EF9F27';
 
+    // SubCategory still reads from allWin — attributed_brand is already set on each row
+    const seenSon = new Set<string>();
+    const subCats: Record<string, number> = {};
+    for (const r of allWin) {
+      if (r.attributed_brand !== 'Sonalika' || seenSon.has(r.video_id)) continue;
+      seenSon.add(r.video_id);
+      const cat = r.tractor_sub_category;
+      if (cat && cat !== '') subCats[cat] = (subCats[cat] || 0) + 1;
+    }
     const sonVideoCount = seenSon.size;
     const topSubCatEntry = Object.entries(subCats).sort((a, b) => b[1] - a[1])[0];
     const topSubCat = topSubCatEntry?.[0] || '';
     const topSubCatPct = sonVideoCount > 0 && topSubCatEntry ? ((topSubCatEntry[1] / sonVideoCount) * 100).toFixed(1) : '0.0';
 
     return { tractorCount, totalCount, densityPct, sonalikaSoV, sonRank, totalBrands, leaderName, leaderSoV, gap, sonRankColor, topSubCat, topSubCatPct };
-  }, [allData, startDate, endDate]);
+  }, [cmsData, allData, startDate, endDate]);
 
   const voiStateA = useMemo(() => {
     const tractorWin = allData.filter((r: any) =>
@@ -681,6 +668,9 @@ function KeyInsightsCard({
   }, [allData, startDate, endDate]);
 
   const cpStateA = useMemo(() => {
+    const CP_NON_TRACTOR = new Set(['Maruti Suzuki', 'Royal Enfield', 'Tata', 'Ultraviolette']);
+    const CP_BRAND_NRM: Record<string, string> = { Escorts: 'Escorts Kubota', Kubota: 'Escorts Kubota' };
+
     const tractorWin = allData.filter((r: any) =>
       r.is_tractor_content && r.publish_date >= startDate && r.publish_date <= endDate
     );
@@ -693,7 +683,9 @@ function KeyInsightsCard({
       try {
         const info = JSON.parse(r.company_brand_info || '{}');
         for (const brand of Object.keys(info)) {
-          brandMentions[brand] = (brandMentions[brand] || 0) + 1;
+          const normalized = CP_BRAND_NRM[brand] || brand;
+          if (CP_NON_TRACTOR.has(normalized)) continue;
+          brandMentions[normalized] = (brandMentions[normalized] || 0) + 1;
         }
       } catch { }
     }

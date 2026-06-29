@@ -307,6 +307,14 @@ const BRAND_NORMALIZE = {
   Kubota: 'Escorts Kubota',
 };
 
+// Non-tractor vehicle brands that appear as incidental co-mentions
+// in misclassified pipeline videos — excluded from all KPI calculations
+const NON_TRACTOR_BRANDS = new Set([
+  'Maruti Suzuki',
+  'Royal Enfield',
+  'Tata',
+  'Ultraviolette',
+]);
 
 function getIsoWeek(isoDate) {
   const d = new Date(isoDate + 'T00:00:00Z');
@@ -381,7 +389,7 @@ export function useCMSData() {
               const detected = JSON.parse(raw.detected_brands_from_transcript || '[]');
               const normalized = detected
                 .map((b) => (BRAND_NORMALIZE[b] !== undefined ? BRAND_NORMALIZE[b] : b))
-                .filter(Boolean);
+                .filter((b) => b && !NON_TRACTOR_BRANDS.has(b));
               brands = [...new Set(normalized)];
             } catch (e) {
               brands = [];
