@@ -1,6 +1,3 @@
-import React, { useState } from 'react';
-
-type SovMode = 'views' | 'videoCount';
 
 interface BrandRow {
   brand: string;
@@ -26,15 +23,13 @@ const AMBER_HL = 'rgba(239,159,39,0.10)';
 const GREEN_LINE = '#1D9E75';
 const RED_LINE = '#E55F5F';
 
-export function ShareOfEngagementCard({ soe, sov_views, sov_videos, rows: brandRows }: Props) {
-  const [mode, setMode] = useState<SovMode>('views');
-
-  const gap = Math.round((mode === 'views' ? sov_views - soe : sov_videos - soe) * 100) / 100;
-  const gapLabel = mode === 'views' ? 'SoV (Views) – SoE Gap' : 'SoV (Video Count) – SoE Gap';
+export function ShareOfEngagementCard({ soe, sov_views: _sov_views, sov_videos, rows: brandRows }: Props) {
+  const gap = Math.round((sov_videos - soe) * 100) / 100;
+  const gapLabel = 'SoV (Video Count) – SoE Gap';
 
   const rows = brandRows.map((d) => ({
     brand: d.brand,
-    sov: mode === 'views' ? d.sov_views : d.sov_videos,
+    sov: d.sov_videos,
     soe: d.soe,
     isSon: d.isOwn
   }));
@@ -93,38 +88,11 @@ export function ShareOfEngagementCard({ soe, sov_views, sov_videos, rows: brandR
       <div style={{ borderTop: '0.5px solid #e2e8f0', marginBottom: '1.25rem' }} />
 
       {/* ── Part 2: Dumbbell chart ────────────────────────────────── */}
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <p className="text-sm font-semibold text-slate-800">SoV vs SoE by brand</p>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Comparing presence to engagement resonance
-          </p>
-        </div>
-
-        {/* Segmented toggle */}
-        <div
-          className="flex overflow-hidden rounded-md"
-          style={{ border: '1px solid #e2e8f0', flexShrink: 0 }}>
-
-          {(['views', 'videoCount'] as SovMode[]).map((m, i) =>
-          <button
-            key={m}
-            onClick={() => setMode(m)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: mode === m ? '#1a1a2e' : 'white',
-              color: mode === m ? 'white' : '#6b7280',
-              border: 'none',
-              borderLeft: i > 0 ? '1px solid #e2e8f0' : 'none',
-              cursor: 'pointer',
-              fontWeight: mode === m ? 600 : 400,
-              fontSize: 12
-            }}>
-
-              {m === 'views' ? 'Views' : 'Video Count'}
-            </button>
-          )}
-        </div>
+      <div className="mb-4">
+        <p className="text-sm font-semibold text-slate-800">SoV vs SoE by brand</p>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Comparing content presence vs engagement resonance
+        </p>
       </div>
 
       {/* Dumbbell rows + x-axis */}
@@ -290,7 +258,7 @@ export function ShareOfEngagementCard({ soe, sov_views, sov_videos, rows: brandR
                 backgroundColor: SOV_COLOR
               }} />
 
-            SoV ({mode === 'views' ? 'Views' : 'Video Count'})
+            SoV (Video Count)
           </span>
           <span className="flex items-center gap-1.5">
             <span

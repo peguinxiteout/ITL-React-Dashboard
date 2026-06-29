@@ -35,12 +35,14 @@ const SIGNAL_BADGE: Record<string, string> = {
   'Buying consideration': 'bg-blue-50 text-blue-700',
   Shortlisting: 'bg-amber-50 text-amber-700',
   'Dealer inquiry': 'bg-emerald-50 text-emerald-700',
+  'Post purchase': 'bg-purple-50 text-purple-700',
+  Awareness: 'bg-slate-100 text-slate-600',
 };
 
 const SEVERITY_BADGE: Record<string, string> = {
   High: 'bg-red-50 text-red-700',
   Medium: 'bg-amber-50 text-amber-700',
-  Low: 'bg-slate-100 text-slate-600',
+  Low: 'bg-green-50 text-green-700',
 };
 
 const TYPE_BADGE_CLS: Record<string, string> = {
@@ -87,6 +89,12 @@ const VS_ACCENT: Record<VSSectionId, string> = {
 };
 
 const DEFAULT_VISIBLE = 5;
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+};
 
 function BrandDot({ brand, size = 8 }: { brand: string; size?: number }) {
   const color = VS_BRAND_COLOR[brand];
@@ -219,9 +227,6 @@ function BrandBars({
           </div>
         );
       })}
-      <p className="pt-1 text-[11px] text-slate-400">
-        Cross-brand reference — selected brand highlighted, others muted.
-      </p>
     </div>
   );
 }
@@ -302,7 +307,7 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
       key: 'questions' as SectionKey,
       section: 'rq' as VSSectionId,
       accent: VS_ACCENT.rq,
-      label: 'Recurring Questions Rate',
+      label: 'Questions Rate',
       icon: <HelpCircleIcon className="h-5 w-5" aria-hidden="true" />,
       rate: kpiSummary.qs_rate,
       count: kpiSummary.qs_count,
@@ -333,7 +338,16 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
   const crossVideoClusters = clusters.filter((c) => c.is_cross_video === true || c.is_cross_video === 'True');
   const recurringClustersCount = clusters.length;
   const mostAskedFreq = clusters.length > 0 ? Math.max(...clusters.map((c) => c.frequency || 0)) : 0;
-  const unansweredCount = recurringClustersCount - crossVideoClusters.length;
+  const unansweredCount = clusters.filter((c) => c.is_cross_video !== true && c.is_cross_video !== 'True').length;
+
+  // QS attribution note (Change 2)
+  const brandedQsCount = recurringQuestionsData.byBrand.reduce((s, b) => s + b.count, 0);
+  const totalQsCount = questionsKpi.qs_count;
+  const unattributedQsCount = totalQsCount - brandedQsCount;
+
+  // Recurring question rate (Change 5)
+  const allClusterFrequencySum = clusters.reduce((sum, c) => sum + Number(c.frequency || 0), 0);
+  const recurringQuestionRate = totalQsCount > 0 ? ((allClusterFrequencySum / totalQsCount) * 100).toFixed(1) : '0.0';
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-5">
@@ -466,7 +480,14 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
               {purchaseIntentData.byBrand.length === 0 ? (
                 <EmptyRow label="brand data" />
               ) : (
-                <BrandBars byBrand={purchaseIntentData.byBrand} selectedBrand={brand} />
+                <>
+                  <BrandBars byBrand={purchaseIntentData.byBrand} selectedBrand={brand} />
+                  {purchaseIntentData.unattributedCount > 0 && (
+                    <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 8 }}>
+                      Showing {purchaseIntentData.brandedCount} of {purchaseIntentData.totalCount} intent comments — {purchaseIntentData.unattributedCount} have no brand attribution
+                    </p>
+                  )}
+                </>
               )}
             </SectionCard>
           </div>
@@ -496,7 +517,12 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                         : purchaseIntentData.byVideo.slice(0, DEFAULT_VISIBLE)
                       ).map((v, i) => (
                         <tr key={i} className="border-b border-slate-100 last:border-0">
-                          <td className="py-3 pr-4 font-medium text-slate-900">{v.title}</td>
+                          <td className="py-3 pr-4">
+                            <span className="block max-w-xs truncate font-medium text-slate-900">{v.title}</span>
+                            <span className="block text-slate-400" style={{ fontSize: 11 }}>
+                              {v.channel_name}{v.channel_name && v.published_at ? ' · ' : ''}{formatDate(v.published_at)}
+                            </span>
+                          </td>
                           <td className="py-3 pr-4">
                             <span className="inline-flex items-center gap-1.5 text-slate-600">
                               <BrandDot brand={v.brand} size={7} />
@@ -548,10 +574,10 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                   ).map((c, i) => (
                     <li key={i} className="rounded-lg border border-slate-100 bg-slate-50 p-3.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <BrandDot brand={c.pi_brand} size={8} />
-                        <span className="text-sm font-semibold text-slate-900">
-                          {c.pi_brand || 'Viewer'}
-                        </span>
+                        {c.pi_brand && <BrandDot brand={c.pi_brand} size={8} />}
+                        {c.pi_brand && (
+                          <span className="text-sm font-semibold text-slate-900">{c.pi_brand}</span>
+                        )}
                         <span
                           className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${SIGNAL_BADGE[c.pi_stage] ?? 'bg-slate-100 text-slate-600'}`}
                         >
@@ -563,7 +589,12 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                         {c.comment_text}
                       </p>
                       <div className="mt-2 flex items-center justify-between gap-2">
-                        <span className="truncate text-xs text-slate-500">on: {c.title}</span>
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate text-xs text-slate-500">on: {c.title}</span>
+                          {c.channel_name && (
+                            <span className="block text-slate-400" style={{ fontSize: 11 }}>by: {c.channel_name}</span>
+                          )}
+                        </div>
                         <span className="flex shrink-0 items-center gap-1 text-xs text-slate-500">
                           <ThumbsUpIcon className="h-3 w-3" aria-hidden="true" /> {c.comment_likeCount}
                         </span>
@@ -666,7 +697,12 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                         : unmetNeedsData.byVideo.slice(0, DEFAULT_VISIBLE)
                       ).map((v, i) => (
                         <tr key={i} className="border-b border-slate-100 last:border-0">
-                          <td className="py-3 pr-4 font-medium text-slate-900">{v.title}</td>
+                          <td className="py-3 pr-4">
+                            <span className="block max-w-xs truncate font-medium text-slate-900">{v.title}</span>
+                            <span className="block text-slate-400" style={{ fontSize: 11 }}>
+                              {v.channel_name}{v.channel_name && v.published_at ? ' · ' : ''}{formatDate(v.published_at)}
+                            </span>
+                          </td>
                           <td className="py-3 pr-4">
                             <span className="inline-flex items-center gap-1.5 text-slate-600">
                               <BrandDot brand={v.brand} size={7} />
@@ -718,10 +754,10 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                   ).map((c, i) => (
                     <li key={i} className="rounded-lg border border-slate-100 bg-slate-50 p-3.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <BrandDot brand={c.un_brand} size={8} />
-                        <span className="text-sm font-semibold text-slate-900">
-                          {c.un_brand || 'Viewer'}
-                        </span>
+                        {c.un_brand && <BrandDot brand={c.un_brand} size={8} />}
+                        {c.un_brand && (
+                          <span className="text-sm font-semibold text-slate-900">{c.un_brand}</span>
+                        )}
                         <span
                           className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${SEVERITY_BADGE[c.un_intensity] ?? 'bg-slate-100 text-slate-600'}`}
                         >
@@ -736,7 +772,12 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                         <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">
                           {c.un_need_type}
                         </span>
-                        <span className="truncate">on: {c.title}</span>
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate">on: {c.title}</span>
+                          {c.channel_name && (
+                            <span className="block text-slate-400" style={{ fontSize: 11 }}>by: {c.channel_name}</span>
+                          )}
+                        </div>
                       </div>
                     </li>
                   ))}
@@ -767,7 +808,7 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
 
           {/* Unanswered callout */}
           <div className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-2.5 text-sm text-slate-600">
-            <strong>{unansweredCount}</strong> of {recurringClustersCount} clusters may be unanswered (not yet cross-video).
+            <strong>{unansweredCount}</strong> of {recurringClustersCount} clusters unanswered.
           </div>
 
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -824,7 +865,14 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
               {recurringQuestionsData.byBrand.length === 0 ? (
                 <EmptyRow label="brand data" />
               ) : (
-                <BrandBars byBrand={recurringQuestionsData.byBrand} selectedBrand={brand} />
+                <>
+                  <BrandBars byBrand={recurringQuestionsData.byBrand} selectedBrand={brand} />
+                  {unattributedQsCount > 0 && (
+                    <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 8 }}>
+                      Showing {brandedQsCount} of {totalQsCount} questions — {unattributedQsCount} have no brand attribution
+                    </p>
+                  )}
+                </>
               )}
             </SectionCard>
           </div>
@@ -845,8 +893,8 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                   ).map((q, i) => (
                     <li key={i} className="rounded-lg border border-slate-100 bg-slate-50 p-3.5">
                       <div className="flex items-center gap-2">
-                        <BrandDot brand={q.qs_brand} size={8} />
-                        <span className="text-xs text-slate-500">{q.qs_brand || '—'}</span>
+                        {q.qs_brand && <BrandDot brand={q.qs_brand} size={8} />}
+                        {q.qs_brand && <span className="text-xs text-slate-500">{q.qs_brand}</span>}
                         <span className="ml-auto text-xs text-slate-400">{q.weeksAgo}w ago</span>
                       </div>
                       <p className="mt-1.5 text-sm font-medium leading-relaxed text-slate-800">
@@ -874,6 +922,11 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                           <span className="truncate">{q.title}</span>
                         </span>
                       </div>
+                      {q.channel_name && (
+                        <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2, paddingLeft: 15 }}>
+                          by: {q.channel_name}
+                        </p>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -895,16 +948,20 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
             subtitle="Grouped semantically-similar questions — click to expand"
           >
             {/* Headline metrics */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'Recurring Clusters', value: recurringClustersCount },
-                { label: 'Most Asked (freq)', value: mostAskedFreq },
-              ].map((m) => (
-                <div key={m.label} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                  <p className="text-xs text-slate-500">{m.label}</p>
-                  <p className="mt-0.5 text-2xl font-bold text-slate-900 tabular-nums">{m.value}</p>
-                </div>
-              ))}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">Recurring Clusters</p>
+                <p className="mt-0.5 text-2xl font-bold text-slate-900 tabular-nums">{recurringClustersCount}</p>
+              </div>
+              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">Most Asked (freq)</p>
+                <p className="mt-0.5 text-2xl font-bold text-slate-900 tabular-nums">{mostAskedFreq}</p>
+              </div>
+              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">Recurring Question Rate</p>
+                <p className="mt-0.5 text-2xl font-bold text-slate-900 tabular-nums">{recurringQuestionRate}%</p>
+                <p className="mt-0.5 text-[11px] text-slate-400">of {totalQsCount} detected questions asked by multiple viewers</p>
+              </div>
             </div>
             <div style={{ marginTop: 16, borderTop: '0.5px solid #e2e8f0' }} />
 
@@ -968,6 +1025,7 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                 <thead>
                   <tr className="border-b border-slate-200 text-left text-slate-600">
                     <th className="py-2.5 pr-4 font-semibold">Question</th>
+                    <th className="py-2.5 pr-4 font-semibold">Brand</th>
                     <th className="py-2.5 pr-4 font-semibold">Frequency</th>
                     <th className="py-2.5 pr-4 font-semibold">Total Likes</th>
                     <th className="py-2.5 pr-4 font-semibold">Videos</th>
@@ -979,6 +1037,14 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                     <tr key={i} className="border-b border-slate-100 last:border-0">
                       <td className="py-3 pr-4 font-medium text-slate-900">
                         {q.canonical_question}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {q.brand && (
+                          <span className="inline-flex items-center gap-1.5 text-slate-600">
+                            <BrandDot brand={q.brand} size={7} />
+                            {q.brand}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 pr-4 tabular-nums text-slate-700">{q.frequency}</td>
                       <td className="py-3 pr-4 tabular-nums text-slate-700">{q.total_likes}</td>
@@ -994,7 +1060,7 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                   ))}
                   {crossVideoClusters.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-4 text-center text-sm text-slate-400">
+                      <td colSpan={6} className="py-4 text-center text-sm text-slate-400">
                         No cross-video questions found.
                       </td>
                     </tr>

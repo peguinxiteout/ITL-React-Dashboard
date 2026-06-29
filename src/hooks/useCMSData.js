@@ -92,7 +92,7 @@ export function summarizeBrands(rows) {
 export function buildWeeklyData(rows) {
   const byKey = new Map();
   for (const r of rows) {
-    const week = r.publish_week;
+    const week = r.publish_date;
     const brand = r.attributed_brand;
     const key = `${brand}__${week}`;
     if (!byKey.has(key)) {
@@ -165,7 +165,7 @@ function buildVideoList(rows) {
 }
 
 export const uniqueWeeks = (rows) =>
-  [...new Set(rows.map((r) => r.publish_week))].filter(Boolean).sort();
+  [...new Set(rows.map((r) => r.publish_date))].filter(Boolean).sort();
 
 export const recentWeeks = (weeks, n) => weeks.slice(Math.max(0, weeks.length - n));
 

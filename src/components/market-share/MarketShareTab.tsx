@@ -108,8 +108,8 @@ export function MarketShareTab({
     const brandSummary = summarizeBrands(brandRows);
     const sonalika = brandSummary.find((b: any) => b.brand === SONALIKA_BRAND) ?? null;
 
-    // Weeks present in the filtered window (for trend charts)
-    const windowWeeks = [...new Set(brandRows.map((r: any) => r.publish_week))]
+    // Dates present in the filtered window (for trend charts)
+    const windowWeeks = [...new Set(brandRows.map((r: any) => r.publish_date))]
       .filter(Boolean)
       .sort() as string[];
 
@@ -194,14 +194,11 @@ export function MarketShareTab({
     const channelCount = new Set(tractorRows.map((r: any) => r.channel_name)).size;
     const totalRowCount = brandRows.length;
 
-    // Build week → minimum publish_date map for x-axis date labels in Share Trends.
+    // Build date → date identity map for x-axis labels in Share Trends (key is now publish_date).
     const weekFirstDates: Record<string, string> = {};
     for (const r of brandRows) {
-      const week = (r as any).publish_week as string;
       const date = (r as any).publish_date as string;
-      if (week && date && (!weekFirstDates[week] || date < weekFirstDates[week])) {
-        weekFirstDates[week] = date;
-      }
+      if (date) weekFirstDates[date] = date;
     }
 
     return {

@@ -23,9 +23,9 @@ export interface BrandCount {
 
 export interface IntentVideoRow {
   title: string;
+  channel_name: string;
+  published_at: string;
   intent_count: number;
-  total_comments: number;
-  intent_rate: number;
   brand: string;
   topSignal: string;
 }
@@ -33,16 +33,20 @@ export interface IntentVideoRow {
 export interface IntentComment {
   comment_text: string;
   pi_stage: string;
-  pi_brand: string;
+  pi_brand: string | null;
   pi_confidence: number;
   comment_likeCount: number;
   title: string;
+  channel_name: string;
   weeksAgo: number;
 }
 
 export interface PurchaseIntentData {
   stageDistribution: StageItem[];
   byBrand: BrandCount[];
+  brandedCount: number;
+  totalCount: number;
+  unattributedCount: number;
   byVideo: IntentVideoRow[];
   topComments: IntentComment[];
 }
@@ -59,20 +63,21 @@ export interface FeatureAreaItem {
 
 export interface NeedVideoRow {
   title: string;
+  channel_name: string;
+  published_at: string;
   needs_count: number;
-  total_comments: number;
-  needs_rate: number;
   brand: string;
-  topSeverity: string;
+  topSeverity: string | null;
 }
 
 export interface NeedComment {
   comment_text: string;
   un_need_type: string;
   un_intensity: string;
-  un_brand: string;
+  un_brand: string | null;
   comment_likeCount: number;
   title: string;
+  channel_name: string;
   weeksAgo: number;
 }
 
@@ -101,6 +106,7 @@ export interface TopQuestion {
   qs_question_type: string;
   comment_likeCount: number;
   title: string;
+  channel_name: string;
   qs_is_content_gap: boolean;
   qs_brand: string;
   weeksAgo: number;
@@ -117,6 +123,8 @@ export interface ClusterRow {
   topic: string;
   member_questions: string;
   is_cross_video: boolean | string;
+  brand?: string | null;
+  channel_name?: string | null;
 }
 
 export interface RecurringQuestionsData {

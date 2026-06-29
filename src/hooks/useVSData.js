@@ -10,6 +10,7 @@ const PI_STAGE_LABEL = {
   consideration: 'Buying consideration',
   shortlisting: 'Shortlisting',
   post_purchase: 'Post purchase',
+  awareness: 'Awareness',
 };
 
 const piStageLabel = (s) => PI_STAGE_LABEL[s] || s || '';
@@ -69,51 +70,68 @@ function mostCommon(arr) {
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
 }
 
+const SEVERITY_ORDER = { high: 3, medium: 2, low: 1, none: 0 };
+
+function getTopSeverity(unRows) {
+  const best = unRows.reduce((top, row) => {
+    const val = (row.un_intensity || 'none').toLowerCase();
+    return (SEVERITY_ORDER[val] || 0) > (SEVERITY_ORDER[top] || 0) ? val : top;
+  }, 'none');
+  return best === 'none' ? null : best.charAt(0).toUpperCase() + best.slice(1);
+}
+
+function getClusterBrand(contentIdsStr, qsBase) {
+  const ids = (contentIdsStr || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const branded = qsBase.filter(
+    (r) => ids.includes(String(r.content_id)) && r.qs_brand
+  );
+  if (branded.length === 0) return null;
+  const counts = {};
+  branded.forEach((r) => { counts[r.qs_brand] = (counts[r.qs_brand] || 0) + 1; });
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function getClusterChannel(contentIdsStr, qsBase) {
+  const ids = (contentIdsStr || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const rows = qsBase
+    .filter((r) => ids.includes(String(r.content_id)))
+    .sort((a, b) => num(b.comment_likeCount) - num(a.comment_likeCount));
+  return rows.length > 0 ? (rows[0].channel_name || null) : null;
+}
+
 // ─── Computations ──────────────────────────────────────────────────────────────
 
-function computeKpiSummary(rows, brand, n, maxDate) {
+function computeKpiSummary(rows, piBase, unBase, qsBase, brand, n, maxDate) {
   const weekRows = filterByWeek(rows, n, maxDate);
   const filtered = filterByBrand(weekRows, brand);
   const total = filtered.length;
 
-  const piRows = filtered.filter(
-    (r) => isBool(r.pi_detected) && r.pi_stage !== 'post_purchase'
-  );
-  const unRows = filtered.filter(
-    (r) => isBool(r.un_detected) && r.un_need_type && r.un_need_type !== 'none' && r.un_need_type !== ''
-  );
-  const qsRows = filtered.filter(
-    (r) => isBool(r.qs_is_question) && r.qs_question_type && r.qs_question_type !== 'none' && r.qs_question_type !== ''
-  );
+  const piFiltered = filterByBrand(filterByWeek(piBase, n, maxDate), brand);
+  const unFiltered = filterByBrand(filterByWeek(unBase, n, maxDate), brand);
+  const qsFiltered = filterByBrand(filterByWeek(qsBase, n, maxDate), brand);
 
   return {
     total_comments: total,
-    pi_rate: pct1(piRows.length, total),
-    pi_count: piRows.length,
+    pi_rate: pct1(piFiltered.length, total),
+    pi_count: piFiltered.length,
     pi_lost_sales: filtered.filter((r) => isBool(r.pi_is_lost_sale)).length,
-    un_rate: pct1(unRows.length, total),
-    un_count: unRows.length,
-    un_high_intensity: unRows.filter((r) => String(r.un_intensity || '').toLowerCase() === 'high').length,
-    un_content_gaps: unRows.filter((r) => r.un_need_type === 'content_gap').length,
-    qs_rate: pct1(qsRows.length, total),
-    qs_count: qsRows.length,
+    un_rate: pct1(unFiltered.length, total),
+    un_count: unFiltered.length,
+    un_high_intensity: unFiltered.filter((r) => String(r.un_intensity || '').toLowerCase() === 'high').length,
+    un_content_gaps: unFiltered.filter((r) => r.un_need_type === 'content_gap').length,
+    qs_rate: pct1(qsFiltered.length, total),
+    qs_count: qsFiltered.length,
   };
 }
 
-function computePurchaseIntentData(rows, brand, n, maxDate) {
-  const weekRows = filterByWeek(rows, n, maxDate);
+function computePurchaseIntentData(piBase, brand, n, maxDate) {
+  const weekRows = filterByWeek(piBase, n, maxDate);
   const filtered = filterByBrand(weekRows, brand);
 
-  // Stage distribution (exclude post_purchase and none)
+  // Stage distribution — piBase already excludes post_purchase; exclude 'none' stages here
   const stageCount = {};
   for (const r of filtered) {
-    if (
-      isBool(r.pi_detected) &&
-      r.pi_stage &&
-      r.pi_stage !== 'post_purchase' &&
-      r.pi_stage !== 'none' &&
-      r.pi_stage !== ''
-    ) {
+    if (r.pi_stage && r.pi_stage !== 'none' && r.pi_stage !== '') {
       const label = piStageLabel(r.pi_stage);
       stageCount[label] = (stageCount[label] || 0) + 1;
     }
@@ -122,10 +140,10 @@ function computePurchaseIntentData(rows, brand, n, maxDate) {
     .map(([stage, count]) => ({ stage, count }))
     .sort((a, b) => b.count - a.count);
 
-  // By brand — always all rows (no brand filter), week-filtered only
+  // By brand — all rows (no brand filter), week-filtered only
   const brandCount = {};
   for (const r of weekRows) {
-    if (isBool(r.pi_detected) && r.pi_brand && r.pi_stage !== 'post_purchase' && r.pi_stage !== 'none') {
+    if (r.pi_brand && r.pi_stage !== 'none') {
       brandCount[r.pi_brand] = (brandCount[r.pi_brand] || 0) + 1;
     }
   }
@@ -133,74 +151,77 @@ function computePurchaseIntentData(rows, brand, n, maxDate) {
     .map(([b, count]) => ({ brand: b, count }))
     .sort((a, b) => b.count - a.count);
 
-  // By video
+  // Brand attribution counts for the annotation note
+  const brandedCount = weekRows.filter((r) => r.pi_brand).length;
+  const totalCount = weekRows.length;
+  const unattributedCount = totalCount - brandedCount;
+
+  // By video — count ALL PI rows per video; only include video if it has ≥1 branded row
   const videoMap = {};
   for (const r of filtered) {
-    const t = r.title || 'Unknown';
-    if (!videoMap[t]) {
-      videoMap[t] = {
-        title: t,
+    const id = r.content_id || r.title || 'Unknown';
+    if (!videoMap[id]) {
+      videoMap[id] = {
+        title: r.title || 'Unknown',
+        channel_name: r.channel_name || '',
+        published_at: r.published_at || '',
         intent_count: 0,
-        total_comments: 0,
         _brands: [],
         _stages: [],
       };
     }
-    videoMap[t].total_comments++;
-    if (isBool(r.pi_detected) && r.pi_stage !== 'post_purchase' && r.pi_stage !== 'none') {
-      videoMap[t].intent_count++;
-      if (r.pi_brand) videoMap[t]._brands.push(r.pi_brand);
-      if (r.pi_stage) videoMap[t]._stages.push(piStageLabel(r.pi_stage));
-    }
+    videoMap[id].intent_count++;
+    if (r.pi_brand) videoMap[id]._brands.push(r.pi_brand);
+    if (r.pi_stage) videoMap[id]._stages.push(piStageLabel(r.pi_stage));
   }
   const byVideo = Object.values(videoMap)
+    .filter((v) => v._brands.length > 0)
     .map((v) => ({
       title: v.title,
+      channel_name: v.channel_name,
+      published_at: v.published_at,
       intent_count: v.intent_count,
-      total_comments: v.total_comments,
-      intent_rate: pct1(v.intent_count, v.total_comments),
       brand: mostCommon(v._brands),
       topSignal: mostCommon(v._stages),
     }))
-    .sort((a, b) => b.intent_rate - a.intent_rate);
+    .sort((a, b) => b.intent_count - a.intent_count);
 
-  // Top comments
+  // Top comments — exclude 'none' stages
   const topComments = filtered
-    .filter((r) => isBool(r.pi_detected) && r.pi_stage !== 'post_purchase' && r.pi_stage !== 'none')
+    .filter((r) => r.pi_stage !== 'none' && r.pi_stage !== '')
     .sort((a, b) => num(b.comment_likeCount) - num(a.comment_likeCount))
     .slice(0, 20)
     .map((r) => ({
       comment_text: r.comment_text || '',
       pi_stage: piStageLabel(r.pi_stage),
-      pi_brand: r.pi_brand || '',
+      pi_brand: r.pi_brand || null,
       pi_confidence: r.pi_confidence,
       comment_likeCount: num(r.comment_likeCount),
       title: r.title || '',
+      channel_name: r.channel_name || '',
       weeksAgo: weeksAgo(r.published_at, maxDate),
     }));
 
-  return { stageDistribution, byBrand, byVideo, topComments };
+  return { stageDistribution, byBrand, brandedCount, totalCount, unattributedCount, byVideo, topComments };
 }
 
-function computeUnmetNeedsData(rows, brand, n, maxDate) {
-  const weekRows = filterByWeek(rows, n, maxDate);
+function computeUnmetNeedsData(unBase, brand, n, maxDate) {
+  const weekRows = filterByWeek(unBase, n, maxDate);
   const filtered = filterByBrand(weekRows, brand);
 
-  // Need type dist
+  // Need type dist — unBase already guarantees un_need_type !== 'none'
   const typeCount = {};
   for (const r of filtered) {
-    if (isBool(r.un_detected) && r.un_need_type && r.un_need_type !== 'none' && r.un_need_type !== '') {
-      typeCount[r.un_need_type] = (typeCount[r.un_need_type] || 0) + 1;
-    }
+    typeCount[r.un_need_type] = (typeCount[r.un_need_type] || 0) + 1;
   }
   const needTypeDist = Object.entries(typeCount)
     .map(([type, count]) => ({ type, count }))
     .sort((a, b) => b.count - a.count);
 
-  // By brand — all rows
+  // By brand — all rows (no brand filter), week-filtered only
   const brandCount = {};
   for (const r of weekRows) {
-    if (isBool(r.un_detected) && r.un_brand && r.un_need_type !== 'none') {
+    if (r.un_brand) {
       brandCount[r.un_brand] = (brandCount[r.un_brand] || 0) + 1;
     }
   }
@@ -208,15 +229,10 @@ function computeUnmetNeedsData(rows, brand, n, maxDate) {
     .map(([b, count]) => ({ brand: b, count }))
     .sort((a, b) => b.count - a.count);
 
-  // Feature areas
+  // Feature areas — derive from unBase (consistent with unmet-need rows)
   const areaCount = {};
   for (const r of filtered) {
-    if (
-      isBool(r.un_detected) &&
-      r.un_feature_area &&
-      r.un_feature_area !== '' &&
-      r.un_feature_area !== 'none'
-    ) {
+    if (r.un_feature_area && r.un_feature_area !== '' && r.un_feature_area !== 'none') {
       areaCount[r.un_feature_area] = (areaCount[r.un_feature_area] || 0) + 1;
     }
   }
@@ -225,73 +241,71 @@ function computeUnmetNeedsData(rows, brand, n, maxDate) {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
-  // By video
+  // By video — only branded videos (unBase already guarantees un_need_type !== 'none')
   const videoMap = {};
   for (const r of filtered) {
-    const t = r.title || 'Unknown';
-    if (!videoMap[t]) {
-      videoMap[t] = { title: t, needs_count: 0, total_comments: 0, _brands: [], _intensities: [] };
+    if (!r.un_brand) continue;
+    const id = r.content_id || r.title || 'Unknown';
+    if (!videoMap[id]) {
+      videoMap[id] = {
+        title: r.title || 'Unknown',
+        channel_name: r.channel_name || '',
+        published_at: r.published_at || '',
+        needs_count: 0,
+        _brands: [],
+        _unRows: [],
+      };
     }
-    videoMap[t].total_comments++;
-    if (isBool(r.un_detected) && r.un_need_type && r.un_need_type !== 'none') {
-      videoMap[t].needs_count++;
-      if (r.un_brand) videoMap[t]._brands.push(r.un_brand);
-      if (r.un_intensity) videoMap[t]._intensities.push(unIntensityLabel(r.un_intensity));
-    }
+    videoMap[id].needs_count++;
+    videoMap[id]._brands.push(r.un_brand);
+    videoMap[id]._unRows.push(r);
   }
   const byVideo = Object.values(videoMap)
     .map((v) => ({
       title: v.title,
+      channel_name: v.channel_name,
+      published_at: v.published_at,
       needs_count: v.needs_count,
-      total_comments: v.total_comments,
-      needs_rate: pct1(v.needs_count, v.total_comments),
       brand: mostCommon(v._brands),
-      topSeverity: mostCommon(v._intensities),
+      topSeverity: getTopSeverity(v._unRows),
     }))
-    .sort((a, b) => b.needs_rate - a.needs_rate);
+    .sort((a, b) => b.needs_count - a.needs_count);
 
-  // Top comments
+  // Top comments — unBase already has un_need_type !== 'none'
   const topComments = filtered
-    .filter((r) => isBool(r.un_detected) && r.un_need_type && r.un_need_type !== 'none')
     .sort((a, b) => num(b.comment_likeCount) - num(a.comment_likeCount))
     .slice(0, 20)
     .map((r) => ({
       comment_text: r.comment_text || '',
       un_need_type: r.un_need_type,
       un_intensity: unIntensityLabel(r.un_intensity),
-      un_brand: r.un_brand || '',
+      un_brand: r.un_brand || null,
       comment_likeCount: num(r.comment_likeCount),
       title: r.title || '',
+      channel_name: r.channel_name || '',
       weeksAgo: weeksAgo(r.published_at, maxDate),
     }));
 
   return { needTypeDist, byBrand, featureAreas, byVideo, topComments };
 }
 
-function computeRecurringQuestionsData(rows, brand, n, maxDate, clusters) {
-  const weekRows = filterByWeek(rows, n, maxDate);
+function computeRecurringQuestionsData(qsBase, brand, n, maxDate, clusters) {
+  const weekRows = filterByWeek(qsBase, n, maxDate);
   const filtered = filterByBrand(weekRows, brand);
 
-  // Question type dist
+  // Question type dist — qsBase already guarantees qs_question_type !== 'none'
   const typeCount = {};
   for (const r of filtered) {
-    if (
-      isBool(r.qs_is_question) &&
-      r.qs_question_type &&
-      r.qs_question_type !== 'none' &&
-      r.qs_question_type !== ''
-    ) {
-      typeCount[r.qs_question_type] = (typeCount[r.qs_question_type] || 0) + 1;
-    }
+    typeCount[r.qs_question_type] = (typeCount[r.qs_question_type] || 0) + 1;
   }
   const questionTypeDist = Object.entries(typeCount)
     .map(([type, count]) => ({ type, count }))
     .sort((a, b) => b.count - a.count);
 
-  // By brand — all rows
+  // By brand — all rows (no brand filter), week-filtered only
   const brandCount = {};
   for (const r of weekRows) {
-    if (isBool(r.qs_is_question) && r.qs_brand && r.qs_question_type !== 'none') {
+    if (r.qs_brand) {
       brandCount[r.qs_brand] = (brandCount[r.qs_brand] || 0) + 1;
     }
   }
@@ -307,9 +321,7 @@ function computeRecurringQuestionsData(rows, brand, n, maxDate, clusters) {
       videoMap[t] = { title: t, question_count: 0, total_comments: 0 };
     }
     videoMap[t].total_comments++;
-    if (isBool(r.qs_is_question) && r.qs_question_type !== 'none') {
-      videoMap[t].question_count++;
-    }
+    videoMap[t].question_count++;
   }
   const byVideo = Object.values(videoMap)
     .map((v) => ({
@@ -318,9 +330,8 @@ function computeRecurringQuestionsData(rows, brand, n, maxDate, clusters) {
     }))
     .sort((a, b) => b.question_rate - a.question_rate);
 
-  // Top questions by likes
+  // Top questions by likes — qsBase already guarantees qs_question_type !== 'none'
   const topQuestions = filtered
-    .filter((r) => isBool(r.qs_is_question) && r.qs_question_type && r.qs_question_type !== 'none')
     .sort((a, b) => num(b.comment_likeCount) - num(a.comment_likeCount))
     .slice(0, 20)
     .map((r) => ({
@@ -328,12 +339,19 @@ function computeRecurringQuestionsData(rows, brand, n, maxDate, clusters) {
       qs_question_type: r.qs_question_type,
       comment_likeCount: num(r.comment_likeCount),
       title: r.title || '',
+      channel_name: r.channel_name || '',
       qs_is_content_gap: isBool(r.qs_is_content_gap),
       qs_brand: r.qs_brand || '',
       weeksAgo: weeksAgo(r.published_at, maxDate),
     }));
 
-  return { questionTypeDist, byBrand, byVideo, topQuestions, clusters };
+  const enrichedClusters = clusters.map((c) => ({
+    ...c,
+    brand: getClusterBrand(c.content_ids, qsBase),
+    channel_name: getClusterChannel(c.content_ids, qsBase),
+  }));
+
+  return { questionTypeDist, byBrand, byVideo, topQuestions, clusters: enrichedClusters };
 }
 
 // ─── Hook ──────────────────────────────────────────────────────────────────────
@@ -393,43 +411,59 @@ export function useVSData({
   }, []);
 
   const maxDate = useMemo(() => getMaxDate(successRows), [successRows]);
+
+  // Base filtered sets — defined once after loading, used exclusively downstream
+  const piRows = useMemo(
+    () => successRows.filter((r) => isBool(r.pi_detected) && r.pi_stage !== 'post_purchase'),
+    [successRows]
+  );
+  const unRows = useMemo(
+    () => successRows.filter((r) => isBool(r.un_detected) && r.un_need_type !== 'none'),
+    [successRows]
+  );
+  const qsRows = useMemo(
+    () => successRows.filter((r) => isBool(r.qs_is_question) && r.qs_question_type !== 'none'),
+    [successRows]
+  );
+
+
   const intentN = useMemo(() => weekToN(intentWeek), [intentWeek]);
   const needsN = useMemo(() => weekToN(needsWeek), [needsWeek]);
   const questionsN = useMemo(() => weekToN(questionsWeek), [questionsWeek]);
 
   const kpiSummary = useMemo(
-    () => computeKpiSummary(successRows, brand, 'all', maxDate),
-    [successRows, brand, maxDate]
+    () => computeKpiSummary(successRows, piRows, unRows, qsRows, brand, 'all', maxDate),
+    [successRows, piRows, unRows, qsRows, brand, maxDate]
   );
 
   const intentKpi = useMemo(
-    () => computeKpiSummary(successRows, brand, intentN, maxDate),
-    [successRows, brand, intentN, maxDate]
+    () => computeKpiSummary(successRows, piRows, unRows, qsRows, brand, intentN, maxDate),
+    [successRows, piRows, unRows, qsRows, brand, intentN, maxDate]
   );
 
   const needsKpi = useMemo(
-    () => computeKpiSummary(successRows, brand, needsN, maxDate),
-    [successRows, brand, needsN, maxDate]
+    () => computeKpiSummary(successRows, piRows, unRows, qsRows, brand, needsN, maxDate),
+    [successRows, piRows, unRows, qsRows, brand, needsN, maxDate]
   );
 
   const questionsKpi = useMemo(
-    () => computeKpiSummary(successRows, brand, questionsN, maxDate),
-    [successRows, brand, questionsN, maxDate]
+    () => computeKpiSummary(successRows, piRows, unRows, qsRows, brand, questionsN, maxDate),
+    [successRows, piRows, unRows, qsRows, brand, questionsN, maxDate]
   );
 
   const purchaseIntentData = useMemo(
-    () => computePurchaseIntentData(successRows, brand, intentN, maxDate),
-    [successRows, brand, intentN, maxDate]
+    () => computePurchaseIntentData(piRows, brand, intentN, maxDate),
+    [piRows, brand, intentN, maxDate]
   );
 
   const unmetNeedsData = useMemo(
-    () => computeUnmetNeedsData(successRows, brand, needsN, maxDate),
-    [successRows, brand, needsN, maxDate]
+    () => computeUnmetNeedsData(unRows, brand, needsN, maxDate),
+    [unRows, brand, needsN, maxDate]
   );
 
   const recurringQuestionsData = useMemo(
-    () => computeRecurringQuestionsData(successRows, brand, questionsN, maxDate, clusters),
-    [successRows, brand, questionsN, maxDate, clusters]
+    () => computeRecurringQuestionsData(qsRows, brand, questionsN, maxDate, clusters),
+    [qsRows, brand, questionsN, maxDate, clusters]
   );
 
   return {

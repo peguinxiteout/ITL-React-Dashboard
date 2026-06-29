@@ -757,16 +757,16 @@ function KeyInsightsCard({
   ];
 
   const cmsBullets: { color: string; text: string }[] = [
-    { color: '#1D4ED8', text: `${cmsStateA.tractorCount} of ${cmsStateA.totalCount} tracked videos are tractor content this week (${cmsStateA.densityPct}%).` },
+    { color: '#1D4ED8', text: `${cmsStateA.tractorCount} of ${cmsStateA.totalCount} tracked videos are tractor content in this window (${cmsStateA.densityPct}%).` },
     ...(cmsStateA.totalBrands > 0 ? [{ color: cmsStateA.sonRankColor, text: `Sonalika holds ${cmsStateA.sonalikaSoV}% content share, ranked ${cmsStateA.sonRank} of ${cmsStateA.totalBrands} brands — ${cmsStateA.leaderName} leads at ${cmsStateA.leaderSoV}%, a ${cmsStateA.gap}pp gap.` }] : []),
-    ...(cmsStateA.topSubCat ? [{ color: '#1D4ED8', text: `${cmsStateA.topSubCatPct}% of Sonalika's videos this week are ${cmsStateA.topSubCat} content.` }] : []),
+    ...(cmsStateA.topSubCat ? [{ color: '#1D4ED8', text: `${cmsStateA.topSubCatPct}% of Sonalika's videos in this window are ${cmsStateA.topSubCat} content.` }] : []),
   ];
 
   const voiBullets: { color: string; text: string }[] = [
     { color: voiStateA.sentColor, text: `Sonalika's creator sentiment is ${voiStateA.positivePct}% positive and ${voiStateA.negativePct}% negative across ${voiStateA.totalEntries} sentiment signals.` },
-    ...(voiStateA.topPraisedFeature ? [{ color: '#639922', text: `${voiStateA.topPraisedFeature} is the most praised feature — ${voiStateA.topPraisedCount} positive signal${voiStateA.topPraisedCount !== 1 ? 's' : ''} from creators this week.` }] : []),
-    ...(voiStateA.topCriticisedCount > 0 ? [{ color: '#EF9F27', text: `${voiStateA.topCriticisedFeature} has the most critical signals — ${voiStateA.topCriticisedCount} negative mention${voiStateA.topCriticisedCount !== 1 ? 's' : ''} flagged this week.` }] : []),
-    { color: '#1D4ED8', text: `${voiStateA.activeCreators} creator${voiStateA.activeCreators !== 1 ? 's' : ''} mentioned Sonalika in tractor content this week.` },
+    ...(voiStateA.topPraisedFeature ? [{ color: '#639922', text: `${voiStateA.topPraisedFeature} is the most praised feature — ${voiStateA.topPraisedCount} positive signal${voiStateA.topPraisedCount !== 1 ? 's' : ''} from creators in this window.` }] : []),
+    ...(voiStateA.topCriticisedCount > 0 ? [{ color: '#EF9F27', text: `${voiStateA.topCriticisedFeature} has the most critical signals — ${voiStateA.topCriticisedCount} negative mention${voiStateA.topCriticisedCount !== 1 ? 's' : ''} flagged in this window.` }] : []),
+    { color: '#1D4ED8', text: `${voiStateA.activeCreators} creator${voiStateA.activeCreators !== 1 ? 's' : ''} mentioned Sonalika in tractor content in this window.` },
   ];
 
   const cpBullets: { color: string; text: string }[] = [
@@ -841,7 +841,7 @@ function KeyInsightsCard({
               sub={`${cms.inactiveCount} of 52 channels inactive this window`}
             />
           </div>
-          {!cmsTrend && <KiStateABullets items={cmsBullets} />}
+          <KiStateABullets items={cmsBullets} />
           {cmsTrend && (
             <>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginBottom: 10 }}>
@@ -898,7 +898,7 @@ function KeyInsightsCard({
         <KiSignalCard bg="#E6F1FB" textColor="#0C447C" icon={<VideoIcon size={14} />} headline="Top creator: Amaan Mirza Rides" sub="Highest engagement score · 100% Sonalika relevance" />
         <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<MegaphoneIcon size={14} />} headline="North India dominates coverage" sub="UP, Haryana, Punjab channels highest Sonalika density" />
       </div>
-      {!hasPrevData && <KiStateABullets items={voiBullets} />}
+      <KiStateABullets items={voiBullets} />
 
       {kiDivider}
 
@@ -915,7 +915,7 @@ function KeyInsightsCard({
         <KiSignalCard bg="#EAF3DE" textColor="#085041" icon={<TrendingUpIcon size={14} />} headline="Price wins in direct comparisons" sub="Cited favourably vs Mahindra & Swaraj" />
         <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<TrendingDownIcon size={14} />} headline="Build quality gap vs competitors" sub="Competitors score higher on build quality in comparisons" />
       </div>
-      {!showCPStateB && <KiStateABullets items={cpBullets} />}
+      <KiStateABullets items={cpBullets} />
       {showCPStateB && (
         <>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginBottom: 10 }}>
@@ -992,7 +992,7 @@ function KeyInsightsCard({
               sub={vs.topUn && vs.topUnCount > 0 ? `${vs.topUnCount} comment${vs.topUnCount !== 1 ? 's' : ''} flagged this need` : ''}
             />
           </div>
-          {!hasPrevData && <KiStateABullets items={vsBullets} />}
+          <KiStateABullets items={vsBullets} />
         </>
       )}
     </section>

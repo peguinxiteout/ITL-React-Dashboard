@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   LineChart,
   Line,
@@ -69,6 +69,21 @@ brand.isOwn ? SONALIKA_TREND_COLOR : brand.color;
 // "2026-W24" → "W24" — fallback when no date map provided
 const weekLabel = (week: string): string => week.replace(/^\d{4}-/, '');
 
+function getChartTicks(dates: string[]): string[] {
+  if (!dates || dates.length === 0) return [];
+  if (dates.length <= 8) return dates;
+  const maxTicks = 8;
+  const step = (dates.length - 1) / (maxTicks - 1);
+  const ticks: string[] = [];
+  for (let i = 0; i < maxTicks; i++) {
+    const index = Math.round(i * step);
+    ticks.push(dates[Math.min(index, dates.length - 1)]);
+  }
+  ticks[0] = dates[0];
+  ticks[ticks.length - 1] = dates[dates.length - 1];
+  return [...new Set(ticks)];
+}
+
 function MetricPills({
   options,
   value,
@@ -130,9 +145,6 @@ function TrendChart({
         })
       : weeks;
 
-  // Show every other x-axis label when there are many weeks to avoid crowding.
-  const tickInterval = filteredWeeks.length > 4 ? 1 : 0;
-
   // Pivot: one row per week, one column per brand holding that week's share.
   const byKey = new Map<string, number>();
   weeklySoV.forEach((r) => byKey.set(`${r.brand}__${r.week}`, r[field]));
@@ -151,6 +163,12 @@ function TrendChart({
     return point;
   });
 
+  // Compute evenly-spaced tick labels (max 8, always first + last).
+  const chartTicks = getChartTicks(filteredWeeks).map((w) => {
+    const iso = weekFirstDates?.[w];
+    return iso ? formatShort(iso) : weekLabel(w);
+  });
+
   // With a single data point no line segments exist — show dots for every
   // brand so the chart isn't empty on the 1-week preset.
   const singlePoint = data.length === 1;
@@ -163,10 +181,11 @@ function TrendChart({
 
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 12, fill: '#64748b' }}
+            ticks={chartTicks}
+            interval={0}
+            tick={{ fontSize: 11, fill: '#64748b' }}
             tickLine={false}
             axisLine={{ stroke: '#e2e8f0' }}
-            interval={tickInterval}
           />
 
           <YAxis
@@ -219,7 +238,7 @@ export function ShareTrendCharts({
   const [sovMetric, setSovMetric] = useState<ShareField>('sov_views');
   const [soeMetric, setSoeMetric] = useState<ShareField>('soe');
   return (
-    <SectionCard title="Share trends" subtitle="Weekly SoV and SoE by brand">
+    <SectionCard title="Share trends" subtitle="Daily SoV and SoE by brand">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_auto_1fr] lg:gap-5">
         {/* Left column: Share of Voice */}
         <div>
