@@ -181,6 +181,32 @@ function normalizeTractorSubCategory(value: unknown): string {
   return categoryMap[key] || '';
 }
 
+function cleanMetadataText(value: unknown, fallback = 'Not available', maxLength = 72): string {
+  const text = String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!text) return fallback;
+
+  const questionMarkCount = (text.match(/\?/g) || []).length;
+  const alphaNumericCount = (text.match(/[a-zA-Z0-9]/g) || []).length;
+
+  if (questionMarkCount >= 2 && alphaNumericCount === 0) return fallback;
+
+  return text.length > maxLength ? `${text.slice(0, maxLength - 3).trim()}...` : text;
+}
+
+function formatContentTypeFromRow(row: KpiRow | undefined): string {
+  if (!row) return 'Not available';
+
+  const rawCategory = (row as KpiRow & { tractor_sub_category?: string }).tractor_sub_category;
+  const normalizedCategory = normalizeTractorSubCategory(rawCategory);
+
+  if (normalizedCategory) return normalizedCategory;
+
+  return cleanMetadataText(rawCategory, 'Not available', 48);
+}
+
 const FEATURE_KEYWORD_MAP: Record<string, string[]> = {
   'Engine Performance': [
     'engine',
@@ -613,10 +639,7 @@ export function getSentimentRecords(rows: KpiRow[]): SentimentRecord[] {
           sentence: String(item.Sentence || item.sentence || '').trim(),
           geoState: row.geo_state || '',
           geoCity: row.geo_city || '',
-          contentType:
-            normalizeTractorSubCategory(
-              (row as KpiRow & { tractor_sub_category?: string }).tractor_sub_category
-            ) || 'Not available',
+          contentType: formatContentTypeFromRow(row),
           videoTitle: row.title || row.filename || 'Not available',
         });
       });
@@ -950,10 +973,77 @@ function formatMetadataRegion(rowOrRecord: KpiRow | SentimentRecord | undefined)
   if (!rowOrRecord) return 'Not available';
 
   const region = formatGeoRegion(rowOrRecord);
-  return region || 'Not available';
+  return cleanMetadataText(region, 'Not available', 48);
 }
 
-function buildVerbatimMetadataFromRecord(record?: SentimentRecord) {
+function getCreatorRegionSummary(
+  rows: KpiRow[],
+  creator: string,
+  fallbackRegion: string,
+  scopedBrand?: string
+): string {
+  const cleanedCreator = cleanCreatorName(creator);
+
+  if (!cleanedCreator) {
+    return cleanMetadataText(fallbackRegion, 'Not available', 48);
+  }
+
+  const regionScores = new Map<string, { count: number; engagement: number }>();
+
+  getVideoLevelRows(rows).forEach((row) => {
+    const rowCreator = cleanCreatorName(row.channelTitle);
+
+    if (rowCreator.toLowerCase() !== cleanedCreator.toLowerCase()) return;
+
+    // Keep metadata aligned with the same brand context shown in the card.
+    // Example: for Sonalika-side cards, use only Sonalika-related rows for this creator.
+    // This prevents the same creator from showing different regions taken from unrelated videos.
+    if (scopedBrand && !rowMentionsBrand(row, scopedBrand)) return;
+
+    const region = formatMetadataRegion(row);
+
+    if (
+      !region ||
+      region === 'Not available' ||
+      region.toLowerCase() === 'unknown' ||
+      region.toLowerCase() === 'india'
+    ) {
+      return;
+    }
+
+    if (!regionScores.has(region)) {
+      regionScores.set(region, { count: 0, engagement: 0 });
+    }
+
+    const item = regionScores.get(region)!;
+    item.count += 1;
+    item.engagement +=
+      toNumber(row.views) + toNumber(row.likeCount) + toNumber(row.comment_count);
+  });
+
+  if (!regionScores.size) {
+    return cleanMetadataText(fallbackRegion, 'Not available', 48);
+  }
+
+  const rankedRegions = Array.from(regionScores.entries()).sort((a, b) => {
+    const countDiff = b[1].count - a[1].count;
+    if (countDiff !== 0) return countDiff;
+
+    const engagementDiff = b[1].engagement - a[1].engagement;
+    if (engagementDiff !== 0) return engagementDiff;
+
+    return a[0].localeCompare(b[0]);
+  });
+
+  // Show one high-confidence region only. If a creator has rows in multiple states,
+  // choose the state with the strongest brand-scoped evidence, then engagement.
+  return rankedRegions[0]?.[0] || cleanMetadataText(fallbackRegion, 'Not available', 48);
+}
+
+function buildVerbatimMetadataFromRecord(
+  record?: SentimentRecord,
+  rows: KpiRow[] = []
+) {
   if (!record) {
     return {
       content_type: 'Not available',
@@ -963,12 +1053,28 @@ function buildVerbatimMetadataFromRecord(record?: SentimentRecord) {
     };
   }
 
+  const creator = cleanCreatorName(record.channelTitle) || 'Not available';
+  const region = rows.length
+    ? getCreatorRegionSummary(rows, creator, formatMetadataRegion(record), record.brand)
+    : formatMetadataRegion(record);
+
   return {
     content_type: record.contentType || 'Not available',
     video_title: cleanShortText(record.videoTitle),
-    creator: cleanCreatorName(record.channelTitle) || 'Not available',
-    region: formatMetadataRegion(record),
+    creator,
+    region,
   };
+}
+
+function metadataCompletenessScore(row: KpiRow): number {
+  let score = 0;
+
+  if (formatContentTypeFromRow(row) !== 'Not available') score += 12;
+  if (cleanCreatorName(row.channelTitle)) score += 10;
+  if (formatMetadataRegion(row) !== 'Not available') score += 10;
+  if (row.title || row.filename) score += 4;
+
+  return score;
 }
 
 function findBrandMetadataSource(
@@ -978,32 +1084,47 @@ function findBrandMetadataSource(
   preferredRecord?: SentimentRecord
 ): ReturnType<typeof buildVerbatimMetadataFromRecord> {
   if (preferredRecord) {
-    return buildVerbatimMetadataFromRecord(preferredRecord);
+    return buildVerbatimMetadataFromRecord(preferredRecord, rows);
   }
 
   const featureKeywords = FEATURE_KEYWORD_MAP[feature] || [feature];
 
-  const sourceRow = getVideoLevelRows(rows)
+  const candidates = getVideoLevelRows(rows)
     .filter((row) => isTractorCategory(row) && rowMentionsBrand(row, brand))
-    .find((row) => {
+    .map((row) => {
       const searchableText = rowSearchableText(row);
-      return featureKeywords.some((keyword) =>
+      const hasFeatureKeyword = featureKeywords.some((keyword) =>
         searchableText.includes(keyword.toLowerCase())
       );
-    });
+      const detectedBrands = normalizeBrandList(row.detected_brands_from_transcript)
+        .map((item) => item.toLowerCase());
+      const exactBrandInDetectedList = detectedBrands.includes(
+        normalizeBrandName(brand).toLowerCase()
+      );
+
+      let score = metadataCompletenessScore(row);
+
+      if (hasFeatureKeyword) score += 30;
+      if (exactBrandInDetectedList) score += 18;
+      if (rowMentionsBrand(row, brand)) score += 8;
+
+      return { row, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  const sourceRow = candidates[0]?.row;
 
   if (!sourceRow) {
     return buildVerbatimMetadataFromRecord(undefined);
   }
 
+  const creator = cleanCreatorName(sourceRow.channelTitle) || 'Not available';
+
   return {
-    content_type:
-      normalizeTractorSubCategory(
-        (sourceRow as KpiRow & { tractor_sub_category?: string }).tractor_sub_category
-      ) || 'Not available',
+    content_type: formatContentTypeFromRow(sourceRow),
     video_title: cleanShortText(sourceRow.title || sourceRow.filename),
-    creator: cleanCreatorName(sourceRow.channelTitle) || 'Not available',
-    region: formatMetadataRegion(sourceRow),
+    creator,
+    region: getCreatorRegionSummary(rows, creator, formatMetadataRegion(sourceRow), brand),
   };
 }
 
