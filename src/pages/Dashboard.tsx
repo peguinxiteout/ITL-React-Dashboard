@@ -2,9 +2,8 @@ import { ChangeEvent, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   VideoIcon, TractorIcon, TagIcon,
-  MegaphoneIcon, HeartHandshakeIcon, CalendarIcon,
+  MegaphoneIcon, HeartHandshakeIcon,
   SmileIcon, ShoppingCartIcon, TrendingUpIcon, TrendingDownIcon,
-  AlertCircleIcon, HelpCircleIcon,
 } from 'lucide-react';
 
 import { DashboardHeader } from '../components/DashboardHeader';
@@ -320,40 +319,6 @@ function BrandChannelHeatmap({ data, loading }: { data: BrandChannelRow[]; loadi
 }
 
 // ─── Key Insights helpers ─────────────────────────────────────────────────────
-function KiDeltaBadge({ delta, suffix = 'pp' }: { delta: number; suffix?: string }) {
-  const color = delta > 0 ? '#16a34a' : delta < 0 ? '#dc2626' : '#94a3b8';
-  const bg = delta > 0 ? '#f0fdf4' : delta < 0 ? '#fef2f2' : '#f8fafc';
-  const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '▬';
-  return (
-    <span style={{ background: bg, color, fontSize: 10, fontWeight: 500, padding: '1px 6px', borderRadius: 10, whiteSpace: 'nowrap' }}>
-      {arrow} {Math.abs(delta).toFixed(1)}{suffix}
-    </span>
-  );
-}
-
-function KiMetricCard({
-  icon, label, value, subtitle, delta, deltaSuffix = 'pp',
-}: {
-  icon: React.ReactNode; label: string; value: string; subtitle: string;
-  delta?: number; deltaSuffix?: string;
-}) {
-  return (
-    <div style={{ background: 'var(--color-background-secondary, #f8fafc)', borderRadius: 12, padding: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ color: '#94a3b8', display: 'flex' }}>{icon}</span>
-          <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.07em', color: '#94a3b8', textTransform: 'uppercase' }}>
-            {label}
-          </span>
-        </div>
-        {delta !== undefined && <KiDeltaBadge delta={delta} suffix={deltaSuffix} />}
-      </div>
-      <p style={{ fontSize: 30, fontWeight: 500, color: '#0f172a', lineHeight: 1, margin: '0 0 6px 0' }}>{value}</p>
-      <p style={{ fontSize: 12, color: '#94a3b8', margin: 0 }}>{subtitle}</p>
-    </div>
-  );
-}
-
 function KiSignalCard({
   bg, textColor, icon, headline, sub,
 }: {
@@ -497,6 +462,15 @@ function KeyInsightsCard({
     const tractorDensity = totalVideoCount > 0 ? (tractorVideoCount / totalVideoCount) * 100 : 0;
     const activeChannelCount = new Set(allWin.map((r) => r.channel_name).filter(Boolean)).size;
     const inactiveCount = Math.max(0, 52 - activeChannelCount);
+    const categoryBreakdown = computeCategoryData(allData, startDate, endDate);
+    const otherCategories = categoryBreakdown.filter((c) => c.category !== 'Tractor');
+    const sortedCategories = [
+      ...otherCategories.filter((c) => c.category !== 'Others').sort((a, b) => b.count - a.count),
+      ...otherCategories.filter((c) => c.category === 'Others'),
+    ];
+    const densitySubtitle = sortedCategories
+      .map((c) => `${c.category} ${c.percentage.toFixed(1)}%`)
+      .join(' · ');
 
     let prevSov: number | null = null;
     let prevSoe: number | null = null;
@@ -521,22 +495,17 @@ function KeyInsightsCard({
 
     return {
       sov, soe, pubRate, sonRank, numBrands, topBrand, gapToTop, sovSoeGap: sov - soe,
-      topCh, topChCount, tractorDensity, inactiveCount,
+      topCh, topChCount, tractorDensity, inactiveCount, densitySubtitle,
       prevSov, prevSoe, prevPubRate, prevTractorDensity,
     };
   }, [cmsData, allData, startDate, endDate, numDays, hasPrevData, prevStartIso, prevEndIso]);
 
   const vs = useMemo(() => {
     const isBool = (v: any) => v === true || v === 'True' || v === 'true';
-    const total = successRows.length;
     const piRows = successRows.filter((r) => isBool(r.pi_detected));
     const unRows = successRows.filter((r) => isBool(r.un_detected));
     const qsRows = successRows.filter((r) => isBool(r.qs_is_question));
     const lostSaleCount = successRows.filter((r) => isBool(r.pi_is_lost_sale)).length;
-
-    const piRate = total > 0 ? (piRows.length / total) * 100 : 0;
-    const unRate = total > 0 ? (unRows.length / total) * 100 : 0;
-    const qsRate = total > 0 ? (qsRows.length / total) * 100 : 0;
 
     const stageCounts: Record<string, number> = {};
     for (const r of piRows) {
@@ -569,7 +538,7 @@ function KeyInsightsCard({
     };
     const topPiLabel = PI_LABELS[topPiStage] || topPiStage.replace(/_/g, ' ');
 
-    return { piRate, unRate, qsRate, piCount: piRows.length, lostSaleCount, topPiStage, topPiLabel, topQs, topUn, topUnCount };
+    return { piCount: piRows.length, lostSaleCount, topPiStage, topPiLabel, topQs, topUn, topUnCount };
   }, [successRows]);
 
   // CMS trend data for State B
@@ -622,6 +591,24 @@ function KeyInsightsCard({
     const gap = Math.abs(parseFloat(leaderSoV) - parseFloat(sonalikaSoV)).toFixed(1);
     const sonRankColor = sonRank <= 3 ? '#639922' : '#EF9F27';
 
+    // Publishing consistency — reuses the same per-brand × per-day video counts
+    // (winBranded / brandVidMap) that drive the Content Frequency heatmap footer.
+    const totalWindowDays = numDays;
+    const sonalikaActiveDays = new Set(
+      winBranded.filter((r: any) => r.attributed_brand === 'Sonalika').map((r: any) => r.publish_date)
+    ).size;
+    let mostActiveCompetitor = '';
+    let mostActiveRate = 0;
+    for (const [brand, vids] of brandVidMap.entries()) {
+      if (brand === 'Sonalika') continue;
+      const rate = totalWindowDays > 0 ? vids.size / totalWindowDays : 0;
+      if (rate > mostActiveRate) {
+        mostActiveRate = rate;
+        mostActiveCompetitor = brand;
+      }
+    }
+    const mostActiveRateFmt = mostActiveRate.toFixed(1);
+
     // SubCategory still reads from allWin — attributed_brand is already set on each row
     const seenSon = new Set<string>();
     const subCats: Record<string, number> = {};
@@ -636,8 +623,12 @@ function KeyInsightsCard({
     const topSubCat = topSubCatEntry?.[0] || '';
     const topSubCatPct = sonVideoCount > 0 && topSubCatEntry ? ((topSubCatEntry[1] / sonVideoCount) * 100).toFixed(1) : '0.0';
 
-    return { tractorCount, totalCount, densityPct, sonalikaSoV, sonRank, totalBrands, leaderName, leaderSoV, gap, sonRankColor, topSubCat, topSubCatPct };
-  }, [cmsData, allData, startDate, endDate]);
+    return {
+      tractorCount, totalCount, densityPct, sonalikaSoV, sonRank, totalBrands, leaderName, leaderSoV, gap, sonRankColor,
+      topSubCat, topSubCatPct,
+      totalWindowDays, sonalikaActiveDays, mostActiveCompetitor, mostActiveRate: mostActiveRateFmt,
+    };
+  }, [cmsData, allData, startDate, endDate, numDays]);
 
   const voiStateA = useMemo(() => {
     const sonalikaSentiment = calculateBrandLevelSentiment(kpiRows).find(
@@ -766,7 +757,7 @@ function KeyInsightsCard({
 
   const cmsBullets: { color: string; text: string }[] = [
     { color: '#1D4ED8', text: `${cmsStateA.tractorCount} of ${cmsStateA.totalCount} tracked videos are tractor content in this window (${cmsStateA.densityPct}%).` },
-    ...(cmsStateA.totalBrands > 0 ? [{ color: cmsStateA.sonRankColor, text: `Sonalika holds ${cmsStateA.sonalikaSoV}% content share, ranked ${cmsStateA.sonRank} of ${cmsStateA.totalBrands} brands — ${cmsStateA.leaderName} leads at ${cmsStateA.leaderSoV}%, a ${cmsStateA.gap}pp gap.` }] : []),
+    ...(cmsStateA.mostActiveCompetitor ? [{ color: '#1D4ED8', text: `Sonalika published on ${cmsStateA.sonalikaActiveDays} of ${cmsStateA.totalWindowDays} days this window — ${cmsStateA.mostActiveCompetitor} was most active at ${cmsStateA.mostActiveRate}/day.` }] : []),
     ...(cmsStateA.topSubCat ? [{ color: '#1D4ED8', text: `${cmsStateA.topSubCatPct}% of Sonalika's videos in this window are ${cmsStateA.topSubCat} content.` }] : []),
   ];
 
@@ -802,24 +793,6 @@ function KeyInsightsCard({
       ) : (
         <>
           <KiModuleHeader pillBg="#E6F1FB" pillText="#0C447C" moduleName="Content Market Share" question="How visible is Sonalika?" tabKey="market-share" setActiveTab={setActiveTab} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 12 }}>
-            <KiMetricCard
-              icon={<MegaphoneIcon size={15} />} label="SHARE OF VOICE"
-              value={`${cms.sov.toFixed(1)}%`} subtitle="by unique video count"
-              delta={hasPrevData && cms.prevSov != null ? cms.sov - cms.prevSov : undefined}
-            />
-            <KiMetricCard
-              icon={<HeartHandshakeIcon size={15} />} label="SHARE OF ENGAGEMENT"
-              value={`${cms.soe.toFixed(1)}%`} subtitle="views + likes + comments"
-              delta={hasPrevData && cms.prevSoe != null ? cms.soe - cms.prevSoe : undefined}
-            />
-            <KiMetricCard
-              icon={<CalendarIcon size={15} />} label="PUBLISH RATE"
-              value={`${cms.pubRate.toFixed(2)}/wk`} subtitle="Sonalika videos per week"
-              delta={hasPrevData && cms.prevPubRate != null ? cms.pubRate - cms.prevPubRate : undefined}
-              deltaSuffix="/wk"
-            />
-          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: cmsTrend ? 12 : 0 }}>
             <KiSignalCard
               bg="#E6F1FB" textColor="#0C447C"
@@ -844,7 +817,7 @@ function KeyInsightsCard({
               bg="#FAEEDA" textColor="#633806"
               icon={<TractorIcon size={14} />}
               headline={`${cms.tractorDensity.toFixed(1)}% tractor content density`}
-              sub={`${cms.inactiveCount} of 52 channels inactive this window`}
+              sub={cms.densitySubtitle}
             />
           </div>
           <KiStateABullets items={cmsBullets} />
@@ -921,12 +894,6 @@ function KeyInsightsCard({
         <p style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center' }}>Loading…</p>
       ) : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 4 }}>
-            <KiMetricCard icon={<ShoppingCartIcon size={15} />} label="PURCHASE INTENT RATE" value={`${vs.piRate.toFixed(1)}%`} subtitle="buying / shortlist / dealer signals" />
-            <KiMetricCard icon={<AlertCircleIcon size={15} />} label="UNMET NEEDS RATE" value={`${vs.unRate.toFixed(1)}%`} subtitle="product, service, pricing gaps" />
-            <KiMetricCard icon={<HelpCircleIcon size={15} />} label="RECURRING QUESTIONS" value={`${vs.qsRate.toFixed(1)}%`} subtitle="questions detected in comments" />
-          </div>
-          <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 12px 0', fontStyle: 'italic' }}>based on full comment corpus</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <KiSignalCard
               bg="#EAF3DE" textColor="#085041"
@@ -939,7 +906,7 @@ function KeyInsightsCard({
               textColor={vs.lostSaleCount > 0 ? '#991b1b' : '#085041'}
               icon={vs.lostSaleCount > 0 ? <TrendingDownIcon size={14} /> : <TrendingUpIcon size={14} />}
               headline={vs.lostSaleCount > 0 ? `${vs.lostSaleCount} lost-sale signal${vs.lostSaleCount !== 1 ? 's' : ''} detected` : 'No lost-sale signals detected'}
-              sub={vs.lostSaleCount > 0 ? 'Review these comments for retention opportunities' : 'All purchase-intent comments are acquisition-positive'}
+              sub={vs.lostSaleCount > 0 ? `${vs.lostSaleCount} comment${vs.lostSaleCount === 1 ? '' : 's'} cite a competitor as the final choice` : 'All purchase-intent comments are acquisition-positive'}
             />
             <KiSignalCard
               bg="#FAEEDA" textColor="#633806"

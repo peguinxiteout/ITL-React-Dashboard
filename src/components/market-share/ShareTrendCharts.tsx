@@ -237,8 +237,35 @@ export function ShareTrendCharts({
 }: ShareTrendChartsProps) {
   const [sovMetric, setSovMetric] = useState<ShareField>('sov_views');
   const [soeMetric, setSoeMetric] = useState<ShareField>('soe');
+  const [selectedBrandName, setSelectedBrandName] = useState<string>(
+    () => brands.find((b) => b.isOwn)?.name ?? brands[0]?.name ?? ''
+  );
+  const selectedBrand = brands.find((b) => b.name === selectedBrandName) ?? brands[0];
+  const displayedBrands = selectedBrand ? [selectedBrand] : [];
   return (
-    <SectionCard title="Share trends" subtitle="Daily SoV and SoE by brand">
+    <SectionCard
+      title="Share trends"
+      subtitle="Daily SoV and SoE by brand"
+      actions={
+        <div className="flex items-center gap-2">
+          <label htmlFor="trend-brand-select" className="text-xs font-medium text-slate-600">
+            Brand
+          </label>
+          <select
+            id="trend-brand-select"
+            value={selectedBrandName}
+            onChange={(e) => setSelectedBrandName(e.target.value)}
+            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+
+            {brands.map((b) =>
+            <option key={b.name} value={b.name}>
+                {b.name}
+              </option>
+            )}
+          </select>
+        </div>
+      }>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_auto_1fr] lg:gap-5">
         {/* Left column: Share of Voice */}
         <div>
@@ -251,7 +278,7 @@ export function ShareTrendCharts({
             onChange={setSovMetric}
             groupLabel="Share of Voice metric" />
 
-          <TrendChart weeks={weeks} weeklySoV={weeklySoV} field={sovMetric} brands={brands} weekFirstDates={weekFirstDates} startDate={startDate} endDate={endDate} />
+          <TrendChart weeks={weeks} weeklySoV={weeklySoV} field={sovMetric} brands={displayedBrands} weekFirstDates={weekFirstDates} startDate={startDate} endDate={endDate} />
         </div>
 
         {/* Vertical divider */}
@@ -274,29 +301,8 @@ export function ShareTrendCharts({
             onChange={setSoeMetric}
             groupLabel="Share of Engagement metric" />
 
-          <TrendChart weeks={weeks} weeklySoV={weeklySoV} field={soeMetric} brands={brands} weekFirstDates={weekFirstDates} startDate={startDate} endDate={endDate} />
+          <TrendChart weeks={weeks} weeklySoV={weeklySoV} field={soeMetric} brands={displayedBrands} weekFirstDates={weekFirstDates} startDate={startDate} endDate={endDate} />
         </div>
-      </div>
-
-      {/* Shared brand legend spanning the full card width */}
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-slate-100 pt-3">
-        {brands.map((brand) =>
-        <span
-          key={brand.name}
-          className="flex items-center gap-1.5 text-xs text-slate-600">
-
-          <span
-            style={{
-              width: 18,
-              height: brand.isOwn ? 3 : 2,
-              borderRadius: 2,
-              backgroundColor: lineColor(brand)
-            }}
-            aria-hidden="true" />
-
-          {brand.name}
-        </span>
-        )}
       </div>
     </SectionCard>);
 

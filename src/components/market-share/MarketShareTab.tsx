@@ -157,10 +157,13 @@ export function MarketShareTab({
       .filter(Boolean)
       .sort() as string[];
 
-    // Dates present in the filtered window (for heatmap)
-    const windowDates = [...new Set(brandRows.map((r: any) => r.publish_date))]
-      .filter(Boolean)
-      .sort() as string[];
+    // Every date from startDate to endDate inclusive, regardless of data (for heatmap columns)
+    const windowDatesStartMs = dateToUtcMs(startDate);
+    const windowDatesEndMs = dateToUtcMs(endDate);
+    const windowDatesCount = Math.round((windowDatesEndMs - windowDatesStartMs) / MS_PER_DAY) + 1;
+    const windowDates = Array.from({ length: windowDatesCount }, (_, i) =>
+      utcMsToIso(windowDatesStartMs + i * MS_PER_DAY)
+    );
 
     // ── Period delta computation ──────────────────────────────────────────────
     // Period length = endDate − startDate (day difference, not inclusive count)
@@ -261,12 +264,6 @@ export function MarketShareTab({
     };
   }, [cmsData, startDate, endDate, selectedBrands, includeShorts]);
 
-  const trendBrands = derived.brandSummary.map((b: any) => ({
-    name: b.brand,
-    color: b.color,
-    isOwn: b.isOwn
-  }));
-
   const headerMeta = loading || error ? '' : derived.dataContext;
 
   return (
@@ -323,7 +320,7 @@ export function MarketShareTab({
             <ShareTrendCharts
             weeks={derived.windowWeeks}
             weeklySoV={derived.brandWeeklySoV}
-            brands={trendBrands}
+            brands={brandItems}
             weekFirstDates={derived.weekFirstDates}
             startDate={startDate}
             endDate={endDate} />

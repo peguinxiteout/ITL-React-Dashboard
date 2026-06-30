@@ -345,10 +345,6 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
   const totalQsCount = questionsKpi.qs_count;
   const unattributedQsCount = totalQsCount - brandedQsCount;
 
-  // Recurring question rate (Change 5)
-  const allClusterFrequencySum = clusters.reduce((sum, c) => sum + Number(c.frequency || 0), 0);
-  const recurringQuestionRate = totalQsCount > 0 ? ((allClusterFrequencySum / totalQsCount) * 100).toFixed(1) : '0.0';
-
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-5">
       {/* Header */}
@@ -948,7 +944,7 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
             subtitle="Grouped semantically-similar questions — click to expand"
           >
             {/* Headline metrics */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
                 <p className="text-xs text-slate-500">Recurring Clusters</p>
                 <p className="mt-0.5 text-2xl font-bold text-slate-900 tabular-nums">{recurringClustersCount}</p>
@@ -956,11 +952,6 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
               <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
                 <p className="text-xs text-slate-500">Most Asked (freq)</p>
                 <p className="mt-0.5 text-2xl font-bold text-slate-900 tabular-nums">{mostAskedFreq}</p>
-              </div>
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs text-slate-500">Recurring Question Rate</p>
-                <p className="mt-0.5 text-2xl font-bold text-slate-900 tabular-nums">{recurringQuestionRate}%</p>
-                <p className="mt-0.5 text-[11px] text-slate-400">of {totalQsCount} detected questions asked by multiple viewers</p>
               </div>
             </div>
             <div style={{ marginTop: 16, borderTop: '0.5px solid #e2e8f0' }} />

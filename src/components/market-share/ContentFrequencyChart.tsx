@@ -206,9 +206,7 @@ export function ContentFrequencyChart({
                   </td>
                   {row.data.map((value, colIdx) => {
                     const week = weeks[colIdx];
-                    const bgColor = isSonalika && value === 0 ?
-                    '#F3F4F6' :
-                    interpolateColor(value, 0, maxVal);
+                    const bgColor = interpolateColor(value, 0, maxVal);
                     const textColor = getTextColor(bgColor);
                     const prevValue = colIdx > 0 ? row.data[colIdx - 1] : null;
                     const delta = colIdx > 0 ? value - prevValue! : null;
@@ -250,7 +248,7 @@ export function ContentFrequencyChart({
                               textOverflow: 'ellipsis'
                             }}>
 
-                            {isSonalika && value === 0 ? '—' : value}
+                            {value}
                           </div>
                           {delta !== null && delta !== 0 &&
                           <div
@@ -264,19 +262,6 @@ export function ContentFrequencyChart({
 
                               {delta > 0 ? '▲' : '▼'}
                               {Math.abs(delta)}
-                            </div>
-                          }
-                          {isSonalika && value === 0 &&
-                          <div
-                            style={{
-                              fontSize: '9px',
-                              color: '#D85A30',
-                              marginTop: 1,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}>
-
-                              gap
                             </div>
                           }
                         </div>
@@ -369,9 +354,6 @@ export function ContentFrequencyChart({
                 vs previous day
               </div>
           }
-            {tooltip.isSonalika && tooltip.value === 0 &&
-          <div>Coverage gap — no creator published Sonalika content this day</div>
-          }
           </div>
         }
       </div>
@@ -388,11 +370,6 @@ export function ContentFrequencyChart({
         <span>
           Most active competitor: {mostActiveCompetitor?.name} ({mostActiveAvg.toFixed(1)}/day)
         </span>
-      </div>
-
-      {/* Footer caption */}
-      <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 8 }}>
-        Unique videos per brand per day. Amber-outlined Sonalika row highlights coverage gaps (—) where no creator published Sonalika content that day.
       </div>
     </SectionCard>);
 
