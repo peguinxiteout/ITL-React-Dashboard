@@ -278,18 +278,28 @@ export default function VoiceInfluencerTab() {
 
   const brandSentimentTableData = useMemo(
     () =>
-      brandSentiment.map((item) => {
-        const positive = Number(item.Positive_pct.toFixed(2));
-        const neutral = Number(item.Neutral_pct.toFixed(2));
-        const negative = Number(Math.max(0, 100 - positive - neutral).toFixed(2));
+      brandSentiment
+        .map((item) => {
+          const positive = Number(item.Positive_pct.toFixed(2));
+          const neutral = Number(item.Neutral_pct.toFixed(2));
+          const negative = Number(Math.max(0, 100 - positive - neutral).toFixed(2));
 
-        return {
-          ...item,
-          Positive_pct: positive,
-          Neutral_pct: neutral,
-          Negative_pct: negative,
-        };
-      }),
+          return {
+            ...item,
+            Positive_pct: positive,
+            Neutral_pct: neutral,
+            Negative_pct: negative,
+          };
+        })
+        .sort((a, b) => {
+          const aBrand = String(a.brand || '').toLowerCase();
+          const bBrand = String(b.brand || '').toLowerCase();
+
+          if (aBrand === 'sonalika') return -1;
+          if (bBrand === 'sonalika') return 1;
+
+          return b.total_mentions - a.total_mentions;
+        }),
     [brandSentiment]
   );
 
@@ -355,6 +365,32 @@ export default function VoiceInfluencerTab() {
         totalMentions: item.total_mentions,
       })),
     [selectedFeatureTopBrands]
+  );
+
+  const topCompetitorByFeature = useMemo(
+    () =>
+      featureSentimentChartData
+        .map((item) => {
+          const topBrand = calculateTopPositiveBrandsForFeature(
+            rows,
+            item.feature,
+            1,
+            selectedBrand
+          )[0];
+
+          return topBrand
+            ? {
+                feature: item.feature,
+                brand: topBrand.brand,
+                positivePct: Number(topBrand.Positive_pct.toFixed(1)),
+              }
+            : null;
+        })
+        .filter(
+          (item): item is { feature: string; brand: string; positivePct: number } =>
+            Boolean(item)
+        ),
+    [rows, selectedBrand, featureSentimentChartData]
   );
 
   const handleFeatureClick = (feature?: string) => {
@@ -533,15 +569,14 @@ export default function VoiceInfluencerTab() {
           Voice of Influencer
         </h1>
 
+
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 p-5 shadow-sm">
             <p className="text-sm font-semibold text-slate-500">Videos Analyzed</p>
             <p className="mt-2 text-3xl font-bold text-blue-900">
               {voiceKpiCards.videos_analyzed.toLocaleString()}
             </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Total video-level records used for KPI calculations.
-            </p>
+            
             <p className="mt-1 text-xs font-semibold text-blue-800">
               Tractor videos: {voiceKpiCards.tractor_videos_analyzed.toLocaleString()}
             </p>
@@ -552,9 +587,7 @@ export default function VoiceInfluencerTab() {
             <p className="mt-2 text-3xl font-bold text-blue-900">
               {voiceKpiCards.brands_detected.toLocaleString()}
             </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Unique tractor brands identified from transcripts and metadata.
-            </p>
+            
           </div>
 
           <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 p-5 shadow-sm">
@@ -562,21 +595,23 @@ export default function VoiceInfluencerTab() {
             <p className="mt-2 text-3xl font-bold text-blue-900">
               {voiceKpiCards.date_range}
             </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Posting period covered by the current dashboard dataset.
-            </p>
+           
           </div>
         </div>
       </div>
 
       <SectionCard
         title="Tractor Content Category Split"
-        subtitle="Total tractor videos vs Sonalika tractor videos across the selected content categories."
       >
         {tractorContentCategoryData.length > 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-              
+              <div>
+                <h3 className="text-base font-bold text-slate-950">
+                  Tractor Video Category Distribution
+                </h3>
+                
+              </div>
               <div className="flex flex-wrap items-center gap-4 text-xs">
                 <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
                   <span
@@ -723,12 +758,18 @@ export default function VoiceInfluencerTab() {
       >
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <SentimentLegend />
+          
         </div>
 
         {featureSentimentChartData.length > 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300">
             <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div>
+                <h3 className="text-base font-bold text-slate-950">
+                  {selectedFeature
+                    ? `${selectedFeature} Positive Sentiment Benchmark`
+                    : `Feature Sentiment Comparison — ${selectedBrand}`}
+                </h3>
                 <p className="text-sm text-slate-500">
                   {selectedFeature
                     ? `Comparing ${selectedBrand} with the top 3 other tractor brands for this feature.`
@@ -748,6 +789,7 @@ export default function VoiceInfluencerTab() {
             </div>
 
             {!selectedFeature ? (
+              <>
               <div className="h-[455px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
@@ -834,6 +876,32 @@ export default function VoiceInfluencerTab() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+
+              {topCompetitorByFeature.length > 0 ? (
+                <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+                  <div className="mb-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-blue-700">
+                      Top competitor positive benchmark by feature
+                    </p>
+                    
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                    {topCompetitorByFeature.map((item) => (
+                      <div
+                        key={`${item.feature}-${item.brand}`}
+                        className="rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs shadow-sm"
+                      >
+                        <p className="font-bold text-slate-950">{item.feature}</p>
+                        <p className="mt-1 text-blue-700">
+                          {item.brand} · {item.positivePct.toFixed(1)}% positive
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              </>
             ) : (
               <div className="overflow-x-auto">
                 <div
@@ -1102,13 +1170,11 @@ export default function VoiceInfluencerTab() {
         {mostMentionedVerbatims.length > 0 ? (
           <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4">
-             
+              
               <h3 className="mt-2 text-lg font-bold text-slate-950">
                 {selectedBrand} criticism vs competitor praise
               </h3>
-              <p className="mt-1 text-sm text-slate-500">
-                Illustrative demo verbatims based on the sentiment themes for top criticized features and matching competitor praise.
-              </p>
+              
             </div>
 
             <div className="space-y-4">
@@ -1127,15 +1193,28 @@ export default function VoiceInfluencerTab() {
                         <p className="text-xs font-bold uppercase tracking-wide text-red-700">
                           {selectedBrand} Negative Verbatim
                         </p>
-                        <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
-                          Criticized
-                        </span>
                       </div>
 
                       {item.clientNegative ? (
-                        <blockquote className="border-l-4 border-red-500 pl-4 text-sm leading-6 text-slate-700">
-                          “{item.clientNegative.sentence}”
-                        </blockquote>
+                        <div>
+                          <blockquote className="border-l-4 border-red-500 pl-4 text-sm leading-6 text-slate-700">
+                            “{item.clientNegative.sentence}”
+                          </blockquote>
+                          <div className="mt-3 grid grid-cols-1 gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs leading-5 text-slate-700 sm:grid-cols-2">
+                            <p>
+                              <span className="font-bold text-slate-800">Content type:</span>{' '}
+                              {item.clientNegative.content_type || 'Not available'}
+                            </p>
+                            <p>
+                              <span className="font-bold text-slate-800">Creator:</span>{' '}
+                              {item.clientNegative.creator || 'Not available'}
+                            </p>
+                            <p>
+                              <span className="font-bold text-slate-800">Region:</span>{' '}
+                              {item.clientNegative.region || 'Not available'}
+                            </p>
+                          </div>
+                        </div>
                       ) : (
                         <p className="text-sm text-slate-500">
                           No clean negative verbatim available for this feature.
@@ -1151,17 +1230,30 @@ export default function VoiceInfluencerTab() {
                         {item.competitorPositive ? (
                           <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
                             {item.competitorPositive.brand}
-                            {typeof item.competitorPositive.sentiment_pct === 'number'
-                              ? ` · ${item.competitorPositive.sentiment_pct.toFixed(1)}% positive`
-                              : ''}
                           </span>
                         ) : null}
                       </div>
 
                       {item.competitorPositive ? (
-                        <blockquote className="border-l-4 border-blue-600 pl-4 text-sm leading-6 text-slate-700">
-                          “{item.competitorPositive.sentence}”
-                        </blockquote>
+                        <div>
+                          <blockquote className="border-l-4 border-blue-600 pl-4 text-sm leading-6 text-slate-700">
+                            “{item.competitorPositive.sentence}”
+                          </blockquote>
+                          <div className="mt-3 grid grid-cols-1 gap-2 rounded-lg bg-blue-50 px-3 py-2 text-xs leading-5 text-slate-700 sm:grid-cols-2">
+                            <p>
+                              <span className="font-bold text-slate-800">Content type:</span>{' '}
+                              {item.competitorPositive.content_type || 'Not available'}
+                            </p>
+                            <p>
+                              <span className="font-bold text-slate-800">Creator:</span>{' '}
+                              {item.competitorPositive.creator || 'Not available'}
+                            </p>
+                            <p>
+                              <span className="font-bold text-slate-800">Region:</span>{' '}
+                              {item.competitorPositive.region || 'Not available'}
+                            </p>
+                          </div>
+                        </div>
                       ) : (
                         <p className="text-sm text-slate-500">
                           No positive competitor verbatim available for this feature.
@@ -1177,7 +1269,7 @@ export default function VoiceInfluencerTab() {
       </SectionCard>
 
       <SectionCard
-        title="4. Weekly Trend Analysis"
+        title="4. Trend Analysis: Weekly Mention & Sentiment Movement"
         actions={
           <div className="flex flex-wrap items-center gap-3">
             <select
@@ -1417,9 +1509,7 @@ export default function VoiceInfluencerTab() {
                 <h3 className="text-base font-bold text-slate-950">
                   6A. Content Distribution by Region
                 </h3>
-                <p className="text-sm text-slate-500">
-                  Unique Sonalika-related videos identified by region.
-                </p>
+                
               </div>
 
               <div className="h-[310px]">
@@ -1464,9 +1554,7 @@ export default function VoiceInfluencerTab() {
                 <h3 className="text-base font-bold text-slate-950">
                   6B. Influencer Density by Region
                 </h3>
-                <p className="text-sm text-slate-500">
-                  Unique creators contributing Sonalika-related content.
-                </p>
+                
               </div>
 
               <div className="h-[310px]">
@@ -1516,9 +1604,7 @@ export default function VoiceInfluencerTab() {
               <h3 className="text-base font-bold text-slate-950">
                 6C. Regional Sentiment Variation
               </h3>
-              <p className="text-sm text-slate-500">
-                Positive, neutral and negative sentiment split by available region.
-              </p>
+              
             </div>
 
             <div className="h-[340px]">
@@ -1575,9 +1661,7 @@ export default function VoiceInfluencerTab() {
               <h3 className="text-base font-bold text-slate-950">
                 6D. Top Creator by Region
               </h3>
-              <p className="mt-1 text-sm text-slate-500">
-                Regions are ranked by Sonalika-related video count. Top creator is selected by highest engagement within that region.
-              </p>
+              
             </div>
 
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">

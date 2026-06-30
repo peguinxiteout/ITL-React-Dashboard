@@ -14,6 +14,7 @@ import {
   calculateCompetitiveMtpComparison,
   calculateCompetitiveTrendTable,
   calculateCompetitorMentionsInSonalikaVideos,
+  getVideoLevelRows,
 } from '../../utils/kpiCalculations';
 
 const CHART_COLOR = '#2563EB';
@@ -66,6 +67,11 @@ const MtpNodeCard = ({
 export default function CompetitivePositioningTab() {
   const { rows, loading, error } = useKpiData();
 
+  const videoLevelRows = useMemo(
+    () => getVideoLevelRows(rows),
+    [rows]
+  );
+
   const competitorMentions = useMemo(
     () => calculateCompetitorMentionsInSonalikaVideos(rows),
     [rows]
@@ -116,7 +122,7 @@ export default function CompetitivePositioningTab() {
         </h1>
         
         <p className="mt-2 inline-flex rounded-md bg-slate-100 px-3 py-1 text-sm text-slate-600">
-          {rows.length} KPI rows loaded
+          {videoLevelRows.length} videos are being analyzed
         </p>
       </div>
 
@@ -265,7 +271,6 @@ export default function CompetitivePositioningTab() {
       </SectionCard>
 <SectionCard
         title="3. Major Talking Points (MTP)"
-        subtitle="Sonalika vs other tractor brands across key tractor-content themes."
       >
         {mtpComparison.sonalika.length > 0 || mtpComparison.otherBrands.length > 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
