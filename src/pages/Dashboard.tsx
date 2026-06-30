@@ -4,7 +4,6 @@ import {
   VideoIcon, TractorIcon, TagIcon,
   MegaphoneIcon, HeartHandshakeIcon, CalendarIcon,
   SmileIcon, ShoppingCartIcon, TrendingUpIcon, TrendingDownIcon,
-  StarIcon, UsersIcon, CrosshairIcon, TrophyIcon, BarChart3Icon,
   AlertCircleIcon, HelpCircleIcon,
 } from 'lucide-react';
 
@@ -27,6 +26,15 @@ import {
   type BrandChannelRow,
 } from '../hooks/useCMSData.js';
 import { useVSData } from '../hooks/useVSData';
+import { useKpiData } from '../hooks/useKpiData';
+import {
+  calculateBrandLevelSentiment,
+  calculateMostMentionedFeatures,
+  calculateCreatorPerformance,
+  calculateGeoCoverage,
+  calculateCompetitorMentionsInSonalikaVideos,
+  calculateCompetitiveTrendTable,
+} from '../utils/kpiCalculations';
 
 export interface GlobalDateRange {
   startDate: string;
@@ -419,6 +427,11 @@ function KeyInsightsCard({
   cmsLoading: boolean; vsLoading: boolean;
   setActiveTab: (tab: TabKey) => void;
 }) {
+  // Reuse the same KPI CSV and calculation functions used by
+  // VoiceInfluencerTab and CompetitivePositioningTab so this overview
+  // cannot drift away from the detailed tab numbers.
+  const { rows: kpiRows } = useKpiData();
+
   const { prevStartIso, prevEndIso, numDays } = useMemo(() => {
     const sMs = dateToUtcMs(startDate);
     const eMs = dateToUtcMs(endDate);
@@ -621,90 +634,76 @@ function KeyInsightsCard({
   }, [cmsData, allData, startDate, endDate]);
 
   const voiStateA = useMemo(() => {
-    const tractorWin = allData.filter((r: any) =>
-      r.is_tractor_content && r.publish_date >= startDate && r.publish_date <= endDate
+    const sonalikaSentiment = calculateBrandLevelSentiment(kpiRows).find(
+      (item: any) => String(item.brand || '').toLowerCase() === 'sonalika'
     );
-    const seenVids = new Set<string>();
-    let posCount = 0, negCount = 0, neuCount = 0;
-    const labelPos: Record<string, number> = {};
-    const labelNeg: Record<string, number> = {};
 
-    for (const r of tractorWin) {
-      if (seenVids.has(r.video_id)) continue;
-      seenVids.add(r.video_id);
-      try {
-        const entries: { Brand: string; Label: string; Opinion: string }[] = JSON.parse(r.sentiments || '[]');
-        for (const e of entries) {
-          if (e.Brand !== 'Sonalika') continue;
-          if (e.Opinion === 'Positive') { posCount++; if (e.Label) labelPos[e.Label] = (labelPos[e.Label] || 0) + 1; }
-          else if (e.Opinion === 'Negative') { negCount++; if (e.Label) labelNeg[e.Label] = (labelNeg[e.Label] || 0) + 1; }
-          else neuCount++;
-        }
-      } catch { }
-    }
+    const positivePct = Number((sonalikaSentiment?.Positive_pct || 0).toFixed(1));
+    const neutralPct = Number((sonalikaSentiment?.Neutral_pct || 0).toFixed(1));
+    const negativePct = Number((sonalikaSentiment?.Negative_pct || 0).toFixed(1));
+    const totalEntries = Number(sonalikaSentiment?.total_mentions || 0);
+    const sentColor = positivePct >= 50 ? '#639922' : positivePct >= 25 ? '#EF9F27' : '#E24B4A';
 
-    const totalEntries = posCount + negCount + neuCount;
-    const positivePct = totalEntries > 0 ? Math.round((posCount / totalEntries) * 100) : 0;
-    const negativePct = totalEntries > 0 ? Math.round((negCount / totalEntries) * 100) : 0;
-    const sentColor = positivePct >= 50 ? '#639922' : positivePct >= 30 ? '#EF9F27' : '#E24B4A';
+    const mostMentioned = calculateMostMentionedFeatures(kpiRows, 'Sonalika', 5);
+    const topPraised = mostMentioned.praised[0];
+    const topCriticised = mostMentioned.criticized[0];
 
-    const topPraised = Object.entries(labelPos).sort((a, b) => b[1] - a[1])[0];
-    const topCriticised = Object.entries(labelNeg).sort((a, b) => b[1] - a[1])[0];
+    const creators = calculateCreatorPerformance(kpiRows);
+    const topCreator = [...creators].sort(
+      (a: any, b: any) => Number(b.engagement || 0) - Number(a.engagement || 0)
+    )[0];
 
-    const activeCreators = new Set(
-      tractorWin
-        .filter((r: any) => r.attributed_brand === 'Sonalika' && r.channel_name)
-        .map((r: any) => r.channel_name)
-    ).size;
+    const topRegions = calculateGeoCoverage(kpiRows)
+      .filter((item: any) => {
+        const region = String(item.geo_region || '').toLowerCase();
+        return region && region !== 'unknown' && region !== 'not available' && region !== 'india';
+      })
+      .slice(0, 3)
+      .map((item: any) => item.geo_region);
 
     return {
-      positivePct, negativePct, totalEntries, sentColor,
-      topPraisedFeature: topPraised?.[0] || '',
-      topPraisedCount: topPraised?.[1] || 0,
-      topCriticisedFeature: topCriticised?.[0] || '',
-      topCriticisedCount: topCriticised?.[1] || 0,
-      activeCreators,
+      positivePct,
+      neutralPct,
+      negativePct,
+      totalEntries,
+      sentColor,
+      topPraisedFeature: topPraised?.feature || '—',
+      topPraisedCount: Number(topPraised?.Positive || 0),
+      topCriticisedFeature: topCriticised?.feature || '',
+      topCriticisedCount: Number(topCriticised?.Negative || 0),
+      activeCreators: creators.length,
+      topCreatorName: topCreator?.channelTitle || '—',
+      topCreatorEngagement: Number(topCreator?.engagement || 0),
+      topRegions,
     };
-  }, [allData, startDate, endDate]);
+  }, [kpiRows]);
 
   const cpStateA = useMemo(() => {
-    const CP_NON_TRACTOR = new Set(['Maruti Suzuki', 'Royal Enfield', 'Tata', 'Ultraviolette']);
-    const CP_BRAND_NRM: Record<string, string> = { Escorts: 'Escorts Kubota', Kubota: 'Escorts Kubota' };
-
-    const tractorWin = allData.filter((r: any) =>
-      r.is_tractor_content && r.publish_date >= startDate && r.publish_date <= endDate
+    const competitorMentions = calculateCompetitorMentionsInSonalikaVideos(kpiRows);
+    const totalMentions = competitorMentions.reduce(
+      (sum: number, item: any) => sum + Number(item.mention_count || 0),
+      0
     );
-    const seenVids = new Set<string>();
-    const brandMentions: Record<string, number> = {};
+    const topCompetitor = competitorMentions[0];
+    const competitorPct =
+      totalMentions > 0 && topCompetitor
+        ? Number(((Number(topCompetitor.mention_count || 0) / totalMentions) * 100).toFixed(1))
+        : 0;
 
-    for (const r of tractorWin) {
-      if (seenVids.has(r.video_id)) continue;
-      seenVids.add(r.video_id);
-      try {
-        const info = JSON.parse(r.company_brand_info || '{}');
-        for (const brand of Object.keys(info)) {
-          const normalized = CP_BRAND_NRM[brand] || brand;
-          if (CP_NON_TRACTOR.has(normalized)) continue;
-          brandMentions[normalized] = (brandMentions[normalized] || 0) + 1;
-        }
-      } catch { }
-    }
+    const trendRows = calculateCompetitiveTrendTable(kpiRows);
+    const brandMentionShareRow = trendRows.find((item: any) => item.metric === 'Brand Mention Share');
+    const brandMentionShare = brandMentionShareRow?.currentWeek?.replace(/\s*Share/i, '') || '0%';
 
-    const uniqueBrands = Object.keys(brandMentions).length;
-    const totalMentions = Object.values(brandMentions).reduce((a, b) => a + b, 0);
-    const sonalikaMentions = brandMentions['Sonalika'] || 0;
-    const sonalikaPct = totalMentions > 0 ? ((sonalikaMentions / totalMentions) * 100).toFixed(1) : '0.0';
-    const brandsSorted = Object.entries(brandMentions).sort((a, b) => b[1] - a[1]);
-    const topComp = brandsSorted.find(([b]) => b !== 'Sonalika');
-    const topCompetitorName = topComp?.[0] || '';
-    const topCompetitorCount = topComp?.[1] || 0;
-    const competitorPct = totalMentions > 0 ? ((topCompetitorCount / totalMentions) * 100).toFixed(1) : '0.0';
-    const sonRankIdx = brandsSorted.findIndex(([b]) => b === 'Sonalika');
-    const sonRank = sonRankIdx >= 0 ? sonRankIdx + 1 : brandsSorted.length + 1;
-    const cpRankColor = sonRank <= 3 ? '#639922' : '#EF9F27';
-
-    return { uniqueBrands, totalMentions, sonalikaPct, topCompetitorName, competitorPct, sonRank, cpRankColor };
-  }, [allData, startDate, endDate]);
+    return {
+      uniqueBrands: competitorMentions.length,
+      totalMentions,
+      topCompetitorName: topCompetitor?.competitor || '—',
+      topCompetitorCount: Number(topCompetitor?.mention_count || 0),
+      competitorPct,
+      brandMentionShare,
+      trendRows,
+    };
+  }, [kpiRows]);
 
   const vsStateA = useMemo(() => {
     const isBoolV = (v: any) => v === true || v === 'True' || v === 'true';
@@ -739,14 +738,25 @@ function KeyInsightsCard({
     return { intentCount, topStage, piDotColor, lostCount, lostDotColor, topNeedType, needCount };
   }, [successRows]);
 
-  const showCPStateB = startDate === '2026-03-09' && endDate === '2026-03-15';
+  const showCPStateB = true;
 
-  const cpTableRows: { kpi: string; prev: string; curr: string; arrow: string; color: string }[] = [
-    { kpi: 'Brand mention share', prev: '22%', curr: '25%', arrow: '▲', color: '#16a34a' },
-    { kpi: 'Positive sentiment', prev: '37%', curr: '16%', arrow: '▼', color: '#dc2626' },
-    { kpi: 'Negative sentiment', prev: '4%', curr: '4%', arrow: '▬', color: '#94a3b8' },
-    { kpi: 'Product demo count', prev: '0 videos', curr: '2 videos', arrow: '▲', color: '#16a34a' },
-  ];
+  const trendArrowMeta = (trend: 'up' | 'down' | 'flat') => {
+    if (trend === 'up') return { arrow: '▲', color: '#16a34a' };
+    if (trend === 'down') return { arrow: '▼', color: '#dc2626' };
+    return { arrow: '▬', color: '#94a3b8' };
+  };
+
+  const cpTableRows: { kpi: string; prev: string; curr: string; arrow: string; color: string }[] =
+    cpStateA.trendRows.map((row: any) => {
+      const { arrow, color } = trendArrowMeta(row.trend);
+      return {
+        kpi: row.metric,
+        prev: row.baseline,
+        curr: row.currentWeek,
+        arrow,
+        color,
+      };
+    });
 
   const cmsBullets: { color: string; text: string }[] = [
     { color: '#1D4ED8', text: `${cmsStateA.tractorCount} of ${cmsStateA.totalCount} tracked videos are tractor content in this window (${cmsStateA.densityPct}%).` },
@@ -755,16 +765,14 @@ function KeyInsightsCard({
   ];
 
   const voiBullets: { color: string; text: string }[] = [
-    { color: voiStateA.sentColor, text: `Sonalika's creator sentiment is ${voiStateA.positivePct}% positive and ${voiStateA.negativePct}% negative across ${voiStateA.totalEntries} sentiment signals.` },
-    ...(voiStateA.topPraisedFeature ? [{ color: '#639922', text: `${voiStateA.topPraisedFeature} is the most praised feature — ${voiStateA.topPraisedCount} positive signal${voiStateA.topPraisedCount !== 1 ? 's' : ''} from creators in this window.` }] : []),
-    ...(voiStateA.topCriticisedCount > 0 ? [{ color: '#EF9F27', text: `${voiStateA.topCriticisedFeature} has the most critical signals — ${voiStateA.topCriticisedCount} negative mention${voiStateA.topCriticisedCount !== 1 ? 's' : ''} flagged in this window.` }] : []),
-    { color: '#1D4ED8', text: `${voiStateA.activeCreators} creator${voiStateA.activeCreators !== 1 ? 's' : ''} mentioned Sonalika in tractor content in this window.` },
+    { color: voiStateA.sentColor, text: `Sonalika creator sentiment is ${voiStateA.positivePct}% positive, ${voiStateA.neutralPct}% neutral and ${voiStateA.negativePct}% negative across ${voiStateA.totalEntries} sentiment signals.` },
+    ...(voiStateA.topPraisedFeature && voiStateA.topPraisedFeature !== '—' ? [{ color: '#639922', text: `${voiStateA.topPraisedFeature} is the most praised feature — ${voiStateA.topPraisedCount} positive signal${voiStateA.topPraisedCount !== 1 ? 's' : ''} from creators.` }] : []),
+    ...(voiStateA.topCriticisedCount > 0 ? [{ color: '#EF9F27', text: `${voiStateA.topCriticisedFeature} has the most critical signals — ${voiStateA.topCriticisedCount} negative mention${voiStateA.topCriticisedCount !== 1 ? 's' : ''} flagged.` }] : []),
   ];
 
   const cpBullets: { color: string; text: string }[] = [
-    { color: '#1D4ED8', text: `${cpStateA.uniqueBrands} brands detected across ${cpStateA.totalMentions} mentions — Sonalika accounts for ${cpStateA.sonalikaPct}% of all brand mentions.` },
-    ...(cpStateA.topCompetitorName ? [{ color: '#EF9F27', text: `${cpStateA.topCompetitorName} is the most mentioned brand at ${cpStateA.competitorPct}% — the primary comparison point for Sonalika content.` }] : []),
-    { color: cpStateA.cpRankColor, text: `Sonalika ranks ${cpStateA.sonRank} of ${cpStateA.uniqueBrands} brands by mention frequency in tractor creator content.` },
+    { color: '#1D4ED8', text: `${cpStateA.uniqueBrands} competitor brands detected across ${cpStateA.totalMentions} competitor mentions in Sonalika-related tractor videos.` },
+    ...(cpStateA.topCompetitorName && cpStateA.topCompetitorName !== '—' ? [{ color: '#EF9F27', text: `${cpStateA.topCompetitorName} is the most mentioned competitor with ${cpStateA.topCompetitorCount} mentions and ${cpStateA.competitorPct.toFixed(1)}% share.` }] : []),
   ];
 
   const vsBullets: { color: string; text: string }[] = [
@@ -879,16 +887,11 @@ function KeyInsightsCard({
 
       {/* ── VoI Module ── */}
       <KiModuleHeader pillBg="#EEEDFE" pillText="#3C3489" moduleName="Voice of Influencer" question="How do creators talk about Sonalika?" tabKey="influencer" setActiveTab={setActiveTab} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 12 }}>
-        <KiMetricCard icon={<SmileIcon size={15} />} label="POSITIVE SENTIMENT" value="73%" subtitle="creator tone on Sonalika" />
-        <KiMetricCard icon={<StarIcon size={15} />} label="TOP PRAISED FEATURE" value="Price" subtitle="most mentioned in transcripts" />
-        <KiMetricCard icon={<UsersIcon size={15} />} label="ACTIVE CREATORS" value="20" subtitle="creators mentioning Sonalika" />
-      </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        <KiSignalCard bg="#EAF3DE" textColor="#085041" icon={<SmileIcon size={14} />} headline="73% positive sentiment, 0% negative" sub="Strong creator affinity — no critical narratives detected" />
-        <KiSignalCard bg="#EAF3DE" textColor="#085041" icon={<TrendingUpIcon size={14} />} headline="Price & engine most praised" sub="8 mentions for Price · 6 for Engine Performance" />
-        <KiSignalCard bg="#E6F1FB" textColor="#0C447C" icon={<VideoIcon size={14} />} headline="Top creator: Amaan Mirza Rides" sub="Highest engagement score · 100% Sonalika relevance" />
-        <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<MegaphoneIcon size={14} />} headline="North India dominates coverage" sub="UP, Haryana, Punjab channels highest Sonalika density" />
+        <KiSignalCard bg="#EAF3DE" textColor="#085041" icon={<SmileIcon size={14} />} headline={`${voiStateA.positivePct}% positive sentiment, ${voiStateA.negativePct}% negative`} sub={`${voiStateA.neutralPct}% neutral across Sonalika sentiment signals`} />
+        <KiSignalCard bg="#EAF3DE" textColor="#085041" icon={<TrendingUpIcon size={14} />} headline={`${voiStateA.topPraisedFeature} most praised`} sub={`${voiStateA.topPraisedCount} positive signal${voiStateA.topPraisedCount !== 1 ? 's' : ''} in detailed tab`} />
+        <KiSignalCard bg="#E6F1FB" textColor="#0C447C" icon={<VideoIcon size={14} />} headline={`Top creator: ${voiStateA.topCreatorName}`} sub={`${voiStateA.topCreatorEngagement.toLocaleString()} total engagement`} />
+        <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<MegaphoneIcon size={14} />} headline={`${voiStateA.topRegions.slice(0, 2).join(' & ') || 'Regional'} coverage leads`} sub={`${voiStateA.topRegions.join(', ') || 'No region data available'}`} />
       </div>
       <KiStateABullets items={voiBullets} />
 
@@ -896,52 +899,13 @@ function KeyInsightsCard({
 
       {/* ── CP Module ── */}
       <KiModuleHeader pillBg="#FAEEDA" pillText="#633806" moduleName="Competitive Positioning" question="How does Sonalika stand vs competitors?" tabKey="positioning" setActiveTab={setActiveTab} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 12 }}>
-        <KiMetricCard icon={<CrosshairIcon size={15} />} label="COMPETITOR MENTIONS" value="59" subtitle="co-mentions in Sonalika content" />
-        <KiMetricCard icon={<TrophyIcon size={15} />} label="MOST MENTIONED RIVAL" value="Mahindra" subtitle="17 direct mentions" />
-        <KiMetricCard icon={<BarChart3Icon size={15} />} label="BRAND MENTION SHARE" value="22%" subtitle="Sonalika vs category" />
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: showCPStateB ? 12 : 0 }}>
-        <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<TagIcon size={14} />} headline="Mahindra most co-mentioned: 17 times" sub="28.8% of all competitor mentions" />
-        <KiSignalCard bg="#E6F1FB" textColor="#0C447C" icon={<VideoIcon size={14} />} headline="Product demo is top talking point" sub="DI 55 power demos dominate Sonalika content" />
-        <KiSignalCard bg="#EAF3DE" textColor="#085041" icon={<TrendingUpIcon size={14} />} headline="Price wins in direct comparisons" sub="Cited favourably vs Mahindra & Swaraj" />
-        <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<TrendingDownIcon size={14} />} headline="Build quality gap vs competitors" sub="Competitors score higher on build quality in comparisons" />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+        <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<TagIcon size={14} />} headline={`${cpStateA.topCompetitorName} most co-mentioned: ${cpStateA.topCompetitorCount} times`} sub={`${cpStateA.competitorPct.toFixed(1)}% of all competitor mentions`} />
+        <KiSignalCard bg="#E6F1FB" textColor="#0C447C" icon={<VideoIcon size={14} />} headline="MTP themes summarize video coverage" sub="Same category buckets used in Competitive Positioning" />
+        <KiSignalCard bg="#EAF3DE" textColor="#085041" icon={<TrendingUpIcon size={14} />} headline={`Brand mention share: ${cpStateA.brandMentionShare}`} sub="Pulled from the same two-week trend logic" />
+        <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<TrendingDownIcon size={14} />} headline="Competitor benchmark visible" sub="Ranking and share match the competitor summary table" />
       </div>
       <KiStateABullets items={cpBullets} />
-      {showCPStateB && (
-        <>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginBottom: 10 }}>
-            <thead>
-              <tr style={{ borderBottom: '0.5px solid #e2e8f0' }}>
-                <th style={{ textAlign: 'left', fontWeight: 500, color: '#64748b', padding: '4px 0' }}>KPI</th>
-                <th style={{ textAlign: 'right', fontWeight: 500, color: '#64748b', padding: '4px 8px' }}>Baseline (Mar 01–08)</th>
-                <th style={{ textAlign: 'right', fontWeight: 500, color: '#64748b', padding: '4px 8px' }}>This week (Mar 09–15)</th>
-                <th style={{ textAlign: 'center', fontWeight: 500, color: '#64748b', padding: '4px 0' }}>Trend</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cpTableRows.map(({ kpi, prev, curr, arrow, color }) => (
-                <tr key={kpi} style={{ borderBottom: '0.5px solid #f1f5f9' }}>
-                  <td style={{ padding: '5px 0', color: '#334155' }}>{kpi}</td>
-                  <td style={{ padding: '5px 8px', textAlign: 'right', color: '#64748b' }}>{prev}</td>
-                  <td style={{ padding: '5px 8px', textAlign: 'right', color: '#0f172a', fontWeight: 500 }}>{curr}</td>
-                  <td style={{ padding: '5px 0', textAlign: 'center', color, fontWeight: 600 }}>{arrow}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: '#334155' }}>
-              <span style={{ width: 8, height: 8, minWidth: 8, borderRadius: '50%', background: '#16a34a', marginTop: 4 }} />
-              <span>Brand mention share rose from 22% to 25% — Sonalika gaining relative visibility week-over-week.</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: '#334155' }}>
-              <span style={{ width: 8, height: 8, minWidth: 8, borderRadius: '50%', background: '#dc2626', marginTop: 4 }} />
-              <span>Positive sentiment dropped from 37% to 16% — creator tone may have shifted toward neutral or comparative content.</span>
-            </div>
-          </div>
-        </>
-      )}
 
       {kiDivider}
 
