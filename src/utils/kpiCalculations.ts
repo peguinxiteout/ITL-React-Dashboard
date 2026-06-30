@@ -12,6 +12,8 @@ export interface SentimentRecord {
   sentence: string;
   geoState: string;
   geoCity: string;
+  contentType: string;
+  videoTitle: string;
 }
 
 export interface SentimentSummaryRow {
@@ -53,6 +55,10 @@ export interface FeatureVerbatimQuote {
   sentence: string;
   total_mentions?: number;
   sentiment_pct?: number;
+  content_type?: string;
+  video_title?: string;
+  creator?: string;
+  region?: string;
 }
 
 export interface FeatureVerbatimComparisonRow {
@@ -607,6 +613,11 @@ export function getSentimentRecords(rows: KpiRow[]): SentimentRecord[] {
           sentence: String(item.Sentence || item.sentence || '').trim(),
           geoState: row.geo_state || '',
           geoCity: row.geo_city || '',
+          contentType:
+            normalizeTractorSubCategory(
+              (row as KpiRow & { tractor_sub_category?: string }).tractor_sub_category
+            ) || 'Not available',
+          videoTitle: row.title || row.filename || 'Not available',
         });
       });
     });
@@ -925,6 +936,85 @@ function cleanVerbatimSentence(value: unknown): string {
   return text.length > 260 ? `${text.slice(0, 257).trim()}...` : text;
 }
 
+function cleanShortText(value: unknown, maxLength = 72): string {
+  const text = String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!text) return 'Not available';
+
+  return text.length > maxLength ? `${text.slice(0, maxLength - 3).trim()}...` : text;
+}
+
+function formatMetadataRegion(rowOrRecord: KpiRow | SentimentRecord | undefined): string {
+  if (!rowOrRecord) return 'Not available';
+
+  const region = formatGeoRegion(rowOrRecord);
+  return region || 'Not available';
+}
+
+function buildVerbatimMetadataFromRecord(record?: SentimentRecord) {
+  if (!record) {
+    return {
+      content_type: 'Not available',
+      video_title: 'Not available',
+      creator: 'Not available',
+      region: 'Not available',
+    };
+  }
+
+  return {
+    content_type: record.contentType || 'Not available',
+    video_title: cleanShortText(record.videoTitle),
+    creator: cleanCreatorName(record.channelTitle) || 'Not available',
+    region: formatMetadataRegion(record),
+  };
+}
+
+function findBrandMetadataSource(
+  rows: KpiRow[],
+  feature: string,
+  brand: string,
+  preferredRecord?: SentimentRecord
+): ReturnType<typeof buildVerbatimMetadataFromRecord> {
+  if (preferredRecord) {
+    return buildVerbatimMetadataFromRecord(preferredRecord);
+  }
+
+  const featureKeywords = FEATURE_KEYWORD_MAP[feature] || [feature];
+
+  const sourceRow = getVideoLevelRows(rows)
+    .filter((row) => isTractorCategory(row) && rowMentionsBrand(row, brand))
+    .find((row) => {
+      const searchableText = rowSearchableText(row);
+      return featureKeywords.some((keyword) =>
+        searchableText.includes(keyword.toLowerCase())
+      );
+    });
+
+  if (!sourceRow) {
+    return buildVerbatimMetadataFromRecord(undefined);
+  }
+
+  return {
+    content_type:
+      normalizeTractorSubCategory(
+        (sourceRow as KpiRow & { tractor_sub_category?: string }).tractor_sub_category
+      ) || 'Not available',
+    video_title: cleanShortText(sourceRow.title || sourceRow.filename),
+    creator: cleanCreatorName(sourceRow.channelTitle) || 'Not available',
+    region: formatMetadataRegion(sourceRow),
+  };
+}
+
+function findSonalikaMetadataSource(
+  rows: KpiRow[],
+  feature: string,
+  preferredRecord?: SentimentRecord
+): ReturnType<typeof buildVerbatimMetadataFromRecord> {
+  return findBrandMetadataSource(rows, feature, 'Sonalika', preferredRecord);
+}
+
 function isUsableVerbatimSentence(value: unknown): boolean {
   const sentence = cleanVerbatimSentence(value);
   const lower = sentence.toLowerCase();
@@ -1045,6 +1135,24 @@ export function calculateMostMentionedFeatureVerbatims(
     const demoFallback =
       normalizedClientBrandLower === 'sonalika' ? getDemoFeatureVerbatim(feature) : undefined;
 
+    const clientMetadata = findSonalikaMetadataSource(
+      rows,
+      feature,
+      clientNegativeRecord
+    );
+
+    const competitorBrandForMetadata =
+      demoFallback?.competitorBrand || competitorPositiveSummary?.brand || competitorPositiveRecord?.brand || '';
+
+    const competitorMetadata = competitorBrandForMetadata
+      ? findBrandMetadataSource(
+          rows,
+          feature,
+          competitorBrandForMetadata,
+          competitorPositiveRecord
+        )
+      : buildVerbatimMetadataFromRecord(undefined);
+
     return {
       feature,
       clientNegative: demoFallback
@@ -1054,6 +1162,7 @@ export function calculateMostMentionedFeatureVerbatims(
             sentiment: 'Negative',
             sentence: demoFallback.sonalikaNegative,
             sentiment_pct: undefined,
+            ...clientMetadata,
           }
         : clientNegativeRecord
           ? {
@@ -1062,6 +1171,7 @@ export function calculateMostMentionedFeatureVerbatims(
               sentiment: 'Negative',
               sentence: cleanVerbatimSentence(clientNegativeRecord.sentence),
               sentiment_pct: undefined,
+              ...clientMetadata,
             }
           : undefined,
       competitorPositive: demoFallback
@@ -1072,6 +1182,7 @@ export function calculateMostMentionedFeatureVerbatims(
             sentence: demoFallback.competitorPositive,
             total_mentions: demoFallback.competitorTotalMentions,
             sentiment_pct: demoFallback.competitorPositivePct,
+            ...competitorMetadata,
           }
         : competitorPositiveRecord && competitorPositiveSummary
           ? {
@@ -1081,6 +1192,7 @@ export function calculateMostMentionedFeatureVerbatims(
               sentence: cleanVerbatimSentence(competitorPositiveRecord.sentence),
               total_mentions: competitorPositiveSummary.total_mentions,
               sentiment_pct: competitorPositiveSummary.Positive_pct,
+              ...competitorMetadata,
             }
           : undefined,
     };
@@ -1593,56 +1705,56 @@ export interface CompetitiveTrendTableRow {
 }
 
 export function calculateCompetitiveMtpComparison(rows: KpiRow[]): CompetitiveMtpComparison {
-  // The MTP comparison is a narrative view for demo/readability.
-  // It is restricted to the tractor-content themes requested for Competitive Positioning.
-  // The bullets are written as clean talking-point summaries so the UI does not expose noisy transcript text.
+  // Major Talking Points are intentionally kept as clean demo summaries.
+  // They explain what kind of tractor-video areas are covered under each content theme.
+  // The wording is rephrased from the client reference so it does not look like a direct PPT copy.
   const hasData = getVideoLevelRows(rows).some(isTractorCategory);
 
   const sonalika: CompetitiveMtpNode[] = [
     {
       title: 'Product Demonstration',
       points: [
-        'Sonalika DI 55 power demonstration',
-        'DI 55 4x4 cultivator test and field performance showcase',
-        'Live tractor usage and on-field activity',
+        'Sonalika DI 745 III field demo and implement-use showcase',
+        'Tiger 47 RX cultivator / haulage demonstration clips',
+        'Live-use videos showing power, grip and handling in farm conditions',
       ],
     },
     {
       title: 'Product Review & Field Experience',
       points: [
-        'Sonalika Tiger 42 owner review',
-        'Farmer feedback on tractor performance',
-        'Real farming activity and usage experience',
+        'Farmer review content around DI 60 and Tiger series tractors',
+        'On-field feedback on pulling power, comfort and usage experience',
+        'Practical farming activity videos with ownership-style observations',
       ],
     },
     {
       title: 'Product Walkthrough',
       points: [
-        'Sonalika DI 60 4WD feature discussion',
-        'Tractor feature explanation',
-        'DI 745 / DI 55 product walkthrough',
+        'Sonalika DI 60 Sikander RX feature walkthrough content',
+        'Engine, hydraulics, PTO and operator-comfort feature explanation',
+        'DI 745 and Tiger series overview videos covering key specifications',
       ],
     },
     {
       title: 'Brand Promotion',
       points: [
-        'Sonalika DI 60 sales record messaging',
-        'Brand promotion and showroom activities',
+        'Dealer and showroom-led Sonalika promotional videos',
+        'Regional visibility, sales milestone and brand awareness clips',
       ],
     },
     {
       title: 'Comparison',
       points: [
-        'Second-hand tractor comparison with Sonalika',
-        'Best HP tractor discussion across Massey, Solis, Sonalika, Eicher and Swaraj',
+        'Sonalika compared with Mahindra, Swaraj and Eicher models',
+        'HP, price, feature and field-use comparison discussions',
       ],
     },
     {
       title: 'Launch, Offers & Innovation',
       points: [
-        'Sonalika Gold 55III launch and 2026 model discussion',
-        'Festival offers and second-hand tractor sale',
-        'Tractor assembly process and quality testing',
+        'New model / variant launch and feature-highlight content',
+        'Seasonal offer, finance and used-tractor discussion videos',
+        'Assembly, testing and product-quality showcase themes',
       ],
     },
   ];
@@ -1651,43 +1763,43 @@ export function calculateCompetitiveMtpComparison(rows: KpiRow[]): CompetitiveMt
     {
       title: 'Product Reviews & Farmer Experience',
       points: [
-        'Farmtrac, Eicher, Solis and VST owner reviews',
-        'Farmer feedback on tractor performance and durability',
+        'Mahindra, Swaraj, Eicher and Solis owner-review videos',
+        'Farmer feedback around mileage, durability and field performance',
       ],
     },
     {
       title: 'Product Demonstration',
       points: [
-        'John Deere tractor power demonstrations',
-        'Tractor performance comparison across brands',
+        'John Deere, New Holland and Swaraj field demonstration clips',
+        'Implement-use and power demonstration content across brands',
       ],
     },
     {
       title: 'Product Walkthrough',
       points: [
-        'Mahindra, Swaraj and New Holland feature highlights',
-        'AC cabin tractors and new model walkthroughs',
+        'Mahindra 575 DI XP Plus and New Holland 3630 feature walkthroughs',
+        'AC cabin, hydraulics, comfort and new-model feature discussions',
       ],
     },
     {
       title: 'Brand Promotion',
       points: [
-        'Mahindra manufacturing plant tours and production showcases',
-        'Vintage tractors and engineering highlights',
+        'Mahindra and Swaraj dealership / brand showcase content',
+        'Factory, service and infrastructure-oriented promotional clips',
       ],
     },
     {
       title: 'Launches, Offers',
       points: [
-        'New tractor launches and model announcements',
-        'Used tractor sales, finance offers and dealership promotions',
+        'New model announcements and used-tractor sales content',
+        'Finance, exchange and dealership offer discussion videos',
       ],
     },
     {
       title: 'Comparison',
       points: [
-        'New Holland vs Mahindra tractor comparisons',
-        'Swaraj Protek vs John Deere feature comparison',
+        'Swaraj vs John Deere and New Holland vs Mahindra comparison clips',
+        'HP, price and model-to-model benchmark discussions',
       ],
     },
   ];
