@@ -764,17 +764,6 @@ function KeyInsightsCard({
     ...(cmsStateA.topSubCat ? [{ color: '#1D4ED8', text: `${cmsStateA.topSubCatPct}% of Sonalika's videos in this window are ${cmsStateA.topSubCat} content.` }] : []),
   ];
 
-  const voiBullets: { color: string; text: string }[] = [
-    { color: voiStateA.sentColor, text: `Sonalika creator sentiment is ${voiStateA.positivePct}% positive, ${voiStateA.neutralPct}% neutral and ${voiStateA.negativePct}% negative across ${voiStateA.totalEntries} sentiment signals.` },
-    ...(voiStateA.topPraisedFeature && voiStateA.topPraisedFeature !== '—' ? [{ color: '#639922', text: `${voiStateA.topPraisedFeature} is the most praised feature — ${voiStateA.topPraisedCount} positive signal${voiStateA.topPraisedCount !== 1 ? 's' : ''} from creators.` }] : []),
-    ...(voiStateA.topCriticisedCount > 0 ? [{ color: '#EF9F27', text: `${voiStateA.topCriticisedFeature} has the most critical signals — ${voiStateA.topCriticisedCount} negative mention${voiStateA.topCriticisedCount !== 1 ? 's' : ''} flagged.` }] : []),
-  ];
-
-  const cpBullets: { color: string; text: string }[] = [
-    { color: '#1D4ED8', text: `${cpStateA.uniqueBrands} competitor brands detected across ${cpStateA.totalMentions} competitor mentions in Sonalika-related tractor videos.` },
-    ...(cpStateA.topCompetitorName && cpStateA.topCompetitorName !== '—' ? [{ color: '#EF9F27', text: `${cpStateA.topCompetitorName} is the most mentioned competitor with ${cpStateA.topCompetitorCount} mentions and ${cpStateA.competitorPct.toFixed(1)}% share.` }] : []),
-  ];
-
   const vsBullets: { color: string; text: string }[] = [
     { color: vsStateA.piDotColor, text: `${vsStateA.intentCount} buyer-intent comment${vsStateA.intentCount !== 1 ? 's' : ''} detected${vsStateA.topStage ? ` — ${vsStateA.topStage} is the dominant signal` : ''}.` },
     { color: vsStateA.lostDotColor, text: vsStateA.lostCount > 0 ? `${vsStateA.lostCount} lost-sale signal${vsStateA.lostCount !== 1 ? 's' : ''} detected — viewers citing competitor purchase decisions.` : 'No lost-sale signals detected — all purchase-intent comments are acquisition-positive.' },
@@ -893,19 +882,15 @@ function KeyInsightsCard({
         <KiSignalCard bg="#E6F1FB" textColor="#0C447C" icon={<VideoIcon size={14} />} headline={`Top creator: ${voiStateA.topCreatorName}`} sub={`${voiStateA.topCreatorEngagement.toLocaleString()} total engagement`} />
         <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<MegaphoneIcon size={14} />} headline={`${voiStateA.topRegions.slice(0, 2).join(' & ') || 'Regional'} coverage leads`} sub={`${voiStateA.topRegions.join(', ') || 'No region data available'}`} />
       </div>
-      <KiStateABullets items={voiBullets} />
 
       {kiDivider}
 
       {/* ── CP Module ── */}
       <KiModuleHeader pillBg="#FAEEDA" pillText="#633806" moduleName="Competitive Positioning" question="How does Sonalika stand vs competitors?" tabKey="positioning" setActiveTab={setActiveTab} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<TagIcon size={14} />} headline={`${cpStateA.topCompetitorName} most co-mentioned: ${cpStateA.topCompetitorCount} times`} sub={`${cpStateA.competitorPct.toFixed(1)}% of all competitor mentions`} />
-        <KiSignalCard bg="#E6F1FB" textColor="#0C447C" icon={<VideoIcon size={14} />} headline="MTP themes summarize video coverage" sub="Same category buckets used in Competitive Positioning" />
         <KiSignalCard bg="#EAF3DE" textColor="#085041" icon={<TrendingUpIcon size={14} />} headline={`Brand mention share: ${cpStateA.brandMentionShare}`} sub="Pulled from the same two-week trend logic" />
-        <KiSignalCard bg="#FAEEDA" textColor="#633806" icon={<TrendingDownIcon size={14} />} headline="Competitor benchmark visible" sub="Ranking and share match the competitor summary table" />
       </div>
-      <KiStateABullets items={cpBullets} />
 
       {kiDivider}
 

@@ -415,6 +415,18 @@ function canonicalFeature(value: unknown): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function isValidSentimentFeature(feature: unknown): boolean {
+  const value = String(feature || '').trim().toLowerCase();
+
+  return Boolean(
+    value &&
+      value !== 'overall' &&
+      value !== 'other' &&
+      value !== 'brand mention' &&
+      value !== 'brand mentions'
+  );
+}
+
 function videoKey(row: KpiRow): string {
   return row.source_id || row.link || row.filename || Math.random().toString();
 }
@@ -796,8 +808,7 @@ export function calculateFeatureLevelSentiment(
     const brand = normalizeBrandName(record.brand);
 
     return (
-      record.feature &&
-      record.feature !== 'Overall' &&
+      isValidSentimentFeature(record.feature) &&
       brand &&
       isTractorKpiBrand(brand)
     );
@@ -820,6 +831,11 @@ export function calculateTopPositiveBrandsForFeature(
 ): FeatureCompetitorPositiveRow[] {
   const selectedFeature = canonicalFeature(feature);
   const normalizedExcludeBrand = normalizeBrandName(excludeBrand).toLowerCase();
+
+  if (!isValidSentimentFeature(selectedFeature)) {
+    return [];
+  }
+
   const tractorRows = rows.filter(isTractorCategory);
 
   const records = getSentimentRecords(tractorRows).filter((record) => {
@@ -829,7 +845,7 @@ export function calculateTopPositiveBrandsForFeature(
       record.feature === selectedFeature &&
       brand &&
       isTractorKpiBrand(brand) &&
-      brand.toLowerCase() !== normalizedExcludeBrand
+      (!normalizedExcludeBrand || brand.toLowerCase() !== normalizedExcludeBrand)
     );
   });
 
@@ -840,9 +856,8 @@ export function calculateTopPositiveBrandsForFeature(
   return summary
     .filter((item) => item.brand && item.Positive > 0)
     .map((item) => {
-      // A blended score avoids ranking a brand with only one positive sentence above a brand
-      // with stronger repeated positive evidence. Positive percentage carries the highest weight,
-      // while positive mention volume is used as a stabilizer for more reliable ranking.
+      // Keep score for compatibility with existing UI/types.
+      // Final ranking is done by Positive_pct first, then positive mention volume.
       const score = item.Positive_pct + Math.log1p(item.Positive) * 8;
 
       return {
@@ -856,13 +871,13 @@ export function calculateTopPositiveBrandsForFeature(
       };
     })
     .sort((a, b) => {
-      const scoreDiff = b.score - a.score;
-      if (scoreDiff !== 0) return scoreDiff;
+      const pctDiff = b.Positive_pct - a.Positive_pct;
+      if (pctDiff !== 0) return pctDiff;
 
       const positiveDiff = b.Positive - a.Positive;
       if (positiveDiff !== 0) return positiveDiff;
 
-      return b.Positive_pct - a.Positive_pct;
+      return b.total_mentions - a.total_mentions;
     })
     .slice(0, topN);
 }
@@ -1202,8 +1217,7 @@ export function calculateMostMentionedFeatureVerbatims(
     const brand = normalizeBrandName(record.brand);
 
     return (
-      record.feature &&
-      record.feature !== 'Overall' &&
+      isValidSentimentFeature(record.feature) &&
       brand &&
       isTractorKpiBrand(brand) &&
       isUsableVerbatimSentence(record.sentence)
@@ -1833,94 +1847,107 @@ export function calculateCompetitiveMtpComparison(rows: KpiRow[]): CompetitiveMt
 
   const sonalika: CompetitiveMtpNode[] = [
     {
-      title: 'Product Demonstration',
+      title: 'New Launches & Feature Highlights',
       points: [
-        'Sonalika DI 745 III field demo and implement-use showcase',
-        'Tiger 47 RX cultivator / haulage demonstration clips',
-        'Live-use videos showing power, grip and handling in farm conditions',
+        'Sonalika Gold Series is positioned around engine strength, with the 3.5L engine, 3532cc displacement and 220Nm torque highlighted as the key feature story.',
+        'Sonalika DI 60 4WD is presented as a heavy-duty upgrade, with focus on 60 HP power, 4WD capability and suitability for tough farming operations.',
       ],
     },
     {
-      title: 'Product Review & Field Experience',
+      title: 'Reviews, Owner Feedback & Real Farming Experience',
       points: [
-        'Farmer review content around DI 60 and Tiger series tractors',
-        'On-field feedback on pulling power, comfort and usage experience',
-        'Practical farming activity videos with ownership-style observations',
+        'Sonalika Tiger 42 owner reviews position it as a reliable and value-driven 42 HP tractor for daily farming use.',
+        'Sonalika DI 60 / DI 60 4WD owner feedback highlights strong real-farming performance, especially for heavy-duty agricultural tasks and demanding field usage.',
+        'Sonalika DI 55 4x4 farmer feedback highlights strong field performance in tough soil conditions and heavy implement usage.',
       ],
     },
     {
-      title: 'Product Walkthrough',
+      title: 'Brand / Model Comparisons',
       points: [
-        'Sonalika DI 60 Sikander RX feature walkthrough content',
-        'Engine, hydraulics, PTO and operator-comfort feature explanation',
-        'DI 745 and Tiger series overview videos covering key specifications',
+        'Sonalika DI 55 4x4 is compared within the 55 HP segment, with its 3-cylinder engine and 4x4 capability highlighted as key differentiators.',
+        'Sonalika Tiger 42 is compared with other 42 HP tractors, with owner feedback positioning it as a strong performer for engine power, torque and farming suitability.',
       ],
     },
     {
-      title: 'Brand Promotion',
+      title: 'Performance & Field Testing',
       points: [
-        'Dealer and showroom-led Sonalika promotional videos',
-        'Regional visibility, sales milestone and brand awareness clips',
+        'Sonalika DI 55 4x4 is tested with 13 cultivators, showing strong pulling power and efficiency in heavy soil conditions.',
+        'Sonalika DI 60 4WD field-test content reinforces its use for heavy-duty and large-scale farming tasks.',
       ],
     },
     {
-      title: 'Comparison',
+      title: 'Maintenance, Issues & Modifications',
       points: [
-        'Sonalika compared with Mahindra, Swaraj and Eicher models',
-        'HP, price, feature and field-use comparison discussions',
+        'Sonalika DI 55 is shown with a cylinder head gasket issue, where gasket replacement after 18,000 hours indicates long service usage before major maintenance.',
+        'Sonalika Tiger 42 owner review discusses routine maintenance experience, ease of servicing and recurring issues faced during regular farming use.',
       ],
     },
     {
-      title: 'Launch, Offers & Innovation',
+      title: 'Implements & Attachments Usage',
       points: [
-        'New model / variant launch and feature-highlight content',
-        'Seasonal offer, finance and used-tractor discussion videos',
-        'Assembly, testing and product-quality showcase themes',
+        'Sonalika DI 55 4x4 is shown handling heavy implements such as rotavators and reapers, reinforcing its suitability for demanding field operations.',
+      ],
+    },
+    {
+      title: 'Second-Hand Buying & Resale',
+      points: [
+        'Sonalika DI 60 4x4 is highlighted in a Muzaffarpur, Bihar second-hand tractor collection as a preferred used-tractor choice for buyers seeking powerful 60 HP performance.',
       ],
     },
   ];
 
   const otherBrands: CompetitiveMtpNode[] = [
     {
-      title: 'Product Reviews & Farmer Experience',
+      title: 'New Launches & Feature Highlights',
       points: [
-        'Mahindra, Swaraj, Eicher and Solis owner-review videos',
-        'Farmer feedback around mileage, durability and field performance',
+        'New Holland Workmaster AC Cabin Tractor is highlighted for factory-fitted AC cabin, 4WD capability and reversible engine fan.',
+        'Mahindra 475 DI 42 HP facelift content focuses on updated price, specifications and design improvements.',
+        'Mahindra 585 DI, 575 DI and 475 DI are discussed for digital or voice-assist features under the talking tractor positioning.',
       ],
     },
     {
-      title: 'Product Demonstration',
+      title: 'Reviews, Owner Feedback & Real Farming Experience',
       points: [
-        'John Deere, New Holland and Swaraj field demonstration clips',
-        'Implement-use and power demonstration content across brands',
+        'John Deere 5050 D receives positive feedback for price-value and practical farmer utility.',
+        'Mahindra and Swaraj owners share real farming experiences around daily operations, crop suitability and long-term reliability.',
+        'Eicher and Farmtrac owner feedback focuses on multi-crop farming utility, seasonal workload handling and heavy-duty usage.',
       ],
     },
     {
-      title: 'Product Walkthrough',
+      title: 'Brand / Model Comparisons',
       points: [
-        'Mahindra 575 DI XP Plus and New Holland 3630 feature walkthroughs',
-        'AC cabin, hydraulics, comfort and new-model feature discussions',
+        'Swaraj Protek Tractor vs John Deere 5210 Gear Pro comparisons focus on gear technology, power output and farming suitability.',
+        '50 HP vs 65 HP tractor comparisons discuss price-to-performance value and practical field utility.',
+        '35 HP, 42 HP and 45 HP tractor comparisons highlight how newer mid-HP models offer better performance at competitive pricing.',
       ],
     },
     {
-      title: 'Brand Promotion',
+      title: 'Performance & Field Testing',
       points: [
-        'Mahindra and Swaraj dealership / brand showcase content',
-        'Factory, service and infrastructure-oriented promotional clips',
+        'Mahindra 585 M-Bull and Yuvo Tech Plus 585 are field-tested for farming efficiency, engine power and fuel economy.',
+        'Eicher 50 HP 4WD is tested for torque, traction and field performance in challenging conditions.',
+        'John Deere 5310 4WD is highlighted for versatility across terrains and demanding farm tasks.',
       ],
     },
     {
-      title: 'Launches, Offers',
+      title: 'Maintenance, Issues & Modifications',
       points: [
-        'New model announcements and used-tractor sales content',
-        'Finance, exchange and dealership offer discussion videos',
+        'John Deere overheating issues are discussed with troubleshooting steps and preventive measures.',
+        'Escort 335 modification videos showcase custom builds, restoration and performance or aesthetic upgrades.',
       ],
     },
     {
-      title: 'Comparison',
+      title: 'Implements & Attachments Usage',
       points: [
-        'Swaraj vs John Deere and New Holland vs Mahindra comparison clips',
-        'HP, price and model-to-model benchmark discussions',
+        'Disk Harrow performance on Mahindra tractors is demonstrated for tillage quality and operational efficiency.',
+        'Landagro Rotavator and similar implements are reviewed around compatibility, pricing and value for Indian farmers.',
+      ],
+    },
+    {
+      title: 'Second-Hand Buying & Resale',
+      points: [
+        'Second-hand tractor collections in Muzaffarpur, Bihar highlight market pricing, model availability and negotiation points.',
+        'Used tractor videos discuss resale value and condition checks for popular brands like Mahindra and Swaraj.',
       ],
     },
   ];
