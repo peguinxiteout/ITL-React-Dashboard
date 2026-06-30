@@ -137,9 +137,11 @@ export function ShareOfVoiceCharts({ summary, totalUniqueVideos, periodDeltas }:
         )}
       </div>
 
-      <p style={{ fontSize: 10, color: '#94a3b8', fontStyle: 'italic', marginTop: 6, textAlign: 'center' }}>
-        {comparisonNote}
-      </p>
+      {!periodDeltas.noData && (
+        <p style={{ fontSize: 10, color: '#94a3b8', fontStyle: 'italic', marginTop: 6, textAlign: 'center' }}>
+          {comparisonNote}
+        </p>
+      )}
 
       <p style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', marginTop: 8, textAlign: 'center' }}>
         Percentages may exceed 100% in aggregate — multi-brand videos are counted for each featured brand.

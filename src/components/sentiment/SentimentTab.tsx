@@ -520,7 +520,7 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                           <td className="py-3 pr-4">
                             <span className="block max-w-xs truncate font-medium text-slate-900">{v.title}</span>
                             <span className="block text-slate-400" style={{ fontSize: 11 }}>
-                              {v.channel_name}{v.channel_name && v.published_at ? ' · ' : ''}{formatDate(v.published_at)}
+                              {v.channel_name}
                             </span>
                           </td>
                           <td className="py-3 pr-4">
@@ -700,7 +700,7 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
                           <td className="py-3 pr-4">
                             <span className="block max-w-xs truncate font-medium text-slate-900">{v.title}</span>
                             <span className="block text-slate-400" style={{ fontSize: 11 }}>
-                              {v.channel_name}{v.channel_name && v.published_at ? ' · ' : ''}{formatDate(v.published_at)}
+                              {v.channel_name}
                             </span>
                           </td>
                           <td className="py-3 pr-4">

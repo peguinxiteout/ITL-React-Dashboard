@@ -475,8 +475,13 @@ function KeyInsightsCard({
     const topChCount = topChEntry?.[1]?.size || 0;
 
     const allWin = allData.filter((r) => r.publish_date >= startDate && r.publish_date <= endDate);
-    const tractorCount = allWin.filter((r) => r.is_tractor_content === true).length;
-    const tractorDensity = allWin.length > 0 ? (tractorCount / allWin.length) * 100 : 0;
+    // Dedupe by video_id — allWin is expanded with one row per detected brand for
+    // multi-brand tractor videos, so raw row counts double-count those videos.
+    // Mirrors computeOverviewStats() in useCMSData.js, which drives the Total
+    // Videos / Tractor Videos summary cards.
+    const totalVideoCount = new Set(allWin.map((r) => r.video_id)).size;
+    const tractorVideoCount = new Set(allWin.filter((r) => r.is_tractor_content === true).map((r) => r.video_id)).size;
+    const tractorDensity = totalVideoCount > 0 ? (tractorVideoCount / totalVideoCount) * 100 : 0;
     const activeChannelCount = new Set(allWin.map((r) => r.channel_name).filter(Boolean)).size;
     const inactiveCount = Math.max(0, 52 - activeChannelCount);
 
@@ -496,8 +501,9 @@ function KeyInsightsCard({
       prevSoe = pTotalEng > 0 ? (pSonEng / pTotalEng) * 100 : 0;
       prevPubRate = weeksInWin > 0 ? prevSonUnique / weeksInWin : 0;
       const prevAllWin = allData.filter((r) => r.publish_date >= prevStartIso && r.publish_date <= prevEndIso);
-      const prevTractorCount = prevAllWin.filter((r) => r.is_tractor_content === true).length;
-      prevTractorDensity = prevAllWin.length > 0 ? (prevTractorCount / prevAllWin.length) * 100 : 0;
+      const prevTotalVideoCount = new Set(prevAllWin.map((r) => r.video_id)).size;
+      const prevTractorVideoCount = new Set(prevAllWin.filter((r) => r.is_tractor_content === true).map((r) => r.video_id)).size;
+      prevTractorDensity = prevTotalVideoCount > 0 ? (prevTractorVideoCount / prevTotalVideoCount) * 100 : 0;
     }
 
     return {

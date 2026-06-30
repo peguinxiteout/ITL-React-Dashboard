@@ -380,7 +380,7 @@ export function ContentFrequencyChart({
       <div style={{ borderTop: '1px solid #e2e8f0', margin: '1.25rem 0' }} />
 
       {/* Summary row */}
-      <div style={{ display: 'flex', gap: 8, fontSize: 12, color: '#64748b' }}>
+      <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--color-text-secondary)' }}>
         <span>Sonalika active days: {sonalikaActiveWeeks} of {sonalikaTotalWeeks}</span>
         <span>·</span>
         <span>Sonalika avg videos/day: {sonalikaAvg.toFixed(1)}</span>
@@ -391,7 +391,7 @@ export function ContentFrequencyChart({
       </div>
 
       {/* Footer caption */}
-      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>
+      <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 8 }}>
         Unique videos per brand per day. Amber-outlined Sonalika row highlights coverage gaps (—) where no creator published Sonalika content that day.
       </div>
     </SectionCard>);
