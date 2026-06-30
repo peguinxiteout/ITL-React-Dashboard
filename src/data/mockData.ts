@@ -77,7 +77,8 @@ export const BRANDS: Brand[] = [
 { id: 'swaraj', name: 'Swaraj', short: 'SWJ', color: '#D97706' },
 { id: 'johndeere', name: 'John Deere', short: 'JD', color: '#16A34A' },
 { id: 'newholland', name: 'New Holland', short: 'NH', color: '#0EA5E9' },
-{ id: 'massey', name: 'Massey Ferguson', short: 'MF', color: '#7C3AED' }];
+{ id: 'massey', name: 'Massey Ferguson', short: 'MF', color: '#7C3AED' },
+{ id: 'escorts', name: 'Escorts Kubota', short: 'EK', color: '#DB2777' }];
 
 
 export const COMPETITORS = BRANDS.filter((b) => !b.isOwn);
