@@ -230,6 +230,7 @@ export default function VoiceInfluencerTab() {
 
   const [selectedBrand, setSelectedBrand] = useState('Sonalika');
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
+  const [benchmarkMode, setBenchmarkMode] = useState<'overall' | 'competitors'>('competitors');
   const [trendBrand, setTrendBrand] = useState('Sonalika');
   const [trendWeekOption, setTrendWeekOption] = useState<TrendWeekOption>('2');
   const [creatorSortKey, setCreatorSortKey] = useState<CreatorSortKey>('engagement');
@@ -298,7 +299,7 @@ export default function VoiceInfluencerTab() {
           if (aBrand === 'sonalika') return -1;
           if (bBrand === 'sonalika') return 1;
 
-          return b.total_mentions - a.total_mentions;
+          return b.video_count - a.video_count;
         }),
     [brandSentiment]
   );
@@ -375,7 +376,7 @@ export default function VoiceInfluencerTab() {
             rows,
             item.feature,
             1,
-            selectedBrand
+            benchmarkMode === 'competitors' ? selectedBrand : ''
           )[0];
 
           return topBrand
@@ -390,7 +391,7 @@ export default function VoiceInfluencerTab() {
           (item): item is { feature: string; brand: string; positivePct: number } =>
             Boolean(item)
         ),
-    [rows, selectedBrand, featureSentimentChartData]
+    [rows, selectedBrand, benchmarkMode, featureSentimentChartData]
   );
 
   const handleFeatureClick = (feature?: string) => {
@@ -692,7 +693,7 @@ export default function VoiceInfluencerTab() {
       </SectionCard>
 
       <SectionCard
-        title="1. Brand-Level Sentiment"
+        title="Brand-Level Sentiment"
       >
         <div className="mb-4 flex items-center justify-between gap-4">
           <SentimentLegend />
@@ -710,8 +711,14 @@ export default function VoiceInfluencerTab() {
               </thead>
 
               <tbody className="divide-y divide-slate-100 bg-white">
-                {brandSentimentTableData.map((item) => (
-                  <tr key={item.brand} className="hover:bg-blue-50/40">
+                {brandSentimentTableData.map((item) => {
+                  const isSonalikaRow = String(item.brand || '').toLowerCase() === 'sonalika';
+
+                  return (
+                  <tr
+                    key={item.brand}
+                    className={isSonalikaRow ? 'bg-blue-50/70 ring-1 ring-inset ring-blue-100' : 'hover:bg-blue-50/40'}
+                  >
                     <td className="px-4 py-3 font-bold text-slate-950">{item.brand}</td>
                     <td className="px-4 py-3 text-center text-slate-700">
                       {item.video_count.toLocaleString()}
@@ -728,7 +735,8 @@ export default function VoiceInfluencerTab() {
                       />
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -738,7 +746,7 @@ export default function VoiceInfluencerTab() {
       </SectionCard>
 
       <SectionCard
-        title="2. Feature-Level Sentiment"
+        title="Feature-Level Sentiment"
         actions={
           <select
             value={selectedBrand}
@@ -879,11 +887,35 @@ export default function VoiceInfluencerTab() {
 
               {topCompetitorByFeature.length > 0 ? (
                 <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
-                  <div className="mb-3">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                     <p className="text-xs font-bold uppercase tracking-wide text-blue-700">
-                      Top competitor positive benchmark by feature
+                      Top positive benchmark by feature
                     </p>
-                    
+
+                    <div className="inline-flex rounded-full border border-blue-100 bg-white p-1 text-xs font-bold shadow-sm">
+                      <button
+                        type="button"
+                        onClick={() => setBenchmarkMode('overall')}
+                        className={`rounded-full px-3 py-1 transition ${
+                          benchmarkMode === 'overall'
+                            ? 'bg-blue-700 text-white'
+                            : 'text-slate-600 hover:bg-blue-50'
+                        }`}
+                      >
+                        Overall
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBenchmarkMode('competitors')}
+                        className={`rounded-full px-3 py-1 transition ${
+                          benchmarkMode === 'competitors'
+                            ? 'bg-blue-700 text-white'
+                            : 'text-slate-600 hover:bg-blue-50'
+                        }`}
+                      >
+                        Competitors
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -1083,13 +1115,13 @@ export default function VoiceInfluencerTab() {
       </SectionCard>
 
       <SectionCard
-        title="3. Most-Mentioned Features"
+        title="Most-Mentioned Features"
       >
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 p-5 shadow-sm">
             <div className="mb-4">
               <h3 className="text-lg font-bold text-slate-950">
-                3A. Top Praised Features — {selectedBrand}
+                Top Praised Features — {selectedBrand}
               </h3>
             </div>
 
@@ -1129,7 +1161,7 @@ export default function VoiceInfluencerTab() {
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4">
               <h3 className="text-lg font-bold text-slate-950">
-                3B. Top Criticized Features — {selectedBrand}
+                Top Criticized Features — {selectedBrand}
               </h3>
             </div>
 
@@ -1269,7 +1301,7 @@ export default function VoiceInfluencerTab() {
       </SectionCard>
 
       <SectionCard
-        title="4. Trend Analysis: Weekly Mention & Sentiment Movement"
+        title="Trend Analysis: Weekly Mention & Sentiment Movement"
         actions={
           <div className="flex flex-wrap items-center gap-3">
             <select
@@ -1303,7 +1335,7 @@ export default function VoiceInfluencerTab() {
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-3">
               <h3 className="text-base font-bold text-slate-950">
-                4A. Weekly Mention Trend
+                Weekly Mention Trend
               </h3>
               
             </div>
@@ -1356,7 +1388,7 @@ export default function VoiceInfluencerTab() {
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-3">
               <h3 className="text-base font-bold text-slate-950">
-                4B. Weekly Sentiment Trend
+                Weekly Sentiment Trend
               </h3>
               
             </div>
@@ -1380,7 +1412,7 @@ export default function VoiceInfluencerTab() {
       </SectionCard>
 
       <SectionCard
-        title="5. Creator Performance Leaderboard"
+        title="Creator Performance Leaderboard"
         actions={
           <select
             value={creatorLimit}
@@ -1499,7 +1531,7 @@ export default function VoiceInfluencerTab() {
       </SectionCard>
 
       <SectionCard
-        title="6. Geo-Segmented Insights"
+        title="Geo-Segmented Insights"
       >
 
         {geoCoverage.length > 0 ? (
@@ -1507,7 +1539,7 @@ export default function VoiceInfluencerTab() {
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="mb-4">
                 <h3 className="text-base font-bold text-slate-950">
-                  6A. Content Distribution by Region
+                  Content Distribution by Region
                 </h3>
                 
               </div>
@@ -1552,7 +1584,7 @@ export default function VoiceInfluencerTab() {
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="mb-4">
                 <h3 className="text-base font-bold text-slate-950">
-                  6B. Influencer Density by Region
+                  Influencer Density by Region
                 </h3>
                 
               </div>
@@ -1602,7 +1634,7 @@ export default function VoiceInfluencerTab() {
           <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4">
               <h3 className="text-base font-bold text-slate-950">
-                6C. Regional Sentiment Distribution
+                Regional Sentiment Distribution
               </h3>
               
             </div>
@@ -1659,7 +1691,7 @@ export default function VoiceInfluencerTab() {
           <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4">
               <h3 className="text-base font-bold text-slate-950">
-                6D. Top Creator by Region
+                Top Creator by Region
               </h3>
               
             </div>
