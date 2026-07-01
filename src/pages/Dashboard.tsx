@@ -958,10 +958,12 @@ export function Dashboard() {
 
   const { startDate, endDate } = globalDateRange;
 
-  const overviewStats = useMemo(
-    () => computeOverviewStats(allData, startDate, endDate),
-    [allData, startDate, endDate]
-  );
+  const overviewStats = useMemo(() => {
+    const cleanData = allData.filter(
+      (row: any) => row.video_id && !String(row.video_id).startsWith('#') && row.video_id !== 'NaN' && String(row.video_id).trim() !== ''
+    );
+    return computeOverviewStats(cleanData, startDate, endDate);
+  }, [allData, startDate, endDate]);
 
   const categoryData = useMemo(
     () => computeCategoryData(allData, startDate, endDate),

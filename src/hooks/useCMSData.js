@@ -206,10 +206,13 @@ export function computeOverviewStats(allData, startDate, endDate) {
   const inRange = allData.filter(
     (r) => r.publish_date >= startDate && r.publish_date <= endDate
   );
+  const validRows = inRange.filter(
+    (row) => row.video_id && row.video_id !== 'NaN' && String(row.video_id).trim() !== ''
+  );
 
-  const totalVideos = new Set(inRange.map((r) => r.video_id)).size;
+  const totalVideos = new Set(validRows.map((r) => r.video_id)).size;
 
-  const tractorRows = inRange.filter((r) => r.is_tractor_content === true);
+  const tractorRows = validRows.filter((r) => r.is_tractor_content === true);
   const tractorVideos = new Set(tractorRows.map((r) => r.video_id)).size;
 
   const brandsPerVideo = {};
