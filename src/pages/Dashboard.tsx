@@ -581,9 +581,15 @@ function KeyInsightsCard({
     const brandSoVRanked = [...brandVidMap.entries()]
       .map(([brand, vids]) => ({ brand, count: vids.size, sov: totalAttrib > 0 ? (vids.size / totalAttrib) * 100 : 0 }))
       .sort((a, b) => b.count - a.count);
-    const totalBrands = brandSoVRanked.length;
+    const filteredBrands = brandSoVRanked.filter((b) => b.count > 1);
+    const totalBrands = filteredBrands.length;
+    console.log('[IO CMS Debug]', {
+      brandSoVRankedLength: brandSoVRanked.length,
+      filteredBrandsLength: filteredBrands.length,
+      filteredBrands: filteredBrands.map(b => `${b.brand}:${b.count}`)
+    });
     const sonalikaSoV = (brandSoVRanked.find((b) => b.brand === 'Sonalika')?.sov ?? 0).toFixed(1);
-    const sonRankIdx = brandSoVRanked.findIndex((b) => b.brand === 'Sonalika');
+    const sonRankIdx = filteredBrands.findIndex((b) => b.brand === 'Sonalika');
     const sonRank = sonRankIdx >= 0 ? sonRankIdx + 1 : totalBrands + 1;
     const leader = brandSoVRanked[0];
     const leaderName = leader?.brand || '';
@@ -797,7 +803,7 @@ function KeyInsightsCard({
             <KiSignalCard
               bg="#E6F1FB" textColor="#0C447C"
               icon={<MegaphoneIcon size={14} />}
-              headline={`${cms.sov.toFixed(1)}% SoV · Rank #${cms.sonRank} of ${cms.numBrands}`}
+              headline={`${cms.sov.toFixed(1)}% SoV · Rank #${cms.sonRank} of ${Math.min(cms.numBrands, 20)}`}
               sub={cms.sonRank === 1 ? 'Leading the category' : `${cms.gapToTop.toFixed(1)}pp gap to #1 (${cms.topBrand})`}
             />
             <KiSignalCard
@@ -1026,7 +1032,7 @@ export function Dashboard() {
             />
             <OverviewCard
               icon={<TagIcon size={15} />}
-              label="Brands Mentioned"
+              label="Brand Mentioned"
               value={cmsLoading ? '…' : overviewStats.brandMentioned}
               descriptor={
                 cmsLoading

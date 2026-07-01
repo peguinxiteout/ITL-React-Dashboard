@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   LineChart,
   Line,
@@ -237,32 +237,91 @@ export function ShareTrendCharts({
 }: ShareTrendChartsProps) {
   const [sovMetric, setSovMetric] = useState<ShareField>('sov_views');
   const [soeMetric, setSoeMetric] = useState<ShareField>('soe');
-  const [selectedBrandName, setSelectedBrandName] = useState<string>(
-    () => brands.find((b) => b.isOwn)?.name ?? brands[0]?.name ?? ''
-  );
-  const selectedBrand = brands.find((b) => b.name === selectedBrandName) ?? brands[0];
-  const displayedBrands = selectedBrand ? [selectedBrand] : [];
+  const ownBrandName = brands.find((b) => b.isOwn)?.name ?? 'Sonalika';
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([ownBrandName]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [dropdownOpen]);
+
+  const MAX_BRANDS = 5;
+  const otherBrands = brands
+    .filter((b) => !b.isOwn)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const toggleBrand = (name: string) => {
+    if (name === ownBrandName) return;
+    setSelectedBrands((prev) => {
+      if (prev.includes(name)) return prev.filter((b) => b !== name);
+      if (prev.length >= MAX_BRANDS) return prev;
+      return [...prev, name];
+    });
+  };
+
+  const dropdownLabel =
+    selectedBrands.length === 1
+      ? ownBrandName
+      : `${ownBrandName} + ${selectedBrands.length - 1}`;
+
+  const displayedBrands = brands.filter((b) => selectedBrands.includes(b.name));
   return (
     <SectionCard
       title="Share trends"
       subtitle="Daily SoV and SoE by brand"
       actions={
-        <div className="flex items-center gap-2">
-          <label htmlFor="trend-brand-select" className="text-xs font-medium text-slate-600">
-            Brand
-          </label>
-          <select
-            id="trend-brand-select"
-            value={selectedBrandName}
-            onChange={(e) => setSelectedBrandName(e.target.value)}
-            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
-
-            {brands.map((b) =>
-            <option key={b.name} value={b.name}>
-                {b.name}
-              </option>
-            )}
-          </select>
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setDropdownOpen((o) => !o)}
+            className="flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+          >
+            {dropdownLabel}
+            <span style={{ fontSize: 10, lineHeight: 1 }}>▾</span>
+          </button>
+          {dropdownOpen && (
+            <div className="absolute right-0 top-full z-20 mt-1 w-52 rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+              {/* Own brand — always checked, disabled */}
+              <label className="flex cursor-not-allowed items-center gap-2 px-3 py-1.5 opacity-50">
+                <input type="checkbox" checked readOnly disabled className="accent-blue-600" />
+                <span className="text-xs text-slate-700">{ownBrandName}</span>
+              </label>
+              <div className="my-1 border-t border-slate-100" />
+              {/* Competitor brands, alphabetical */}
+              {otherBrands.map((b) => {
+                const checked = selectedBrands.includes(b.name);
+                const atMax = !checked && selectedBrands.length >= MAX_BRANDS;
+                return (
+                  <label
+                    key={b.name}
+                    className={`flex items-center gap-2 px-3 py-1.5 ${atMax ? 'cursor-not-allowed opacity-40' : 'cursor-pointer hover:bg-slate-50'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={atMax}
+                      onChange={() => toggleBrand(b.name)}
+                      className="accent-blue-600"
+                    />
+                    <span className="text-xs text-slate-700">{b.name}</span>
+                  </label>
+                );
+              })}
+              <div className="mx-3 mt-1 border-t border-slate-100 pb-1 pt-1.5">
+                <p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>
+                  Sonalika is always shown · Select up to 4 additional brands
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       }>
 
