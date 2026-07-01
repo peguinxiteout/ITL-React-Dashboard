@@ -427,8 +427,47 @@ function isValidSentimentFeature(feature: unknown): boolean {
   );
 }
 
-function videoKey(row: KpiRow): string {
-  return row.source_id || row.link || row.filename || Math.random().toString();
+function isInvalidVideoIdentifier(value: unknown): boolean {
+  const text = String(value || '').trim();
+  const lower = text.toLowerCase();
+
+  return (
+    !text ||
+    lower === 'nan' ||
+    lower === 'null' ||
+    lower === 'none' ||
+    lower === 'undefined' ||
+    lower === 'unknown' ||
+    lower === 'not available' ||
+    lower === '#name?' ||
+    /^#+name\??$/i.test(text)
+  );
+}
+
+function getStrictVideoId(row: KpiRow): string {
+  const rowWithVideoId = row as KpiRow & { video_id?: string };
+  const videoId = String(rowWithVideoId.video_id || '').trim();
+
+  return isInvalidVideoIdentifier(videoId) ? '' : videoId;
+}
+
+function hasVideoIdColumn(rows: KpiRow[]): boolean {
+  return rows.some((row) => Object.prototype.hasOwnProperty.call(row, 'video_id'));
+}
+
+function fallbackVideoKey(row: KpiRow): string {
+  const candidates = [row.source_id, row.link, row.filename, row.title];
+  const validKey = candidates.find((value) => !isInvalidVideoIdentifier(value));
+
+  return validKey ? String(validKey).trim() : '';
+}
+
+function videoKey(row: KpiRow, useStrictVideoId = false): string {
+  if (useStrictVideoId) {
+    return getStrictVideoId(row);
+  }
+
+  return getStrictVideoId(row) || fallbackVideoKey(row);
 }
 
 function safeParseSentiments(value: string | undefined): any[] {
@@ -611,9 +650,15 @@ function cleanCreatorName(value: unknown): string {
 export function getVideoLevelRows(rows: KpiRow[]): KpiRow[] {
   const seen = new Set<string>();
   const output: KpiRow[] = [];
+  const useStrictVideoId = hasVideoIdColumn(rows);
 
   rows.forEach((row) => {
-    const key = videoKey(row);
+    const key = videoKey(row, useStrictVideoId);
+
+    // When the CSV has a video_id column, KPI base counts should use only
+    // valid unique video IDs. Rows with blank/#NAME?/invalid video_id are
+    // excluded instead of being counted through source_id/link fallback.
+    if (!key) return;
 
     if (!seen.has(key)) {
       seen.add(key);
@@ -626,10 +671,14 @@ export function getVideoLevelRows(rows: KpiRow[]): KpiRow[] {
 
 export function getSentimentRecords(rows: KpiRow[]): SentimentRecord[] {
   const records: SentimentRecord[] = [];
+  const useStrictVideoId = hasVideoIdColumn(rows);
 
   rows.forEach((row) => {
     const parsed = safeParseSentiments(row.sentiments);
-    const key = videoKey(row);
+    const key = videoKey(row, useStrictVideoId);
+
+    // Keep sentiment/feature KPIs aligned with the same valid video-id base.
+    if (!key) return;
 
     parsed.forEach((item) => {
       const itemBrands = normalizeBrandList(item.Company || item.Brand);
@@ -1939,15 +1988,8 @@ export function calculateCompetitiveMtpComparison(rows: KpiRow[]): CompetitiveMt
     {
       title: 'Implements & Attachments Usage',
       points: [
-        'Disk Harrow performance on Mahindra tractors is demonstrated for tillage quality and operational efficiency.',
+        'Disk Harrow performance on *Mahindra* tractors is demonstrated for tillage quality and operational efficiency.',
         'Landagro Rotavator and similar implements are reviewed around compatibility, pricing and value for Indian farmers.',
-      ],
-    },
-    {
-      title: 'Second-Hand Buying & Resale',
-      points: [
-        'Second-hand tractor collections in Muzaffarpur, Bihar highlight market pricing, model availability and negotiation points.',
-        'Used tractor videos discuss resale value and condition checks for popular brands like Mahindra and Swaraj.',
       ],
     },
   ];
