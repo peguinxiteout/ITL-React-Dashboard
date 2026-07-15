@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { SectionHeader } from '../SectionHeader';
+import { TabKPIHeader } from '../shared/TabKPIHeader';
+import { CMSKeyInsights } from './CMSKeyInsights';
 import { ShareOfVoiceCharts } from './ShareOfVoiceCharts';
 import { ShareOfEngagementCard } from './ShareOfEngagementCard';
 import { ShareTrendCharts } from './ShareTrendCharts';
@@ -10,6 +11,7 @@ import {
   summarizeBrands,
   buildWeeklyData,
   buildWeeklySoV,
+  computeOverviewStats,
   SONALIKA_BRAND,
   getBrandColor,
 } from '../../hooks/useCMSData.js';
@@ -79,7 +81,7 @@ const MS_PER_DAY = 86400000;
 export function MarketShareTab({
   selectedCompetitors: _selectedCompetitors,
   globalDateRange,
-  setGlobalDateRange: _setGlobalDateRange,
+  setGlobalDateRange,
   allData,
   cmsData,
   loading,
@@ -89,6 +91,14 @@ export function MarketShareTab({
   const [includeShorts, setIncludeShorts] = useState<boolean>(true);
 
   const { startDate, endDate } = globalDateRange;
+
+  // Same COUNT DISTINCT video_id stats IO's header cards show, so the two tabs
+  // never disagree on Total Videos / Tractor Videos / Brand Mentioned for a
+  // given date range.
+  const overviewStats = useMemo(
+    () => computeOverviewStats(allData, startDate, endDate),
+    [allData, startDate, endDate]
+  );
 
   // All attributed tractor rows in the current date window (not filtered by selectedBrands)
   const windowBrandedRows = useMemo(() => {
@@ -264,8 +274,6 @@ export function MarketShareTab({
     };
   }, [cmsData, startDate, endDate, selectedBrands, includeShorts]);
 
-  const headerMeta = loading || error ? '' : derived.dataContext;
-
   return (
     <motion.div
       variants={container}
@@ -273,23 +281,35 @@ export function MarketShareTab({
       animate="show"
       className="space-y-5">
 
-      <motion.div
-        variants={item}
-        className="flex items-end justify-between gap-4">
-
-        <SectionHeader
+      <motion.div variants={item}>
+        <TabKPIHeader
           title="Content Market Share"
-          descriptor="Organic creator content - Indian tractor market"
-          meta={headerMeta} />
+          subtitle="Organic creator content - Indian tractor market"
+          startDate={startDate}
+          endDate={endDate}
+          onDateChange={setGlobalDateRange}
+          stats={overviewStats}
+          loading={loading}
+          actions={
+            <BrandFilterButton
+              brands={brandItems}
+              selectedBrands={selectedBrands}
+              onChange={setSelectedBrands}
+              includeShorts={includeShorts}
+              onShortsChange={setIncludeShorts} />
+          } />
+      </motion.div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <BrandFilterButton
-            brands={brandItems}
-            selectedBrands={selectedBrands}
-            onChange={setSelectedBrands}
-            includeShorts={includeShorts}
-            onShortsChange={setIncludeShorts} />
-        </div>
+      <motion.div variants={item}>
+        <CMSKeyInsights
+          cmsData={cmsData}
+          allData={allData}
+          startDate={startDate}
+          endDate={endDate}
+          loading={loading}
+          totalVideoCount={overviewStats.totalVideos}
+          tractorVideoCount={overviewStats.tractorVideos}
+        />
       </motion.div>
 
       {loading ?
