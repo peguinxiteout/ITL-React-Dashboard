@@ -359,7 +359,8 @@ export function useCMSData() {
 
         const expandedRows = [];
         for (const raw of cleanRows) {
-          if (!raw || !raw.video_id) continue;
+          // Skip rows with invalid video_id before expanding
+          if (!raw || !raw.video_id || raw.video_id === 'NaN' || String(raw.video_id).trim() === '' || String(raw.video_id).startsWith('#')) continue;
 
           const publishDate = raw.posted_date
             ? new Date(raw.posted_date).toISOString().split('T')[0]

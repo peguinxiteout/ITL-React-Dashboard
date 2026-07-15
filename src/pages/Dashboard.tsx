@@ -386,11 +386,13 @@ function KiModuleHeader({
 // ─── KeyInsightsCard ──────────────────────────────────────────────────────────
 function KeyInsightsCard({
   cmsData, allData, successRows, startDate, endDate, cmsLoading, vsLoading, setActiveTab,
+  totalVideoCount, tractorVideoCount,
 }: {
   cmsData: any[]; allData: any[]; successRows: any[];
   startDate: string; endDate: string;
   cmsLoading: boolean; vsLoading: boolean;
   setActiveTab: (tab: TabKey) => void;
+  totalVideoCount: number; tractorVideoCount: number;
 }) {
   // Reuse the same KPI CSV and calculation functions used by
   // VoiceInfluencerTab and CompetitivePositioningTab so this overview
@@ -762,7 +764,7 @@ function KeyInsightsCard({
     });
 
   const cmsBullets: { color: string; text: string }[] = [
-    { color: '#1D4ED8', text: `${cmsStateA.tractorCount} of ${cmsStateA.totalCount} tracked videos are tractor content in this window (${cmsStateA.densityPct}%).` },
+    { color: '#1D4ED8', text: `${tractorVideoCount} of ${totalVideoCount} tracked videos are tractor content in this window (${(totalVideoCount > 0 ? (tractorVideoCount / totalVideoCount) * 100 : 0).toFixed(1)}%).` },
     ...(cmsStateA.mostActiveCompetitor ? [{ color: '#1D4ED8', text: `Sonalika published on ${cmsStateA.sonalikaActiveDays} of ${cmsStateA.totalWindowDays} days this window — ${cmsStateA.mostActiveCompetitor} was most active at ${cmsStateA.mostActiveRate}/day.` }] : []),
     ...(cmsStateA.topSubCat ? [{ color: '#1D4ED8', text: `${cmsStateA.topSubCatPct}% of Sonalika's videos in this window are ${cmsStateA.topSubCat} content.` }] : []),
   ];
@@ -1039,6 +1041,8 @@ export function Dashboard() {
             cmsLoading={cmsLoading}
             vsLoading={vsLoading}
             setActiveTab={setActiveTab}
+            totalVideoCount={overviewStats.totalVideos}
+            tractorVideoCount={overviewStats.tractorVideos}
           />
 
           {/* Total Category Videos bar chart */}
