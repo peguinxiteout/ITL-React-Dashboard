@@ -6,7 +6,7 @@ import { ShareOfVoiceCharts } from './ShareOfVoiceCharts';
 import { ShareOfEngagementCard } from './ShareOfEngagementCard';
 import { ShareTrendCharts } from './ShareTrendCharts';
 import { ContentFrequencyChart } from './ContentFrequencyChart';
-import { BrandFilterButton } from './BrandFilterButton';
+import { VSSelect, VSSelectOption } from '../sentiment/VSSelect';
 import {
   summarizeBrands,
   buildWeeklyData,
@@ -87,8 +87,9 @@ export function MarketShareTab({
   loading,
   error,
 }: MarketShareTabProps) {
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [includeShorts, setIncludeShorts] = useState<boolean>(true);
+  // "Home" brand every own-vs-rest visual keys off; every isOwn flag below
+  // derives from this instead of the static CMS_BRAND_META table.
+  const [ownBrand, setOwnBrand] = useState<string>(SONALIKA_BRAND);
 
   const { startDate, endDate } = globalDateRange;
 
@@ -100,70 +101,72 @@ export function MarketShareTab({
     [allData, startDate, endDate]
   );
 
-  // All attributed tractor rows in the current date window (not filtered by selectedBrands)
-  const windowBrandedRows = useMemo(() => {
-    const baseData = includeShorts
-      ? cmsData
-      : cmsData.filter((r: any) => r.is_short === false);
-    return baseData.filter(
+  // All attributed tractor rows in the current date window — shorts and
+  // long-form alike; the tab has no brand/shorts filtering.
+  const windowBrandedRows = useMemo(() =>
+    cmsData.filter(
       (r: any) => r.publish_date >= startDate && r.publish_date <= endDate
-    );
-  }, [cmsData, startDate, endDate, includeShorts]);
+    ),
+    [cmsData, startDate, endDate]
+  );
 
-  // Brands with >1 unique attributed video in the window; Sonalika pinned first, rest alphabetical
+  // Every brand attributed to at least one video in the window — no minimum-video
+  // threshold; own brand pinned first, rest alphabetical
   const availableBrands = useMemo(() => {
-    const brandVideoCounts: Record<string, Set<string>> = {};
-    windowBrandedRows.forEach((r: any) => {
-      if (!brandVideoCounts[r.attributed_brand]) {
-        brandVideoCounts[r.attributed_brand] = new Set();
-      }
-      brandVideoCounts[r.attributed_brand].add(r.video_id);
+    const brands = new Set<string>(
+      windowBrandedRows.map((r: any) => r.attributed_brand)
+    );
+    return [...brands].sort((a: string, b: string) => {
+      if (a === ownBrand) return -1;
+      if (b === ownBrand) return 1;
+      return a.localeCompare(b);
     });
-    return Object.entries(brandVideoCounts)
-      .filter(([, videos]) => (videos as Set<string>).size > 1)
-      .map(([brand]) => brand)
-      .sort((a: string, b: string) => {
-        if (a === 'Sonalika') return -1;
-        if (b === 'Sonalika') return 1;
-        return a.localeCompare(b);
-      });
-  }, [windowBrandedRows]);
+  }, [windowBrandedRows, ownBrand]);
+
+  // If a date-window change drops the selected own brand out of the list,
+  // fall back to the default rather than pointing every chart at a ghost brand.
+  useEffect(() => {
+    if (availableBrands.length > 0 && !availableBrands.includes(ownBrand)) {
+      setOwnBrand(SONALIKA_BRAND);
+    }
+  }, [availableBrands, ownBrand]);
 
   // Shape for BrandFilterButton — name + color + isOwn flag
   const brandItems = useMemo(() =>
     availableBrands.map((name: string) => ({
       name,
-      isOwn: name === 'Sonalika',
+      isOwn: name === ownBrand,
       color: getBrandColor(name),
     })),
-    [availableBrands]
+    [availableBrands, ownBrand]
   );
 
-  // Reset selection whenever the available brand list changes (new date window)
-  useEffect(() => {
-    setSelectedBrands(availableBrands);
-  }, [availableBrands]);
+  // Options for the own-brand dropdown; falls back to the current selection
+  // while data is still loading so VSSelect never renders with zero options.
+  const ownBrandOptions = useMemo<VSSelectOption[]>(() => {
+    const opts = availableBrands.map((name: string) => ({
+      value: name,
+      label: name,
+      color: getBrandColor(name),
+    }));
+    return opts.length > 0
+      ? opts
+      : [{ value: ownBrand, label: ownBrand, color: getBrandColor(ownBrand) }];
+  }, [availableBrands, ownBrand]);
 
   const derived = useMemo(() => {
-    const baseData = includeShorts
-      ? cmsData
-      : cmsData.filter((r: any) => r.is_short === false);
+    const windowRows = windowBrandedRows;
 
-    // Filter by selected date range
-    const windowRows = baseData.filter(
-      (r: any) => r.publish_date >= startDate && r.publish_date <= endDate
-    );
+    // isOwn is recomputed against ownBrand — the static flag the hook attaches
+    // from CMS_BRAND_META is import-time and ignores the dropdown selection.
+    const brandSummary = summarizeBrands(windowRows).map((b: any) => ({
+      ...b,
+      isOwn: b.brand === ownBrand,
+    }));
+    const own = brandSummary.find((b: any) => b.isOwn) ?? null;
 
-    const brandRows = windowRows.filter((r: any) =>
-      selectedBrands.includes(r.attributed_brand)
-    );
-    // Pass windowRows as denominator so SoV/SoE are relative to ALL attributed
-    // videos in the window, not just the selectedBrands-filtered subset.
-    const brandSummary = summarizeBrands(brandRows, windowRows);
-    const sonalika = brandSummary.find((b: any) => b.brand === SONALIKA_BRAND) ?? null;
-
-    // Dates present in the filtered window (for trend charts)
-    const windowWeeks = [...new Set(brandRows.map((r: any) => r.publish_date))]
+    // Dates present in the window (for trend charts)
+    const windowWeeks = [...new Set(windowRows.map((r: any) => r.publish_date))]
       .filter(Boolean)
       .sort() as string[];
 
@@ -205,26 +208,24 @@ export function MarketShareTab({
         noData: true,
       };
     } else {
-      const prevRows = baseData.filter(
+      const prevRows = cmsData.filter(
         (r: any) =>
-          r.publish_date >= prevStartIso &&
-          r.publish_date <= prevEndIso &&
-          selectedBrands.includes(r.attributed_brand)
+          r.publish_date >= prevStartIso && r.publish_date <= prevEndIso
       );
       const prevSummary = summarizeBrands(prevRows);
-      const prevSon = prevSummary.find((b: any) => b.brand === SONALIKA_BRAND);
+      const prevOwn = prevSummary.find((b: any) => b.brand === ownBrand);
       const r1 = (n: number) => Math.round(n * 10) / 10;
       periodDeltas = {
-        videos: r1((sonalika?.sov_videos ?? 0) - (prevSon?.sov_videos ?? 0)),
-        views: r1((sonalika?.sov_views ?? 0) - (prevSon?.sov_views ?? 0)),
-        comments: r1((sonalika?.sov_comments ?? 0) - (prevSon?.sov_comments ?? 0)),
+        videos: r1((own?.sov_videos ?? 0) - (prevOwn?.sov_videos ?? 0)),
+        views: r1((own?.sov_views ?? 0) - (prevOwn?.sov_views ?? 0)),
+        comments: r1((own?.sov_comments ?? 0) - (prevOwn?.sov_comments ?? 0)),
         prevStart: prevStartIso,
         prevEnd: prevEndIso,
         noData: false,
       };
     }
 
-    const brandWeeklyData = buildWeeklyData(brandRows);
+    const brandWeeklyData = buildWeeklyData(windowRows);
     const brandWeeklySoV = buildWeeklySoV(brandWeeklyData);
 
     const ordered = [
@@ -233,7 +234,7 @@ export function MarketShareTab({
     ];
     // Daily distinct video count per brand × date for the heatmap
     const dateVideoSets = new Map<string, Set<string>>();
-    for (const r of brandRows) {
+    for (const r of windowRows) {
       const key = `${(r as any).attributed_brand}__${(r as any).publish_date}`;
       if (!dateVideoSets.has(key)) dateVideoSets.set(key, new Set<string>());
       dateVideoSets.get(key)!.add((r as any).video_id);
@@ -250,11 +251,11 @@ export function MarketShareTab({
       (r: any) => r.is_tractor_content === true && r.publish_date >= startDate && r.publish_date <= endDate
     );
     const channelCount = new Set(tractorRows.map((r: any) => r.channel_name)).size;
-    const totalRowCount = brandRows.length;
+    const totalRowCount = windowRows.length;
 
     // Build date → date identity map for x-axis labels in Share Trends (key is now publish_date).
     const weekFirstDates: Record<string, string> = {};
-    for (const r of brandRows) {
+    for (const r of windowRows) {
       const date = (r as any).publish_date as string;
       if (date) weekFirstDates[date] = date;
     }
@@ -263,7 +264,7 @@ export function MarketShareTab({
       windowWeeks,
       windowDates,
       brandSummary,
-      sonalika,
+      own,
       brandWeeklySoV,
       heatmapRows,
       videoCount,
@@ -272,7 +273,7 @@ export function MarketShareTab({
       weekFirstDates,
       dataContext: `${videoCount} attributed videos · ${channelCount} channels · ${formatDate(startDate)} – ${formatDate(endDate)}`
     };
-  }, [cmsData, startDate, endDate, selectedBrands, includeShorts]);
+  }, [cmsData, windowBrandedRows, startDate, endDate, ownBrand]);
 
   return (
     <motion.div
@@ -289,15 +290,20 @@ export function MarketShareTab({
           endDate={endDate}
           onDateChange={setGlobalDateRange}
           stats={overviewStats}
-          loading={loading}
-          actions={
-            <BrandFilterButton
-              brands={brandItems}
-              selectedBrands={selectedBrands}
-              onChange={setSelectedBrands}
-              includeShorts={includeShorts}
-              onShortsChange={setIncludeShorts} />
-          } />
+          loading={loading} />
+      </motion.div>
+
+      {/* Control bar — same placement pattern as Viewer Sentiment's Brand row */}
+      <motion.div variants={item}>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-slate-400">Brand</span>
+          <VSSelect
+            size="lg"
+            value={ownBrand}
+            options={ownBrandOptions}
+            onChange={setOwnBrand}
+            ariaLabel="Own brand" />
+        </div>
       </motion.div>
 
       <motion.div variants={item}>
@@ -309,6 +315,7 @@ export function MarketShareTab({
           loading={loading}
           totalVideoCount={overviewStats.totalVideos}
           tractorVideoCount={overviewStats.tractorVideos}
+          ownBrand={ownBrand}
         />
       </motion.div>
 
@@ -326,14 +333,16 @@ export function MarketShareTab({
             <ShareOfVoiceCharts
               summary={derived.brandSummary}
               totalUniqueVideos={derived.videoCount}
-              periodDeltas={derived.periodDeltas} />
+              periodDeltas={derived.periodDeltas}
+              ownBrand={ownBrand} />
           </motion.div>
           <motion.div variants={item}>
             <ShareOfEngagementCard
-            soe={derived.sonalika?.soe ?? 0}
-            sov_views={derived.sonalika?.sov_views ?? 0}
-            sov_videos={derived.sonalika?.sov_videos ?? 0}
-            rows={derived.brandSummary} />
+            soe={derived.own?.soe ?? 0}
+            sov_views={derived.own?.sov_views ?? 0}
+            sov_videos={derived.own?.sov_videos ?? 0}
+            rows={derived.brandSummary}
+            ownBrand={ownBrand} />
 
           </motion.div>
           <motion.div variants={item}>
@@ -341,6 +350,7 @@ export function MarketShareTab({
             weeks={derived.windowWeeks}
             weeklySoV={derived.brandWeeklySoV}
             brands={brandItems}
+            ownBrand={ownBrand}
             weekFirstDates={derived.weekFirstDates}
             startDate={startDate}
             endDate={endDate} />
@@ -349,7 +359,8 @@ export function MarketShareTab({
           <motion.div variants={item}>
             <ContentFrequencyChart
             weeks={derived.windowDates}
-            rows={derived.heatmapRows} />
+            rows={derived.heatmapRows}
+            ownBrand={ownBrand} />
 
           </motion.div>
         </>

@@ -15,6 +15,7 @@ interface HeatmapRow {
 interface ContentFrequencyChartProps {
   weeks: string[];
   rows: HeatmapRow[];
+  ownBrand: string;
 }
 
 interface TooltipState {
@@ -53,7 +54,8 @@ function getTextColor(bgColor: string): string {
 
 export function ContentFrequencyChart({
   weeks,
-  rows
+  rows,
+  ownBrand
 }: ContentFrequencyChartProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
@@ -363,9 +365,9 @@ export function ContentFrequencyChart({
 
       {/* Summary row */}
       <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--color-text-secondary)' }}>
-        <span>Sonalika active days: {sonalikaActiveWeeks} of {sonalikaTotalWeeks}</span>
+        <span>{ownBrand} active days: {sonalikaActiveWeeks} of {sonalikaTotalWeeks}</span>
         <span>·</span>
-        <span>Sonalika avg videos/day: {sonalikaAvg.toFixed(1)}</span>
+        <span>{ownBrand} avg videos/day: {sonalikaAvg.toFixed(1)}</span>
         <span>·</span>
         <span>
           Most active competitor: {mostActiveCompetitor?.name} ({mostActiveAvg.toFixed(1)}/day)

@@ -13,6 +13,15 @@ export const CMS_BRAND_META = {
   'New Holland': { short: 'NH' },
   'Massey Ferguson': { short: 'MF' },
   'Escorts Kubota': { short: 'EK' },
+  Kartar: { short: 'KAR' },
+  'Ashok Leyland': { short: 'AL' },
+  'Indo Farm': { short: 'IF' },
+  'Deutz Fahr': { short: 'DF' },
+  Preet: { short: 'PRT' },
+  ACE: { short: 'ACE' },
+  Force: { short: 'FRC' },
+  Solis: { short: 'SOL' },
+  TAFE: { short: 'TAF' },
 };
 
 export const BRAND_COLORS = {
@@ -23,6 +32,15 @@ export const BRAND_COLORS = {
   'New Holland': '#AFA9EC',
   'Massey Ferguson': '#F0997B',
   'Escorts Kubota': '#ED93B1',
+  'Kartar': '#CCC619',
+  'Ashok Leyland': '#77D161',
+  'Indo Farm': '#59CF7A',
+  'Deutz Fahr': '#5CCCD6',
+  'Preet': '#AA81DA',
+  'ACE': '#CB7BD5',
+  'Force': '#DA81BF',
+  'Solis': '#D65151',
+  'TAFE': '#B66435',
 };
 
 export const getBrandColor = (brand) => BRAND_COLORS[brand] || '#9CA3AF';

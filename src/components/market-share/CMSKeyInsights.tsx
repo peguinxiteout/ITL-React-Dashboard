@@ -66,15 +66,16 @@ export interface CMSKeyInsightsProps {
   loading: boolean;
   totalVideoCount: number;
   tractorVideoCount: number;
+  ownBrand: string;
 }
 
-// "How visible is Sonalika?" key-insights module — moved here verbatim from
+// "How visible is <ownBrand>?" key-insights module — moved here from
 // Dashboard.tsx's KeyInsightsCard (formerly the "Content Market Share" module
 // of the Intelligence Overview tab). Depends only on cmsData/allData/date
 // range — never touched useKpiData/kpiCalculations.ts, so this move required
 // no changes to the shared VoI/CP calculation files.
 export function CMSKeyInsights({
-  cmsData, allData, startDate, endDate, loading, totalVideoCount, tractorVideoCount,
+  cmsData, allData, startDate, endDate, loading, totalVideoCount, tractorVideoCount, ownBrand,
 }: CMSKeyInsightsProps) {
   const { prevStartIso, prevEndIso, numDays } = useMemo(() => {
     const sMs = dateToUtcMs(startDate);
@@ -93,9 +94,9 @@ export function CMSKeyInsights({
   const cms = useMemo(() => {
     const eng = (r: any) => (Number(r.view_count) || 0) + (Number(r.like_count) || 0) + (Number(r.comment_count) || 0);
     const win = cmsData.filter((r) => r.publish_date >= startDate && r.publish_date <= endDate);
-    const son = win.filter((r) => r.attributed_brand === 'Sonalika');
+    const son = win.filter((r) => r.attributed_brand === ownBrand);
 
-    // SoV: COUNT DISTINCT video_id (Sonalika) / COUNT DISTINCT video_id (all attributed)
+    // SoV: COUNT DISTINCT video_id (own brand) / COUNT DISTINCT video_id (all attributed)
     const winUniqueIds = new Set(win.map((r: any) => r.video_id)).size;
     const sonUnique = new Set(son.map((r: any) => r.video_id)).size;
     const sov = winUniqueIds > 0 ? (sonUnique / winUniqueIds) * 100 : 0;
@@ -113,7 +114,7 @@ export function CMSKeyInsights({
       brandVideoIds.get(r.attributed_brand)!.add(r.video_id);
     }
     const brandsSorted = [...brandVideoIds.entries()].sort((a, b) => b[1].size - a[1].size);
-    const sonRankIdx = brandsSorted.findIndex(([b]) => b === 'Sonalika');
+    const sonRankIdx = brandsSorted.findIndex(([b]) => b === ownBrand);
     const sonRank = sonRankIdx >= 0 ? sonRankIdx + 1 : brandsSorted.length + 1;
     const topBrand = brandsSorted[0]?.[0] || '';
     const topBrandUniqueIds = brandsSorted[0]?.[1]?.size || 0;
@@ -158,7 +159,7 @@ export function CMSKeyInsights({
 
     if (hasPrevData) {
       const prevWin = cmsData.filter((r) => r.publish_date >= prevStartIso && r.publish_date <= prevEndIso);
-      const prevSon = prevWin.filter((r) => r.attributed_brand === 'Sonalika');
+      const prevSon = prevWin.filter((r) => r.attributed_brand === ownBrand);
       const prevWinUniqueIds = new Set(prevWin.map((r: any) => r.video_id)).size;
       const prevSonUnique = new Set(prevSon.map((r: any) => r.video_id)).size;
       prevSov = prevWinUniqueIds > 0 ? (prevSonUnique / prevWinUniqueIds) * 100 : 0;
@@ -177,7 +178,7 @@ export function CMSKeyInsights({
       topCh, topChCount, tractorDensity, inactiveCount, densitySubtitle,
       prevSov, prevSoe, prevPubRate, prevTractorDensity,
     };
-  }, [cmsData, allData, startDate, endDate, numDays, hasPrevData, prevStartIso, prevEndIso]);
+  }, [cmsData, allData, startDate, endDate, numDays, hasPrevData, prevStartIso, prevEndIso, ownBrand]);
 
   // CMS trend data for State B
   const cmsTrend = useMemo(() => {
@@ -186,7 +187,7 @@ export function CMSKeyInsights({
     }
     const rows: { label: string; prev: number; curr: number; fmt: (v: number) => string }[] = [
       { label: 'Tractor content density', prev: cms.prevTractorDensity, curr: cms.tractorDensity, fmt: (v) => `${v.toFixed(1)}%` },
-      { label: 'Sonalika content share (SoV)', prev: cms.prevSov, curr: cms.sov, fmt: (v) => `${v.toFixed(1)}%` },
+      { label: `${ownBrand} content share (SoV)`, prev: cms.prevSov, curr: cms.sov, fmt: (v) => `${v.toFixed(1)}%` },
       { label: 'Share of Engagement (SoE)', prev: cms.prevSoe, curr: cms.soe, fmt: (v) => `${v.toFixed(1)}%` },
       { label: 'Publish rate', prev: cms.prevPubRate, curr: cms.pubRate, fmt: (v) => `${v.toFixed(2)}/wk` },
     ];
@@ -207,38 +208,25 @@ export function CMSKeyInsights({
     const totalCount = new Set(allWin.map((r: any) => r.video_id)).size;
     const densityPct = totalCount > 0 ? ((tractorCount / totalCount) * 100).toFixed(1) : '0.0';
 
-    // Brand SoV — read from hook's cmsData (NON_TRACTOR already excluded by useCMSData)
+    // Per-brand distinct video sets — read from hook's cmsData (NON_TRACTOR
+    // already excluded by useCMSData)
     const winBranded = cmsData.filter((r: any) => r.publish_date >= startDate && r.publish_date <= endDate);
     const brandVidMap = new Map<string, Set<string>>();
     for (const r of winBranded) {
       if (!brandVidMap.has(r.attributed_brand)) brandVidMap.set(r.attributed_brand, new Set());
       brandVidMap.get(r.attributed_brand)!.add(r.video_id);
     }
-    const totalAttrib = new Set(winBranded.map((r: any) => r.video_id)).size;
-    const brandSoVRanked = [...brandVidMap.entries()]
-      .map(([brand, vids]) => ({ brand, count: vids.size, sov: totalAttrib > 0 ? (vids.size / totalAttrib) * 100 : 0 }))
-      .sort((a, b) => b.count - a.count);
-    const filteredBrands = brandSoVRanked.filter((b) => b.count > 1);
-    const totalBrands = filteredBrands.length;
-    const sonalikaSoV = (brandSoVRanked.find((b) => b.brand === 'Sonalika')?.sov ?? 0).toFixed(1);
-    const sonRankIdx = filteredBrands.findIndex((b) => b.brand === 'Sonalika');
-    const sonRank = sonRankIdx >= 0 ? sonRankIdx + 1 : totalBrands + 1;
-    const leader = brandSoVRanked[0];
-    const leaderName = leader?.brand || '';
-    const leaderSoV = (leader?.sov ?? 0).toFixed(1);
-    const gap = Math.abs(parseFloat(leaderSoV) - parseFloat(sonalikaSoV)).toFixed(1);
-    const sonRankColor = sonRank <= 3 ? '#639922' : '#EF9F27';
 
     // Publishing consistency — reuses the same per-brand × per-day video counts
     // (winBranded / brandVidMap) that drive the Content Frequency heatmap footer.
     const totalWindowDays = numDays;
     const sonalikaActiveDays = new Set(
-      winBranded.filter((r: any) => r.attributed_brand === 'Sonalika').map((r: any) => r.publish_date)
+      winBranded.filter((r: any) => r.attributed_brand === ownBrand).map((r: any) => r.publish_date)
     ).size;
     let mostActiveCompetitor = '';
     let mostActiveRate = 0;
     for (const [brand, vids] of brandVidMap.entries()) {
-      if (brand === 'Sonalika') continue;
+      if (brand === ownBrand) continue;
       const rate = totalWindowDays > 0 ? vids.size / totalWindowDays : 0;
       if (rate > mostActiveRate) {
         mostActiveRate = rate;
@@ -251,7 +239,7 @@ export function CMSKeyInsights({
     const seenSon = new Set<string>();
     const subCats: Record<string, number> = {};
     for (const r of allWin) {
-      if (r.attributed_brand !== 'Sonalika' || seenSon.has(r.video_id)) continue;
+      if (r.attributed_brand !== ownBrand || seenSon.has(r.video_id)) continue;
       seenSon.add(r.video_id);
       const cat = r.tractor_sub_category;
       if (cat && cat !== '') subCats[cat] = (subCats[cat] || 0) + 1;
@@ -262,20 +250,20 @@ export function CMSKeyInsights({
     const topSubCatPct = sonVideoCount > 0 && topSubCatEntry ? ((topSubCatEntry[1] / sonVideoCount) * 100).toFixed(1) : '0.0';
 
     return {
-      tractorCount, totalCount, densityPct, sonalikaSoV, sonRank, totalBrands, leaderName, leaderSoV, gap, sonRankColor,
+      tractorCount, totalCount, densityPct,
       topSubCat, topSubCatPct,
       totalWindowDays, sonalikaActiveDays, mostActiveCompetitor, mostActiveRate: mostActiveRateFmt,
     };
-  }, [cmsData, allData, startDate, endDate, numDays]);
+  }, [cmsData, allData, startDate, endDate, numDays, ownBrand]);
 
   const cmsBullets: { color: string; text: string }[] = [
     { color: '#1D4ED8', text: `${tractorVideoCount} of ${totalVideoCount} tracked videos are tractor content in this window (${(totalVideoCount > 0 ? (tractorVideoCount / totalVideoCount) * 100 : 0).toFixed(1)}%).` },
-    ...(cmsStateA.mostActiveCompetitor ? [{ color: '#1D4ED8', text: `Sonalika published on ${cmsStateA.sonalikaActiveDays} of ${cmsStateA.totalWindowDays} days this window - ${cmsStateA.mostActiveCompetitor} was most active at ${cmsStateA.mostActiveRate}/day.` }] : []),
-    ...(cmsStateA.topSubCat ? [{ color: '#1D4ED8', text: `${cmsStateA.topSubCatPct}% of Sonalika's videos in this window are ${cmsStateA.topSubCat} content.` }] : []),
+    ...(cmsStateA.mostActiveCompetitor ? [{ color: '#1D4ED8', text: `${ownBrand} published on ${cmsStateA.sonalikaActiveDays} of ${cmsStateA.totalWindowDays} days this window - ${cmsStateA.mostActiveCompetitor} was most active at ${cmsStateA.mostActiveRate}/day.` }] : []),
+    ...(cmsStateA.topSubCat ? [{ color: '#1D4ED8', text: `${cmsStateA.topSubCatPct}% of ${ownBrand}'s videos in this window are ${cmsStateA.topSubCat} content.` }] : []),
   ];
 
   return (
-    <SectionCard title="How visible is Sonalika?">
+    <SectionCard title={`How visible is ${ownBrand}?`}>
       {loading ? (
         <p style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center' }}>Loading…</p>
       ) : (
@@ -284,7 +272,7 @@ export function CMSKeyInsights({
             <KiSignalCard
               bg="#E6F1FB" textColor="#0C447C"
               icon={<MegaphoneIcon size={14} />}
-              headline={`${cms.sov.toFixed(1)}% SoV · Rank #${cms.sonRank} of ${Math.min(cms.numBrands, 20)}`}
+              headline={`${cms.sov.toFixed(1)}% SoV · Rank #${cms.sonRank} of ${cms.numBrands}`}
               sub={cms.sonRank === 1 ? 'Leading the category' : `${cms.gapToTop.toFixed(1)}pp gap to #1 (${cms.topBrand})`}
             />
             <KiSignalCard
@@ -298,7 +286,7 @@ export function CMSKeyInsights({
               bg="#E6F1FB" textColor="#0C447C"
               icon={<VideoIcon size={14} />}
               headline={cms.topCh}
-              sub={`${cms.topChCount} Sonalika video${cms.topChCount !== 1 ? 's' : ''} in window`}
+              sub={`${cms.topChCount} ${ownBrand} video${cms.topChCount !== 1 ? 's' : ''} in window`}
             />
             <KiSignalCard
               bg="#FAEEDA" textColor="#633806"

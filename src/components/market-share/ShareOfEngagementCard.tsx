@@ -12,6 +12,7 @@ interface Props {
   sov_views: number;
   sov_videos: number;
   rows: BrandRow[];
+  ownBrand: string;
 }
 
 const ROW_H = 44;
@@ -23,7 +24,7 @@ const AMBER_HL = 'rgba(239,159,39,0.10)';
 const GREEN_LINE = '#1D9E75';
 const RED_LINE = '#E55F5F';
 
-export function ShareOfEngagementCard({ soe, sov_views: _sov_views, sov_videos, rows: brandRows }: Props) {
+export function ShareOfEngagementCard({ soe, sov_views: _sov_views, sov_videos, rows: brandRows, ownBrand }: Props) {
   const gap = Math.round((sov_videos - soe) * 100) / 100;
   const gapLabel = 'SoV (Video Count) – SoE Gap';
 
@@ -53,7 +54,7 @@ export function ShareOfEngagementCard({ soe, sov_views: _sov_views, sov_videos, 
       <div className="mb-4">
         <h3 className="text-base font-semibold text-slate-900">Share of Engagement</h3>
         <p className="mt-0.5 text-sm text-slate-500">
-          Sonalika's combined engagement share vs category
+          {ownBrand}'s combined engagement share vs category
         </p>
       </div>
 
@@ -63,7 +64,7 @@ export function ShareOfEngagementCard({ soe, sov_views: _sov_views, sov_videos, 
           style={{ backgroundColor: '#FFF8EE', border: '1px solid #F5D8A0' }}>
 
           <p className="text-xs mb-2" style={{ color: '#A16207' }}>
-            Sonalika SoE — Combined
+            {ownBrand} SoE — Combined
           </p>
           <p className="text-3xl font-bold mb-1" style={{ color: '#EF9F27' }}>
             {soe.toFixed(1)}%

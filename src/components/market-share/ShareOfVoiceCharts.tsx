@@ -25,6 +25,7 @@ interface ShareOfVoiceChartsProps {
   summary: BrandSummary[];
   totalUniqueVideos: number;
   periodDeltas: PeriodDeltas;
+  ownBrand: string;
 }
 
 type MetricKey = 'video_count' | 'total_views' | 'total_comments';
@@ -66,13 +67,13 @@ function DeltaBadge({ value }: { value: number | null }) {
   );
 }
 
-export function ShareOfVoiceCharts({ summary, totalUniqueVideos, periodDeltas }: ShareOfVoiceChartsProps) {
+export function ShareOfVoiceCharts({ summary, totalUniqueVideos, periodDeltas, ownBrand }: ShareOfVoiceChartsProps) {
   const comparisonNote = `vs ${formatDate(periodDeltas.prevStart)} – ${formatDate(periodDeltas.prevEnd)}`;
 
   return (
     <SectionCard
       title="Share of Voice"
-      subtitle="Sonalika's proportion of category video volume, views and comments">
+      subtitle={`${ownBrand}'s proportion of category video volume, views and comments`}>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         {METRICS.map((metric) => {
@@ -109,7 +110,7 @@ export function ShareOfVoiceCharts({ summary, totalUniqueVideos, periodDeltas }:
                   <span className="text-xl font-bold text-slate-900">
                     {sonalikaShare.toFixed(1)}%
                   </span>
-                  <span className="text-[11px] text-slate-500">Sonalika</span>
+                  <span className="text-[11px] text-slate-500">{ownBrand}</span>
                 </div>
               </div>
               <div className="mt-1 flex items-center justify-center gap-1.5">

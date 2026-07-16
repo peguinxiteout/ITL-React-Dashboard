@@ -10,9 +10,6 @@ import {
 'recharts';
 import { SectionCard } from '../SectionCard';
 
-// Sonalika's line color in the trend charts (distinct from its donut/table blue)
-const SONALIKA_TREND_COLOR = '#EF9F27';
-
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 // "YYYY-MM-DD" → "DD MMM"
@@ -45,6 +42,7 @@ interface ShareTrendChartsProps {
   weeks: string[];
   weeklySoV: WeeklyShareRow[];
   brands: TrendBrand[];
+  ownBrand?: string;
   weekFirstDates?: Record<string, string>;
   startDate?: string;
   endDate?: string;
@@ -62,9 +60,6 @@ const SOE_METRICS: { key: ShareField; label: string }[] = [
 { key: 'sov_views', label: 'Views' },
 { key: 'sov_likes', label: 'Likes' },
 { key: 'sov_comments', label: 'Comments' }];
-
-const lineColor = (brand: TrendBrand): string =>
-brand.isOwn ? SONALIKA_TREND_COLOR : brand.color;
 
 // "2026-W24" → "W24" — fallback when no date map provided
 const weekLabel = (week: string): string => week.replace(/^\d{4}-/, '');
@@ -209,12 +204,12 @@ function TrendChart({
                 type="monotone"
                 dataKey={brand.name}
                 name={brand.name}
-                stroke={lineColor(brand)}
+                stroke={brand.color}
                 strokeWidth={isOwn ? 2.5 : 1.5}
                 strokeOpacity={isOwn ? 1 : 0.6}
                 dot={
                   isOwn
-                    ? { r: 3, fill: SONALIKA_TREND_COLOR }
+                    ? { r: 3, fill: brand.color }
                     : singlePoint
                     ? { r: 2.5, fill: brand.color, fillOpacity: 0.6 }
                     : false
@@ -231,14 +226,22 @@ export function ShareTrendCharts({
   weeks,
   weeklySoV,
   brands,
+  ownBrand = 'Sonalika',
   weekFirstDates,
   startDate,
   endDate,
 }: ShareTrendChartsProps) {
   const [sovMetric, setSovMetric] = useState<ShareField>('sov_views');
   const [soeMetric, setSoeMetric] = useState<ShareField>('soe');
-  const ownBrandName = brands.find((b) => b.isOwn)?.name ?? 'Sonalika';
+  const ownBrandName = brands.find((b) => b.isOwn)?.name ?? ownBrand;
   const [selectedBrands, setSelectedBrands] = useState<string[]>([ownBrandName]);
+
+  // When the tab's own-brand dropdown changes, restart the comparison set from
+  // the new own brand — otherwise the previous one lingers in the selection
+  // and the new always-shown brand never enters it.
+  useEffect(() => {
+    setSelectedBrands([ownBrandName]);
+  }, [ownBrandName]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -317,7 +320,7 @@ export function ShareTrendCharts({
               })}
               <div className="mx-3 mt-1 border-t border-slate-100 pb-1 pt-1.5">
                 <p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>
-                  Sonalika is always shown · Select up to 4 additional brands
+                  {ownBrandName} is always shown · Select up to 4 additional brands
                 </p>
               </div>
             </div>
