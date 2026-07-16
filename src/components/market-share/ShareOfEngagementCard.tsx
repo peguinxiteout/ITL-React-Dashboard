@@ -1,3 +1,4 @@
+import { useState } from 'react';
 
 interface BrandRow {
   brand: string;
@@ -17,6 +18,7 @@ interface Props {
 
 const ROW_H = 44;
 const DOT_D = 14;
+const DEFAULT_VISIBLE = 5;
 
 const SOV_COLOR = '#185FA5';
 const SOE_COLOR = '#1D9E75';
@@ -25,6 +27,8 @@ const GREEN_LINE = '#1D9E75';
 const RED_LINE = '#E55F5F';
 
 export function ShareOfEngagementCard({ soe, sov_views: _sov_views, sov_videos, rows: brandRows, ownBrand }: Props) {
+  const [chartOpen, setChartOpen] = useState(false);
+
   const gap = Math.round((sov_videos - soe) * 100) / 100;
   const gapLabel = 'SoV (Video Count) – SoE Gap';
 
@@ -34,6 +38,14 @@ export function ShareOfEngagementCard({ soe, sov_views: _sov_views, sov_videos, 
     soe: d.soe,
     isSon: d.isOwn
   }));
+
+  // Collapsed: own brand pinned first, then the next 4 highest-SoV brands
+  // (rows arrive pre-sorted by SoV descending). Expanded: natural SoV order.
+  const ownRow = rows.find((r) => r.isSon);
+  const collapsedRows = ownRow ?
+  [ownRow, ...rows.filter((r) => !r.isSon).slice(0, DEFAULT_VISIBLE - 1)] :
+  rows.slice(0, DEFAULT_VISIBLE);
+  const visibleRows = chartOpen ? rows : collapsedRows;
 
   // Axis scales with the data — when the brand filter re-bases shares, a single
   // brand can exceed the default 40% ceiling, so the axis grows in 10% steps.
@@ -98,7 +110,7 @@ export function ShareOfEngagementCard({ soe, sov_views: _sov_views, sov_videos, 
 
       {/* Dumbbell rows + x-axis */}
       <div>
-        {rows.map((row) => {
+        {visibleRows.map((row) => {
           const sx = xNum(row.sov);
           const ex = xNum(row.soe);
           const lineLeft = Math.min(sx, ex);
@@ -278,6 +290,25 @@ export function ShareOfEngagementCard({ soe, sov_views: _sov_views, sov_videos, 
           Line color: green = SoE outperforms SoV · red = SoV outperforms SoE
         </p>
       </div>
+
+      {rows.length > DEFAULT_VISIBLE &&
+      <div className="mt-3 flex justify-end">
+          <button
+          type="button"
+          onClick={() => setChartOpen((o) => !o)}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            fontSize: 12,
+            color: SOV_COLOR,
+            cursor: 'pointer'
+          }}>
+
+            {chartOpen ? 'Show less ←' : `View all ${rows.length} brands →`}
+          </button>
+        </div>
+      }
     </section>);
 
 }

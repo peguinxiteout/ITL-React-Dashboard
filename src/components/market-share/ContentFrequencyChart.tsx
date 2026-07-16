@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { SectionCard } from '../SectionCard';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DEFAULT_VISIBLE = 5;
 function formatDayLabel(isoDate: string): string {
   const [, m, d] = isoDate.split('-');
   return `${d} ${MONTHS[parseInt(m, 10) - 1]}`;
@@ -58,7 +59,12 @@ export function ContentFrequencyChart({
   ownBrand
 }: ContentFrequencyChartProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const [rowsOpen, setRowsOpen] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
+
+  // Rows arrive own-brand-first from MarketShareTab; collapsed view is simply
+  // the first 5. Summary footer and color scale still use the full list.
+  const visibleRows = rowsOpen ? rows : rows.slice(0, DEFAULT_VISIBLE);
 
   const numWeeks = weeks.length;
   const isNarrow = numWeeks > 8;
@@ -187,7 +193,7 @@ export function ContentFrequencyChart({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
+            {visibleRows.map((row) => {
               const isSonalika = row.isSonalika;
               return (
                 <tr key={row.name} style={{ borderBottom: '1px solid #e2e8f0' }}>
@@ -359,6 +365,25 @@ export function ContentFrequencyChart({
           </div>
         }
       </div>
+
+      {rows.length > DEFAULT_VISIBLE &&
+      <div className="mt-3 flex justify-end">
+          <button
+          type="button"
+          onClick={() => setRowsOpen((o) => !o)}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            fontSize: 12,
+            color: '#185FA5',
+            cursor: 'pointer'
+          }}>
+
+            {rowsOpen ? 'Show less ←' : `View all ${rows.length} brands →`}
+          </button>
+        </div>
+      }
 
       {/* Divider */}
       <div style={{ borderTop: '1px solid #e2e8f0', margin: '1.25rem 0' }} />
