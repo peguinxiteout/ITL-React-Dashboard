@@ -17,8 +17,6 @@ import { computeOverviewStats } from '../../hooks/useCMSData.js';
 import { DateRangeKey } from '../../data/mockData';
 import type { GlobalDateRange } from '../../pages/Dashboard';
 import {
-  VS_BRANDS,
-  VSBrand,
   VS_WEEKS,
   VSWeek,
   VS_BRAND_COLOR,
@@ -81,11 +79,9 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
 };
 
-const BRAND_OPTIONS: VSSelectOption[] = VS_BRANDS.map((b) => ({
-  value: b,
-  label: b,
-  color: b === 'All Brands' ? undefined : VS_BRAND_COLOR[b],
-}));
+// Grey dot for brands without an explicit VS_BRAND_COLOR entry — same
+// fallback convention as CMS's getBrandColor and BrandBars below.
+const FALLBACK_BRAND_COLOR = '#94a3b8';
 
 const WEEK_OPTIONS: VSSelectOption[] = VS_WEEKS.map((w) => ({
   value: w,
@@ -109,8 +105,8 @@ const formatDate = (dateStr: string) => {
 };
 
 function BrandDot({ brand, size = 8 }: { brand: string; size?: number }) {
-  const color = VS_BRAND_COLOR[brand];
-  if (!color) return null;
+  if (!brand) return null;
+  const color = VS_BRAND_COLOR[brand] || FALLBACK_BRAND_COLOR;
   return (
     <span
       style={{
@@ -201,14 +197,14 @@ function BrandBars({
   selectedBrand,
 }: {
   byBrand: { brand: string; count: number }[];
-  selectedBrand: VSBrand;
+  selectedBrand: string;
 }) {
   const max = Math.max(...byBrand.map((d) => d.count), 1);
   return (
     <div className="space-y-2.5">
       {byBrand.map((d) => {
         const muted = selectedBrand !== 'All Brands' && d.brand !== selectedBrand;
-        const color = muted ? '#cbd5e1' : (VS_BRAND_COLOR[d.brand] || '#94a3b8');
+        const color = muted ? '#cbd5e1' : (VS_BRAND_COLOR[d.brand] || FALLBACK_BRAND_COLOR);
         return (
           <div key={d.brand} className="flex items-center gap-3">
             <span
@@ -252,7 +248,7 @@ export function SentimentTab({
 }: SentimentTabProps) {
   void dateRange;
 
-  const [selectedVSBrand, setSelectedVSBrand] = useState<VSBrand>('All Brands');
+  const [selectedVSBrand, setSelectedVSBrand] = useState<string>('All Brands');
   const [activeVSSection, setActiveVSSection] = useState<VSSectionId>('pi');
   const [intentWeek, setIntentWeek] = useState<VSWeek>('All time');
   const [needsWeek, setNeedsWeek] = useState<VSWeek>('All time');
@@ -292,8 +288,34 @@ export function SentimentTab({
     [allData, startDate, endDate]
   );
 
-  // Card 4: the comment dataset's own coverage window (min/max published_at
-  // across all loaded rows) — fixed, does not follow the date picker.
+  // Brand dropdown options derived from the actual corpus: every distinct
+  // non-empty brand across pi_brand/un_brand/qs_brand (same three fields
+  // useVSData's filterByBrand matches on), ordered by attribution count
+  // descending like the by-brand charts, with "All Brands" pinned first.
+  const brandOptions = useMemo<VSSelectOption[]>(() => {
+    const counts: Record<string, number> = {};
+    for (const r of successRows as any[]) {
+      for (const b of [r.pi_brand, r.un_brand, r.qs_brand]) {
+        if (b && typeof b === 'string' && b.toLowerCase() !== 'none') {
+          counts[b] = (counts[b] || 0) + 1;
+        }
+      }
+    }
+    return [
+      { value: 'All Brands', label: 'All Brands' },
+      ...Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([b]) => ({
+          value: b,
+          label: b,
+          color: VS_BRAND_COLOR[b] || FALLBACK_BRAND_COLOR,
+        })),
+    ];
+  }, [successRows]);
+
+  // The comment dataset's own coverage window (min/max published_at across
+  // all loaded rows) — fixed, does not follow the date picker. Shown inline
+  // next to the Brand dropdown.
   const commentDatasetRange = useMemo(() => {
     let min = '';
     let max = '';
@@ -331,9 +353,9 @@ export function SentimentTab({
       accent: VS_ACCENT.pi,
       label: 'Purchase Intent Rate',
       icon: <ShoppingCartIcon className="h-5 w-5" aria-hidden="true" />,
-      rate: kpiSummary.pi_rate,
-      count: kpiSummary.pi_count,
-      countLabel: 'intent comments',
+      rate: intentKpi.pi_rate,
+      count: intentKpi.pi_count,
+      countLabel: `of ${intentKpi.total_comments.toLocaleString()} comments`,
     },
     {
       key: 'needs' as SectionKey,
@@ -341,9 +363,9 @@ export function SentimentTab({
       accent: VS_ACCENT.un,
       label: 'Unmet Needs Rate',
       icon: <AlertTriangleIcon className="h-5 w-5" aria-hidden="true" />,
-      rate: kpiSummary.un_rate,
-      count: kpiSummary.un_count,
-      countLabel: 'needs detected',
+      rate: needsKpi.un_rate,
+      count: needsKpi.un_count,
+      countLabel: `of ${needsKpi.total_comments.toLocaleString()} comments`,
     },
     {
       key: 'questions' as SectionKey,
@@ -351,9 +373,9 @@ export function SentimentTab({
       accent: VS_ACCENT.rq,
       label: 'Questions Rate',
       icon: <HelpCircleIcon className="h-5 w-5" aria-hidden="true" />,
-      rate: kpiSummary.qs_rate,
-      count: kpiSummary.qs_count,
-      countLabel: 'questions detected',
+      rate: questionsKpi.qs_rate,
+      count: questionsKpi.qs_count,
+      countLabel: `of ${questionsKpi.total_comments.toLocaleString()} comments`,
     },
   ];
 
@@ -406,27 +428,30 @@ export function SentimentTab({
             value: successRows.length,
             descriptor: 'Full comment corpus · not date-filtered',
           }}
-          dateCard={{ value: commentDatasetRange, subtext: 'Full comment dataset range' }}
         />
-      </motion.div>
-
-      {/* Key insights (moved from Intelligence Overview) */}
-      <motion.div variants={item}>
-        <VSKeyInsights successRows={successRows} />
       </motion.div>
 
       {/* Control bar */}
       <motion.div variants={item}>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-slate-400">Brand</span>
           <VSSelect
             size="lg"
             value={selectedVSBrand}
-            options={BRAND_OPTIONS}
-            onChange={(v) => setSelectedVSBrand(v as VSBrand)}
+            options={brandOptions}
+            onChange={(v) => setSelectedVSBrand(v)}
             ariaLabel="Brand filter"
           />
+          <div className="ml-auto flex items-baseline gap-1.5 text-xs">
+            <span className="font-semibold text-slate-700">{commentDatasetRange}</span>
+            <span className="text-slate-400">· Full comment dataset range</span>
+          </div>
         </div>
+      </motion.div>
+
+      {/* Key insights (moved from Intelligence Overview) */}
+      <motion.div variants={item}>
+        <VSKeyInsights successRows={successRows} brand={selectedVSBrand} />
       </motion.div>
 
       {/* Summary cards */}
@@ -489,12 +514,12 @@ export function SentimentTab({
             onWeekChange={setIntentWeek}
           />
 
-          {/* Lost sale signals alert */}
-          {kpiSummary.pi_lost_sales > 0 ? (
+          {/* Lost sale signals alert — intentKpi so it follows this section's week filter */}
+          {intentKpi.pi_lost_sales > 0 ? (
             <div
               className="rounded-lg border border-red-100 bg-red-50 px-4 py-2.5 text-sm text-red-700"
             >
-              <strong>{kpiSummary.pi_lost_sales}</strong> lost-sale signal{kpiSummary.pi_lost_sales !== 1 ? 's' : ''} detected in current corpus.
+              <strong>{intentKpi.pi_lost_sales}</strong> lost-sale signal{intentKpi.pi_lost_sales !== 1 ? 's' : ''} detected in current corpus.
             </div>
           ) : (
             <div className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-2.5 text-sm text-slate-400">

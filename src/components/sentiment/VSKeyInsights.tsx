@@ -53,21 +53,35 @@ function KiStateABullets({ items }: { items: { color: string; text: string }[] }
 
 export interface VSKeyInsightsProps {
   successRows: any[];
+  // Currently selected brand ('All Brands' = no filtering). Key Insights is
+  // brand-reactive but stays "all time" — the three section week dropdowns
+  // must never affect it.
+  brand?: string;
 }
 
 // "What do viewers say in comments?" key-insights module — moved here verbatim
 // from Dashboard.tsx's KeyInsightsCard (formerly the "Viewer Sentiment" module
-// of the Intelligence Overview tab). Computed from the raw successRows only —
-// useVSData returns those rows unfiltered regardless of its brand/week options,
-// so this is a fixed full-corpus snapshot: it deliberately does NOT react to
-// the VS tab's Brand selector or week dropdowns below it.
-export function VSKeyInsights({ successRows }: VSKeyInsightsProps) {
+// of the Intelligence Overview tab). Computed from the raw successRows,
+// brand-filtered with the same OR-across-signal-brands rule as useVSData's
+// filterByBrand, so its numbers follow the tab's Brand selector while staying
+// independent of the week dropdowns below it.
+export function VSKeyInsights({ successRows, brand = 'All Brands' }: VSKeyInsightsProps) {
+  const rows = useMemo(() => {
+    if (!brand || brand === 'All Brands') return successRows;
+    return successRows.filter(
+      (r) => r.pi_brand === brand || r.un_brand === brand || r.qs_brand === brand
+    );
+  }, [successRows, brand]);
+
   const vs = useMemo(() => {
     const isBool = (v: any) => v === true || v === 'True' || v === 'true';
-    const piRows = successRows.filter((r) => isBool(r.pi_detected));
-    const unRows = successRows.filter((r) => isBool(r.un_detected));
-    const qsRows = successRows.filter((r) => isBool(r.qs_is_question));
-    const lostSaleCount = successRows.filter((r) => isBool(r.pi_is_lost_sale)).length;
+    // Must stay in sync with useVSData.js's canonical piRows: post_purchase
+    // rows are not purchase intent, so the count here always matches the
+    // Purchase Intent Rate card below.
+    const piRows = rows.filter((r) => isBool(r.pi_detected) && r.pi_stage !== 'post_purchase');
+    const unRows = rows.filter((r) => isBool(r.un_detected));
+    const qsRows = rows.filter((r) => isBool(r.qs_is_question));
+    const lostSaleCount = rows.filter((r) => isBool(r.pi_is_lost_sale)).length;
 
     const stageCounts: Record<string, number> = {};
     for (const r of piRows) {
@@ -101,13 +115,14 @@ export function VSKeyInsights({ successRows }: VSKeyInsightsProps) {
     const topPiLabel = PI_LABELS[topPiStage] || topPiStage.replace(/_/g, ' ');
 
     return { piCount: piRows.length, lostSaleCount, topPiStage, topPiLabel, topQs, topUn, topUnCount };
-  }, [successRows]);
+  }, [rows]);
 
   const vsStateA = useMemo(() => {
     const isBoolV = (v: any) => v === true || v === 'True' || v === 'true';
-    const piRows = successRows.filter((r: any) => isBoolV(r.pi_detected));
+    // Same sync-with-piRows rule as above: exclude post_purchase.
+    const piRows = rows.filter((r: any) => isBoolV(r.pi_detected) && r.pi_stage !== 'post_purchase');
     const intentCount = piRows.length;
-    const piPct = successRows.length > 0 ? (intentCount / successRows.length) * 100 : 0;
+    const piPct = rows.length > 0 ? (intentCount / rows.length) * 100 : 0;
     const piDotColor = piPct >= 10 ? '#639922' : piPct >= 5 ? '#EF9F27' : '#E24B4A';
 
     const stageCounts: Record<string, number> = {};
@@ -119,11 +134,11 @@ export function VSKeyInsights({ successRows }: VSKeyInsightsProps) {
     const VS_PI_LABELS: Record<string, string> = { dealer_inquiry: 'Dealer inquiry', consideration: 'Buying consideration', shortlisting: 'Shortlisting' };
     const topStage = topStageEntry ? (VS_PI_LABELS[topStageEntry[0]] || topStageEntry[0].replace(/_/g, ' ')) : '';
 
-    const lostCount = successRows.filter((r: any) => isBoolV(r.pi_is_lost_sale)).length;
+    const lostCount = rows.filter((r: any) => isBoolV(r.pi_is_lost_sale)).length;
     const lostDotColor = lostCount > 0 ? '#E24B4A' : '#639922';
 
     const unTypeCounts: Record<string, number> = {};
-    for (const r of successRows) {
+    for (const r of rows) {
       if (isBoolV(r.un_detected)) {
         const t = r.un_need_type;
         if (t && t !== 'none' && t !== '') unTypeCounts[t] = (unTypeCounts[t] || 0) + 1;
@@ -134,16 +149,22 @@ export function VSKeyInsights({ successRows }: VSKeyInsightsProps) {
     const needCount = topNeedEntry?.[1] || 0;
 
     return { intentCount, topStage, piDotColor, lostCount, lostDotColor, topNeedType, needCount };
-  }, [successRows]);
+  }, [rows]);
 
   const vsBullets: { color: string; text: string }[] = [
-    { color: vsStateA.piDotColor, text: `${vsStateA.intentCount} buyer-intent comment${vsStateA.intentCount !== 1 ? 's' : ''} detected${vsStateA.topStage ? ` — ${vsStateA.topStage} is the dominant signal` : ''}.` },
-    { color: vsStateA.lostDotColor, text: vsStateA.lostCount > 0 ? `${vsStateA.lostCount} lost-sale signal${vsStateA.lostCount !== 1 ? 's' : ''} detected — viewers citing competitor purchase decisions.` : 'No lost-sale signals detected — all purchase-intent comments are acquisition-positive.' },
-    ...(vsStateA.needCount > 0 ? [{ color: '#EF9F27', text: `Top unmet need: ${vsStateA.topNeedType} — ${vsStateA.needCount} comment${vsStateA.needCount !== 1 ? 's' : ''} flagged this.` }] : []),
+    { color: vsStateA.piDotColor, text: `${vsStateA.intentCount} buyer-intent comment${vsStateA.intentCount !== 1 ? 's' : ''} detected${vsStateA.topStage ? ` - ${vsStateA.topStage} is the dominant signal` : ''}.` },
+    { color: vsStateA.lostDotColor, text: vsStateA.lostCount > 0 ? `${vsStateA.lostCount} lost-sale signal${vsStateA.lostCount !== 1 ? 's' : ''} detected - viewers citing competitor purchase decisions.` : 'No lost-sale signals detected - all purchase-intent comments are acquisition-positive.' },
+    ...(vsStateA.needCount > 0 ? [{ color: '#EF9F27', text: `Top unmet need: ${vsStateA.topNeedType} - ${vsStateA.needCount} comment${vsStateA.needCount !== 1 ? 's' : ''} flagged this.` }] : []),
   ];
 
   return (
-    <SectionCard title="What do viewers say in comments?">
+    <SectionCard
+      title={
+        brand === 'All Brands'
+          ? 'What do viewers say in comments?'
+          : `What do viewers say about ${brand} in comments?`
+      }
+    >
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <KiSignalCard
           bg="#EAF3DE" textColor="#085041"
