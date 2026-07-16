@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ShoppingCartIcon,
@@ -10,9 +10,12 @@ import {
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { SectionCard } from '../SectionCard';
-import { SectionHeader } from '../SectionHeader';
 import { VSSelect, VSSelectOption } from './VSSelect';
+import { VSKeyInsights } from './VSKeyInsights';
+import { TabKPIHeader, formatDateRangeLabel } from '../shared/TabKPIHeader';
+import { computeOverviewStats } from '../../hooks/useCMSData.js';
 import { DateRangeKey } from '../../data/mockData';
+import type { GlobalDateRange } from '../../pages/Dashboard';
 import {
   VS_BRANDS,
   VSBrand,
@@ -27,8 +30,13 @@ import { useVSData } from '../../hooks/useVSData';
 
 interface SentimentTabProps {
   dateRange: DateRangeKey;
-  globalDateRange?: { startDate: string; endDate: string };
-  setGlobalDateRange?: (v: any) => void;
+  globalDateRange: GlobalDateRange;
+  setGlobalDateRange: (value: GlobalDateRange | ((prev: GlobalDateRange) => GlobalDateRange)) => void;
+  // Full tractor_kpi_input rows from Dashboard's useCMSData() call — used only
+  // for the header's Total Videos / Tractor Videos cards, never for the
+  // sentiment charts below.
+  allData: any[];
+  cmsLoading: boolean;
 }
 
 const SIGNAL_BADGE: Record<string, string> = {
@@ -231,7 +239,13 @@ function BrandBars({
   );
 }
 
-export function SentimentTab({ dateRange }: SentimentTabProps) {
+export function SentimentTab({
+  dateRange,
+  globalDateRange,
+  setGlobalDateRange,
+  allData,
+  cmsLoading,
+}: SentimentTabProps) {
   void dateRange;
 
   const [selectedVSBrand, setSelectedVSBrand] = useState<VSBrand>('All Brands');
@@ -250,6 +264,7 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
   const {
     loading,
     error,
+    successRows,
     kpiSummary,
     intentKpi,
     needsKpi,
@@ -263,6 +278,29 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
     needsWeek,
     questionsWeek,
   });
+
+  const { startDate, endDate } = globalDateRange;
+
+  // Cards 1–2: same COUNT DISTINCT video_id stats IO/CMS show for this window,
+  // so the three tabs never disagree for a given globalDateRange.
+  const overviewStats = useMemo(
+    () => computeOverviewStats(allData, startDate, endDate),
+    [allData, startDate, endDate]
+  );
+
+  // Card 4: the comment dataset's own coverage window (min/max published_at
+  // across all loaded rows) — fixed, does not follow the date picker.
+  const commentDatasetRange = useMemo(() => {
+    let min = '';
+    let max = '';
+    for (const r of successRows as any[]) {
+      const d = typeof r.published_at === 'string' ? r.published_at : '';
+      if (!d) continue;
+      if (!min || d < min) min = d;
+      if (!max || d > max) max = d;
+    }
+    return min && max ? formatDateRangeLabel(min.slice(0, 10), max.slice(0, 10)) : '—';
+  }, [successRows]);
 
   if (loading) {
     return (
@@ -349,11 +387,28 @@ export function SentimentTab({ dateRange }: SentimentTabProps) {
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-5">
       {/* Header */}
       <motion.div variants={item}>
-        <SectionHeader
+        <TabKPIHeader
           title="Viewer Sentiment"
-          descriptor="Purchase intent, unmet needs, and recurring questions from viewer comments"
-          meta={`Based on ${kpiSummary.total_comments.toLocaleString()} analyzed comments · real data`}
+          subtitle="Purchase intent, unmet needs, and recurring questions from viewer comments"
+          startDate={startDate}
+          endDate={endDate}
+          onDateChange={setGlobalDateRange}
+          stats={overviewStats}
+          loading={cmsLoading}
+          caption="Applies to monitored video counts only. Comment analysis below uses its own time filters."
+          card3={{
+            icon: <MessageSquareIcon size={15} />,
+            label: 'Total Comments Analyzed',
+            value: successRows.length,
+            descriptor: 'Full comment corpus · not date-filtered',
+          }}
+          dateCard={{ value: commentDatasetRange, subtext: 'Full comment dataset range' }}
         />
+      </motion.div>
+
+      {/* Key insights (moved from Intelligence Overview) */}
+      <motion.div variants={item}>
+        <VSKeyInsights successRows={successRows} />
       </motion.div>
 
       {/* Control bar */}
