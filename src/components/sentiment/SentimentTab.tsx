@@ -68,6 +68,10 @@ const QUESTION_TYPE_COLORS: Record<string, string> = {
 };
 const QT_COLOR_FALLBACKS = ['#0EA5E9', '#EC4899', '#64748B'];
 
+const FEATURE_AREA_LABEL: Record<string, string> = {
+  'content request': 'viewer feedback',
+};
+
 const container = {
   hidden: {},
   show: { transition: { staggerChildren: 0.07 } },
@@ -706,7 +710,9 @@ export function SentimentTab({
                   {featureAreas.map((f, i) => (
                     <li key={f.area} className="flex items-center gap-3">
                       <span className="w-5 shrink-0 text-sm font-bold text-slate-400">#{i + 1}</span>
-                      <span className="w-36 shrink-0 truncate text-xs text-slate-700">{f.area}</span>
+                      <span className="w-36 shrink-0 truncate text-xs text-slate-700">
+                        {FEATURE_AREA_LABEL[f.area] ?? f.area}
+                      </span>
                       <div className="relative h-3.5 flex-1 overflow-hidden rounded bg-slate-100">
                         <div
                           className="absolute inset-y-0 left-0 rounded bg-amber-500"
