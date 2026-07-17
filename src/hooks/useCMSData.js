@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
+import { getBrandColor } from '../utils/brandColors';
 
 // ─── Brand metadata ──────────────────────────────────────────────────────────
-// Keyed by the exact `attributed_brand` string in the CSV. Colors mirror the
-// brand palette in mockData.ts so the Content Market Share visuals stay
-// consistent with the rest of the dashboard.
+// Keyed by the exact `attributed_brand` string in the CSV. Colors come from
+// the shared palette in src/utils/brandColors.ts so every tab renders the
+// same brand in the same color.
 export const CMS_BRAND_META = {
   Sonalika: { short: 'SON', isOwn: true },
   Mahindra: { short: 'MAH' },
@@ -23,27 +24,6 @@ export const CMS_BRAND_META = {
   Solis: { short: 'SOL' },
   TAFE: { short: 'TAF' },
 };
-
-export const BRAND_COLORS = {
-  'Sonalika': '#EF9F27',
-  'Mahindra': '#5DCAA5',
-  'Swaraj': '#85B7EB',
-  'John Deere': '#97C459',
-  'New Holland': '#AFA9EC',
-  'Massey Ferguson': '#F0997B',
-  'Escorts Kubota': '#ED93B1',
-  'Kartar': '#CCC619',
-  'Ashok Leyland': '#77D161',
-  'Indo Farm': '#59CF7A',
-  'Deutz Fahr': '#5CCCD6',
-  'Preet': '#AA81DA',
-  'ACE': '#CB7BD5',
-  'Force': '#DA81BF',
-  'Solis': '#D65151',
-  'TAFE': '#B66435',
-};
-
-export const getBrandColor = (brand) => BRAND_COLORS[brand] || '#9CA3AF';
 
 export const SONALIKA_BRAND = 'Sonalika';
 

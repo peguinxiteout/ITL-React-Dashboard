@@ -13,8 +13,8 @@ import {
   buildWeeklySoV,
   computeOverviewStats,
   SONALIKA_BRAND,
-  getBrandColor,
 } from '../../hooks/useCMSData.js';
+import { getBrandColor } from '../../utils/brandColors';
 import type { GlobalDateRange } from '../../pages/Dashboard';
 
 interface MarketShareTabProps {

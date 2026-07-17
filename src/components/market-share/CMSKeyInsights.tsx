@@ -75,7 +75,7 @@ export interface CMSKeyInsightsProps {
 // range — never touched useKpiData/kpiCalculations.ts, so this move required
 // no changes to the shared VoI/CP calculation files.
 export function CMSKeyInsights({
-  cmsData, allData, startDate, endDate, loading, totalVideoCount, tractorVideoCount, ownBrand,
+  cmsData, allData, startDate, endDate, loading, ownBrand,
 }: CMSKeyInsightsProps) {
   const { prevStartIso, prevEndIso, numDays } = useMemo(() => {
     const sMs = dateToUtcMs(startDate);
@@ -235,6 +235,36 @@ export function CMSKeyInsights({
     }
     const mostActiveRateFmt = mostActiveRate.toFixed(1);
 
+    // Comparison-video exposure — group winBranded rows by video_id to get each
+    // video's full brand set, then count own-brand videos that also feature at
+    // least one competitor, and which competitor co-appears most often.
+    const vidBrands = new Map<string, Set<string>>();
+    for (const r of winBranded) {
+      if (!vidBrands.has(r.video_id)) vidBrands.set(r.video_id, new Set());
+      vidBrands.get(r.video_id)!.add(r.attributed_brand);
+    }
+    let ownVideoCount = 0;
+    let comparisonCount = 0;
+    const coCounts = new Map<string, number>();
+    for (const brands of vidBrands.values()) {
+      if (!brands.has(ownBrand)) continue;
+      ownVideoCount++;
+      if (brands.size > 1) {
+        comparisonCount++;
+        for (const b of brands) {
+          if (b !== ownBrand) coCounts.set(b, (coCounts.get(b) || 0) + 1);
+        }
+      }
+    }
+    let topCompetitor = '';
+    let topCompetitorCount = 0;
+    for (const [b, c] of coCounts.entries()) {
+      if (c > topCompetitorCount) {
+        topCompetitorCount = c;
+        topCompetitor = b;
+      }
+    }
+
     // SubCategory still reads from allWin — attributed_brand is already set on each row
     const seenSon = new Set<string>();
     const subCats: Record<string, number> = {};
@@ -251,13 +281,19 @@ export function CMSKeyInsights({
 
     return {
       tractorCount, totalCount, densityPct,
+      ownVideoCount, comparisonCount, topCompetitor, topCompetitorCount,
       topSubCat, topSubCatPct,
       totalWindowDays, sonalikaActiveDays, mostActiveCompetitor, mostActiveRate: mostActiveRateFmt,
     };
   }, [cmsData, allData, startDate, endDate, numDays, ownBrand]);
 
   const cmsBullets: { color: string; text: string }[] = [
-    { color: '#1D4ED8', text: `${tractorVideoCount} of ${totalVideoCount} tracked videos are tractor content in this window (${(totalVideoCount > 0 ? (tractorVideoCount / totalVideoCount) * 100 : 0).toFixed(1)}%).` },
+    ...(cmsStateA.ownVideoCount > 0 ? [{
+      color: '#1D4ED8',
+      text: cmsStateA.comparisonCount > 0
+        ? `${cmsStateA.comparisonCount} of ${ownBrand}'s ${cmsStateA.ownVideoCount} videos in this window also feature a competitor - most often ${cmsStateA.topCompetitor} (${cmsStateA.topCompetitorCount}×).`
+        : `None of ${ownBrand}'s videos in this window mention a competitor brand.`,
+    }] : []),
     ...(cmsStateA.mostActiveCompetitor ? [{ color: '#1D4ED8', text: `${ownBrand} published on ${cmsStateA.sonalikaActiveDays} of ${cmsStateA.totalWindowDays} days this window - ${cmsStateA.mostActiveCompetitor} was most active at ${cmsStateA.mostActiveRate}/day.` }] : []),
     ...(cmsStateA.topSubCat ? [{ color: '#1D4ED8', text: `${cmsStateA.topSubCatPct}% of ${ownBrand}'s videos in this window are ${cmsStateA.topSubCat} content.` }] : []),
   ];

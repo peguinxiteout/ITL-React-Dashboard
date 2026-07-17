@@ -101,9 +101,15 @@ export function ShareOfVoiceCharts({ summary, totalUniqueVideos, periodDeltas, o
                       strokeWidth={0}>
                       {data.map((d) => <Cell key={d.name} fill={d.color} />)}
                     </Pie>
+                    {/* wrapperStyle zIndex lifts the tooltip above the center-label
+                        overlay below — a later positioned sibling that otherwise
+                        paints over the tooltip when hovering near the center.
+                        Dark style matches ContentFrequencyChart's tooltip. */}
                     <Tooltip
                       formatter={(value: number, name: string) => [formatNumber(value), name]}
-                      contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }} />
+                      wrapperStyle={{ zIndex: 1000 }}
+                      contentStyle={{ fontSize: 12, borderRadius: 6, border: 'none', backgroundColor: '#1a1a2e', padding: '8px 12px' }}
+                      itemStyle={{ color: '#ffffff' }} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">

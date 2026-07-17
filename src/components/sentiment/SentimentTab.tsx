@@ -19,11 +19,11 @@ import type { GlobalDateRange } from '../../pages/Dashboard';
 import {
   VS_WEEKS,
   VSWeek,
-  VS_BRAND_COLOR,
   SECTION_LABEL,
   SECTION_COLOR,
   SectionKey,
 } from './sentimentMock';
+import { getBrandColor } from '../../utils/brandColors';
 import { useVSData } from '../../hooks/useVSData';
 
 interface SentimentTabProps {
@@ -79,10 +79,6 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
 };
 
-// Grey dot for brands without an explicit VS_BRAND_COLOR entry — same
-// fallback convention as CMS's getBrandColor and BrandBars below.
-const FALLBACK_BRAND_COLOR = '#94a3b8';
-
 const WEEK_OPTIONS: VSSelectOption[] = VS_WEEKS.map((w) => ({
   value: w,
   label: w,
@@ -106,7 +102,7 @@ const formatDate = (dateStr: string) => {
 
 function BrandDot({ brand, size = 8 }: { brand: string; size?: number }) {
   if (!brand) return null;
-  const color = VS_BRAND_COLOR[brand] || FALLBACK_BRAND_COLOR;
+  const color = getBrandColor(brand);
   return (
     <span
       style={{
@@ -204,7 +200,7 @@ function BrandBars({
     <div className="space-y-2.5">
       {byBrand.map((d) => {
         const muted = selectedBrand !== 'All Brands' && d.brand !== selectedBrand;
-        const color = muted ? '#cbd5e1' : (VS_BRAND_COLOR[d.brand] || FALLBACK_BRAND_COLOR);
+        const color = muted ? '#cbd5e1' : getBrandColor(d.brand);
         return (
           <div key={d.brand} className="flex items-center gap-3">
             <span
@@ -308,7 +304,7 @@ export function SentimentTab({
         .map(([b]) => ({
           value: b,
           label: b,
-          color: VS_BRAND_COLOR[b] || FALLBACK_BRAND_COLOR,
+          color: getBrandColor(b),
         })),
     ];
   }, [successRows]);

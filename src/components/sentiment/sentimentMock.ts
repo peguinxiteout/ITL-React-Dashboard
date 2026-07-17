@@ -20,15 +20,7 @@ export const SPECIFIC_BRANDS: VSBrand[] = VS_BRANDS.filter(
   (b) => b !== 'All Brands'
 ) as VSBrand[];
 
-export const VS_BRAND_COLOR: Record<string, string> = {
-  Sonalika: '#1D4ED8',
-  Mahindra: '#DC2626',
-  Swaraj: '#D97706',
-  'John Deere': '#16A34A',
-  'New Holland': '#0EA5E9',
-  'Massey Ferguson': '#7C3AED',
-  'Escorts Kubota': '#0D9488'
-};
+// Brand colors live in the shared palette: src/utils/brandColors.ts.
 
 export const VS_WEEKS = [
   'All time',
