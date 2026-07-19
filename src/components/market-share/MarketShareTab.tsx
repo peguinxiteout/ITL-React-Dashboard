@@ -6,6 +6,7 @@ import { ShareOfVoiceCharts } from './ShareOfVoiceCharts';
 import { ShareOfEngagementCard } from './ShareOfEngagementCard';
 import { ShareTrendCharts } from './ShareTrendCharts';
 import { ContentFrequencyChart } from './ContentFrequencyChart';
+import { ContentCategoryBreakdownCard } from './ContentCategoryBreakdownCard';
 import { VSSelect, VSSelectOption } from '../sentiment/VSSelect';
 import {
   summarizeBrands,
@@ -360,6 +361,14 @@ export function MarketShareTab({
             <ContentFrequencyChart
             weeks={derived.windowDates}
             rows={derived.heatmapRows}
+            ownBrand={ownBrand} />
+
+          </motion.div>
+          <motion.div variants={item}>
+            <ContentCategoryBreakdownCard
+            allData={allData}
+            startDate={startDate}
+            endDate={endDate}
             ownBrand={ownBrand} />
 
           </motion.div>
