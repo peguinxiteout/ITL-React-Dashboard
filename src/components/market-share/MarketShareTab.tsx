@@ -26,6 +26,9 @@ interface MarketShareTabProps {
   cmsData: any[];
   loading: boolean;
   error: string | null;
+  // Notifies the parent of the currently selected own-brand, so the dashboard
+  // header can mirror it in the title. Fires once on mount and on every change.
+  onBrandChange?: (brand: string) => void;
 }
 
 const container = {
@@ -87,10 +90,15 @@ export function MarketShareTab({
   cmsData,
   loading,
   error,
+  onBrandChange,
 }: MarketShareTabProps) {
   // "Home" brand every own-vs-rest visual keys off; every isOwn flag below
   // derives from this instead of the static CMS_BRAND_META table.
   const [ownBrand, setOwnBrand] = useState<string>(SONALIKA_BRAND);
+
+  useEffect(() => {
+    onBrandChange?.(ownBrand);
+  }, [ownBrand, onBrandChange]);
 
   const { startDate, endDate } = globalDateRange;
 

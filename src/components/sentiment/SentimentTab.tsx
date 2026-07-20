@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ShoppingCartIcon,
@@ -35,6 +35,9 @@ interface SentimentTabProps {
   // sentiment charts below.
   allData: any[];
   cmsLoading: boolean;
+  // Notifies the parent of the currently selected VS brand, so the dashboard
+  // header can mirror it in the title. Fires once on mount and on every change.
+  onBrandChange?: (brand: string) => void;
 }
 
 const SIGNAL_BADGE: Record<string, string> = {
@@ -241,10 +244,15 @@ export function SentimentTab({
   setGlobalDateRange,
   allData,
   cmsLoading,
+  onBrandChange,
 }: SentimentTabProps) {
   void dateRange;
 
-  const [selectedVSBrand, setSelectedVSBrand] = useState<string>('All Brands');
+  const [selectedVSBrand, setSelectedVSBrand] = useState<string>('Sonalika');
+
+  useEffect(() => {
+    onBrandChange?.(selectedVSBrand);
+  }, [selectedVSBrand, onBrandChange]);
   const [activeVSSection, setActiveVSSection] = useState<VSSectionId>('pi');
   const [intentWeek, setIntentWeek] = useState<VSWeek>('All time');
   const [needsWeek, setNeedsWeek] = useState<VSWeek>('All time');

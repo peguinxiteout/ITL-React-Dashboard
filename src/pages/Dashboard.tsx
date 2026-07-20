@@ -1,4 +1,4 @@
-import { ChangeEvent, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   VideoIcon, TractorIcon, TagIcon,
@@ -491,6 +491,26 @@ export function Dashboard() {
     (screenState?.activeTab as TabKey) ?? 'overview'
   );
 
+  // Brand currently selected on whichever of CMS/VS is active — mirrored into
+  // the header title. Cleared when navigating to a tab that has no brand
+  // selector so the header falls back to the static title instead of showing
+  // a stale brand from the tab the user just left.
+  const [activeTabBrandName, setActiveTabBrandName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== 'market-share' && activeTab !== 'sentiment') {
+      setActiveTabBrandName(null);
+    }
+  }, [activeTab]);
+
+  const handleCMSBrandChange = useCallback((brand: string) => setActiveTabBrandName(brand), []);
+  const handleVSBrandChange = useCallback((brand: string) => setActiveTabBrandName(brand), []);
+
+  const headerTitle =
+    (activeTab === 'market-share' || activeTab === 'sentiment') && activeTabBrandName
+      ? `${activeTabBrandName} YouTube Intelligence`
+      : 'Sonalika YouTube Intelligence';
+
   const [dateRange] = useState<DateRangeKey>('30d');
 
   const [selectedCompetitors] = useState<string[]>(
@@ -617,6 +637,7 @@ export function Dashboard() {
           cmsData={cmsData}
           loading={cmsLoading}
           error={cmsError}
+          onBrandChange={handleCMSBrandChange}
         />
       );
     }
@@ -629,6 +650,7 @@ export function Dashboard() {
           setGlobalDateRange={setGlobalDateRange}
           allData={allData}
           cmsLoading={cmsLoading}
+          onBrandChange={handleVSBrandChange}
         />
       );
     }
@@ -646,7 +668,7 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen w-full bg-slate-50">
-      <DashboardHeader activeTab={activeTab} onTabChange={setActiveTab} />
+      <DashboardHeader activeTab={activeTab} onTabChange={setActiveTab} title={headerTitle} />
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div

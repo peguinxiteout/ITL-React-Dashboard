@@ -4,6 +4,7 @@ import { TabKey } from '../data/mockData';
 interface DashboardHeaderProps {
   activeTab: TabKey;
   onTabChange: (tab: TabKey) => void;
+  title: string;
 }
 const NAV_ITEMS: {
   key: TabKey;
@@ -32,7 +33,8 @@ const NAV_ITEMS: {
 
 export function DashboardHeader({
   activeTab,
-  onTabChange
+  onTabChange,
+  title
 }: DashboardHeaderProps) {
   const handleNavKeyDown = (e: React.KeyboardEvent) => {
     const idx = NAV_ITEMS.findIndex((t) => t.key === activeTab);
@@ -83,7 +85,7 @@ export function DashboardHeader({
           </div>
           <div>
             <h1 className="text-lg font-bold leading-tight text-slate-900">
-              Sonalika YouTube Intelligence
+              {title}
             </h1>
             <p className="text-xs text-slate-500">
               Competitive insights · Indian tractor category
