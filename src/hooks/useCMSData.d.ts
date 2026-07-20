@@ -61,6 +61,17 @@ export interface OverviewStats {
   comparisonVideos: number;
 }
 
+export interface BrandDirectCount {
+  brand: string;
+  count: number;
+}
+
+export interface BrandDirectCounts {
+  directCounts: BrandDirectCount[];
+  directVideos: number;
+  comparisonVideos: number;
+}
+
 export interface CategoryItem {
   category: string;
   count: number;
@@ -92,6 +103,12 @@ export function computeOverviewStats(
   startDate: string,
   endDate: string
 ): OverviewStats;
+
+export function computeBrandDirectCounts(
+  allData: Record<string, unknown>[],
+  startDate: string,
+  endDate: string
+): BrandDirectCounts;
 
 export function computeCategoryData(
   allData: Record<string, unknown>[],

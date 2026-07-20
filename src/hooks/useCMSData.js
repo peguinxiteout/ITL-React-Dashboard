@@ -227,6 +227,50 @@ export function computeOverviewStats(allData, startDate, endDate) {
   return { totalVideos, tractorVideos, brandMentioned: Object.keys(brandsPerVideo).length, directVideos: direct, comparisonVideos: multi };
 }
 
+// ─── Brand Share (per-brand direct/multi-brand breakdown) ─────────────────────
+// Per-brand version of computeOverviewStats' direct/comparison split, for the
+// CMS tab's "Brand Share" chart. Deliberately NOT built by modifying
+// computeOverviewStats (which only returns aggregate totals) — this duplicates
+// its exact filter (same inRange population, same
+// `is_tractor_content && attributed_brand !== 'unattributed'` condition) so that
+// sum(directCounts[].count) === computeOverviewStats(...).directVideos and
+// comparisonVideos === computeOverviewStats(...).comparisonVideos for the same
+// (allData, startDate, endDate) — verified as a cross-check by the caller.
+// directCounts: one entry per brand with >=1 direct (exactly-one-brand) video in
+// the window, sorted descending by count. comparisonVideos: single aggregate
+// count of videos with 2+ attributed brands (not broken down per brand-pair).
+export function computeBrandDirectCounts(allData, startDate, endDate) {
+  const inRange = allData.filter(
+    (r) => r.publish_date >= startDate && r.publish_date <= endDate
+  );
+
+  const brandsPerVideo = {};
+  inRange
+    .filter((r) => r.is_tractor_content && r.attributed_brand !== 'unattributed')
+    .forEach((r) => {
+      if (!brandsPerVideo[r.video_id]) brandsPerVideo[r.video_id] = new Set();
+      brandsPerVideo[r.video_id].add(r.attributed_brand);
+    });
+
+  const directCountsMap = new Map();
+  let comparisonVideos = 0;
+  for (const brands of Object.values(brandsPerVideo)) {
+    if (brands.size === 1) {
+      const [brand] = brands;
+      directCountsMap.set(brand, (directCountsMap.get(brand) ?? 0) + 1);
+    } else if (brands.size >= 2) {
+      comparisonVideos++;
+    }
+  }
+
+  const directCounts = [...directCountsMap.entries()]
+    .map(([brand, count]) => ({ brand, count }))
+    .sort((a, b) => b.count - a.count);
+  const directVideos = directCounts.reduce((sum, d) => sum + d.count, 0);
+
+  return { directCounts, directVideos, comparisonVideos };
+}
+
 // ─── Category breakdown ───────────────────────────────────────────────────────
 // Groups all rows (no brand/attribution filter) by video_category and counts
 // distinct video_ids. Returns array sorted descending by count.
