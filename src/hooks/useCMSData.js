@@ -296,7 +296,7 @@ export function computeCategoryData(allData, startDate, endDate) {
 // ─── Channel coverage ─────────────────────────────────────────────────────────
 // tractorChannels: distinct channels publishing tractor content in window.
 // activeChannels:  distinct channels publishing any content in window.
-// inactiveChannelNames: channels in full dataset that published nothing in window.
+// inactiveChannelNames: channels active in window but with no tractor content.
 export function computeChannelCoverage(allData, startDate, endDate) {
   const allChannelSet = new Set(allData.map((r) => r.channel_name).filter(Boolean));
   const inRange = allData.filter(
@@ -307,8 +307,8 @@ export function computeChannelCoverage(allData, startDate, endDate) {
   const tractorInRange = inRange.filter((r) => r.is_tractor_content === true);
   const tractorChannelSet = new Set(tractorInRange.map((r) => r.channel_name).filter(Boolean));
   const tractorChannels = tractorChannelSet.size;
-  const inactiveChannelNames = [...allChannelSet]
-    .filter((ch) => !activeChannelSet.has(ch))
+  const inactiveChannelNames = [...activeChannelSet]
+    .filter((ch) => !tractorChannelSet.has(ch))
     .sort();
   return { tractorChannels, activeChannels, inactiveChannelNames };
 }
