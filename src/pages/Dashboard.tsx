@@ -502,8 +502,8 @@ export function Dashboard() {
   );
 
   const [globalDateRange, setGlobalDateRange] = useState<GlobalDateRange>({
-    startDate: '2026-03-01',
-    endDate: '2026-03-08',
+    startDate: '2026-03-09',
+    endDate: '2026-03-15',
   });
 
   const { allData, cmsData, loading: cmsLoading, error: cmsError, totalMonitored } = useCMSData();
