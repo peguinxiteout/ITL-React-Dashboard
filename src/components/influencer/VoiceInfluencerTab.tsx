@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -14,10 +14,15 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { CalendarIcon, MegaphoneIcon, SmileIcon, TagIcon, TractorIcon, TrendingUpIcon, VideoIcon } from 'lucide-react';
 import { SectionCard } from '../SectionCard';
+import { TabInsights, TabOverviewCards } from '../TabOverview';
+import { VSSelect, type VSSelectOption } from '../sentiment/VSSelect';
+import { getBrandColor } from '../../utils/brandColors';
 import { useKpiData } from '../../hooks/useKpiData';
 import {
   calculateBrandLevelSentiment,
+  calculateCompetitiveMtpComparison,
   calculateTopPositiveBrandsForFeature,
   calculateCreatorPerformance,
   calculateFeatureLevelSentiment,
@@ -27,11 +32,11 @@ import {
   calculateMostMentionedFeatures,
   calculateMostMentionedFeatureVerbatims,
   calculateVoiceInfluencerKpiCards,
-  calculateTractorContentCategoryDistribution,
   calculateWeeklyMentionTrend,
   calculateWeeklySentimentTrend,
   getAvailableBrands,
   getAvailableDateRange,
+  getModelsForBrandFeature,
 } from '../../utils/kpiCalculations';
 
 const COLORS = {
@@ -77,15 +82,6 @@ const TREND_WEEK_OPTIONS: { label: string; value: TrendWeekOption }[] = [
 
 const CREATOR_LIMIT_OPTIONS = [5, 10, 15, 20];
 
-const CREATOR_SORT_LABELS: Record<CreatorSortKey, string> = {
-  engagement: 'Engagement',
-  overall_score: 'Overall Score',
-  sonalika_mention_percentage: 'Sonalika Mention %',
-  tractor_video_percentage: 'Tractor Video %',
-  content_frequency: 'Content Frequency',
-  sentiment_score: 'Sentiment Score',
-  engagement_rate_pct: 'Eng. Rate %',
-};
 
 const getStartDateForWeekOption = (
   maxDate: string,
@@ -222,19 +218,82 @@ const SentimentLegend = () => (
   </div>
 );
 
-export default function VoiceInfluencerTab() {
+const filterRowsByDateRange = (
+  rows: Record<string, string>[],
+  startDate: string,
+  endDate: string
+) => {
+  if (!startDate && !endDate) return rows;
+
+  return rows.filter((row) => {
+    const postedDate = String(row.posted_date || '').slice(0, 10);
+    if (!postedDate) return false;
+    if (startDate && postedDate < startDate) return false;
+    if (endDate && postedDate > endDate) return false;
+    return true;
+  });
+};
+
+const DiscussionThemeCard = ({
+  title,
+  points,
+  models,
+}: {
+  title: string;
+  points: string[];
+  models?: string[];
+}) => (
+  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <h4 className="text-sm font-bold text-slate-950">{title}</h4>
+    {models?.length ? (
+      <p className="mt-2 text-xs font-semibold text-blue-700">Models identified: {models.join(', ')}</p>
+    ) : null}
+    <ul className="mt-3 space-y-2 text-sm leading-5 text-slate-700">
+      {points.map((point) => (
+        <li key={point} className="flex gap-2">
+          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
+          <span>{point}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+interface VoiceInfluencerTabProps {
+  onBrandChange?: (brand: string) => void;
+  standardKpis?: {
+    totalVideos: number;
+    tractorVideos: number;
+    dateRange: string;
+  };
+}
+
+export default function VoiceInfluencerTab({ standardKpis, onBrandChange }: VoiceInfluencerTabProps = {}) {
   const { rows, loading, error } = useKpiData();
 
   const availableBrands = useMemo(() => getAvailableBrands(rows), [rows]);
   const availableDateRange = useMemo(() => getAvailableDateRange(rows), [rows]);
 
   const [selectedBrand, setSelectedBrand] = useState('Sonalika');
+  const [selectedStartDate, setSelectedStartDate] = useState('');
+  const [selectedEndDate, setSelectedEndDate] = useState('');
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [benchmarkMode, setBenchmarkMode] = useState<'overall' | 'competitors'>('competitors');
   const [trendBrand, setTrendBrand] = useState('Sonalika');
   const [trendWeekOption, setTrendWeekOption] = useState<TrendWeekOption>('2');
   const [creatorSortKey, setCreatorSortKey] = useState<CreatorSortKey>('engagement');
   const [creatorLimit, setCreatorLimit] = useState(5);
+
+  useEffect(() => {
+    if (!rows.length) return;
+    setSelectedStartDate((current) => current || availableDateRange.minDate);
+    setSelectedEndDate((current) => current || availableDateRange.maxDate);
+  }, [rows.length, availableDateRange.minDate, availableDateRange.maxDate]);
+
+  const filteredRows = useMemo(
+    () => filterRowsByDateRange(rows, selectedStartDate, selectedEndDate),
+    [rows, selectedStartDate, selectedEndDate]
+  );
 
   const brandOptions = useMemo(() => {
     const options = availableBrands.length ? availableBrands : ['Sonalika'];
@@ -248,33 +307,41 @@ export default function VoiceInfluencerTab() {
 
   const trendOptions = useMemo(() => ['All Brands', ...brandOptions], [brandOptions]);
 
-  const voiceKpiCards = useMemo(
-    () => calculateVoiceInfluencerKpiCards(rows),
-    [rows]
+  const brandSelectOptions = useMemo<VSSelectOption[]>(
+    () => brandOptions.map((brand) => ({ value: brand, label: brand, color: getBrandColor(brand) })),
+    [brandOptions]
   );
 
-  const tractorContentCategoryData = useMemo(
-    () => calculateTractorContentCategoryDistribution(rows),
-    [rows]
+  useEffect(() => {
+    onBrandChange?.(selectedBrand);
+  }, [selectedBrand, onBrandChange]);
+
+  const voiceKpiCards = useMemo(
+    () => calculateVoiceInfluencerKpiCards(filteredRows),
+    [filteredRows]
+  );
+
+  const resolvedStandardKpis = useMemo(
+    () => ({
+      totalVideos: standardKpis?.totalVideos ?? voiceKpiCards.videos_analyzed,
+      tractorVideos:
+        standardKpis?.tractorVideos ?? voiceKpiCards.tractor_videos_analyzed,
+      dateRange: standardKpis?.dateRange ?? voiceKpiCards.date_range,
+    }),
+    [standardKpis, voiceKpiCards]
   );
 
   const effectiveTrendStartDate = useMemo(
-    () => getStartDateForWeekOption(availableDateRange.maxDate, trendWeekOption),
-    [trendWeekOption, availableDateRange]
+    () => getStartDateForWeekOption(selectedEndDate || availableDateRange.maxDate, trendWeekOption),
+    [trendWeekOption, selectedEndDate, availableDateRange.maxDate]
   );
 
-  const effectiveTrendEndDate = availableDateRange.maxDate;
+  const effectiveTrendEndDate = selectedEndDate || availableDateRange.maxDate;
 
-  const selectedTrendPeriodLabel = useMemo(() => {
-    return (
-      TREND_WEEK_OPTIONS.find((option) => option.value === trendWeekOption)?.label ||
-      'Last 2 weeks'
-    );
-  }, [trendWeekOption]);
 
   const brandSentiment = useMemo(
-    () => calculateBrandLevelSentiment(rows),
-    [rows]
+    () => calculateBrandLevelSentiment(filteredRows),
+    [filteredRows]
   );
 
   const brandSentimentTableData = useMemo(
@@ -296,17 +363,17 @@ export default function VoiceInfluencerTab() {
           const aBrand = String(a.brand || '').toLowerCase();
           const bBrand = String(b.brand || '').toLowerCase();
 
-          if (aBrand === 'sonalika') return -1;
-          if (bBrand === 'sonalika') return 1;
+          if (aBrand === selectedBrand.toLowerCase()) return -1;
+          if (bBrand === selectedBrand.toLowerCase()) return 1;
 
           return b.video_count - a.video_count;
         }),
-    [brandSentiment]
+    [brandSentiment, selectedBrand]
   );
 
   const featureSentiment = useMemo(
-    () => calculateFeatureLevelSentiment(rows, selectedBrand).slice(0, 10),
-    [rows, selectedBrand]
+    () => calculateFeatureLevelSentiment(filteredRows, selectedBrand).slice(0, 10),
+    [filteredRows, selectedBrand]
   );
 
   const featureSentimentChartData = useMemo(
@@ -337,9 +404,9 @@ export default function VoiceInfluencerTab() {
   const selectedFeatureTopBrands = useMemo(
     () =>
       selectedFeature
-        ? calculateTopPositiveBrandsForFeature(rows, selectedFeature, 3, selectedBrand)
+        ? calculateTopPositiveBrandsForFeature(filteredRows, selectedFeature, 3, selectedBrand)
         : [],
-    [rows, selectedFeature, selectedBrand]
+    [filteredRows, selectedFeature, selectedBrand]
   );
 
   const selectedFeatureSingleChartData = useMemo(
@@ -368,12 +435,17 @@ export default function VoiceInfluencerTab() {
     [selectedFeatureTopBrands]
   );
 
+  const selectedFeatureModels = useMemo(
+    () => selectedFeature ? getModelsForBrandFeature(filteredRows, selectedBrand, selectedFeature, 3) : [],
+    [filteredRows, selectedBrand, selectedFeature]
+  );
+
   const topCompetitorByFeature = useMemo(
     () =>
       featureSentimentChartData
         .map((item) => {
           const topBrand = calculateTopPositiveBrandsForFeature(
-            rows,
+            filteredRows,
             item.feature,
             1,
             benchmarkMode === 'competitors' ? selectedBrand : ''
@@ -391,7 +463,7 @@ export default function VoiceInfluencerTab() {
           (item): item is { feature: string; brand: string; positivePct: number } =>
             Boolean(item)
         ),
-    [rows, selectedBrand, benchmarkMode, featureSentimentChartData]
+    [filteredRows, selectedBrand, benchmarkMode, featureSentimentChartData]
   );
 
   const handleFeatureClick = (feature?: string) => {
@@ -403,36 +475,41 @@ export default function VoiceInfluencerTab() {
   };
 
   const mostMentioned = useMemo(
-    () => calculateMostMentionedFeatures(rows, selectedBrand, 5),
-    [rows, selectedBrand]
+    () => calculateMostMentionedFeatures(filteredRows, selectedBrand, 5),
+    [filteredRows, selectedBrand]
   );
 
   const mostMentionedVerbatims = useMemo(
-    () => calculateMostMentionedFeatureVerbatims(rows, selectedBrand, 3),
-    [rows, selectedBrand]
+    () => calculateMostMentionedFeatureVerbatims(filteredRows, selectedBrand, 3),
+    [filteredRows, selectedBrand]
+  );
+
+  const discussionThemes = useMemo(
+    () => calculateCompetitiveMtpComparison(filteredRows, selectedBrand),
+    [filteredRows, selectedBrand]
   );
 
   const weeklyMentionTrend = useMemo(
     () =>
       calculateWeeklyMentionTrend(
-        rows,
+        filteredRows,
         trendBrand,
         effectiveTrendStartDate,
         effectiveTrendEndDate,
         brandOptions
       ),
-    [rows, trendBrand, effectiveTrendStartDate, effectiveTrendEndDate, brandOptions]
+    [filteredRows, trendBrand, effectiveTrendStartDate, effectiveTrendEndDate, brandOptions]
   );
 
   const weeklySentimentTrend = useMemo(
     () =>
       calculateWeeklySentimentTrend(
-        rows,
+        filteredRows,
         trendBrand,
         effectiveTrendStartDate,
         effectiveTrendEndDate
       ),
-    [rows, trendBrand, effectiveTrendStartDate, effectiveTrendEndDate]
+    [filteredRows, trendBrand, effectiveTrendStartDate, effectiveTrendEndDate]
   );
 
   const mentionLineBrands = useMemo(() => {
@@ -445,30 +522,38 @@ export default function VoiceInfluencerTab() {
 
   const creatorPerformance = useMemo(
     () =>
-      calculateCreatorPerformance(rows)
+      calculateCreatorPerformance(filteredRows, selectedBrand)
         .sort((a, b) => Number(b[creatorSortKey]) - Number(a[creatorSortKey]))
         .map((item, index) => ({
           ...item,
           rank: index + 1,
         }))
         .slice(0, creatorLimit),
-    [rows, creatorSortKey, creatorLimit]
+    [filteredRows, selectedBrand, creatorSortKey, creatorLimit]
+  );
+
+  const topCreatorInsight = useMemo(
+    () =>
+      [...calculateCreatorPerformance(filteredRows, selectedBrand)].sort(
+        (a, b) => Number(b.engagement || 0) - Number(a.engagement || 0)
+      )[0],
+    [filteredRows, selectedBrand]
   );
 
   const geoCoverage = useMemo(
     () =>
-      calculateGeoCoverage(rows)
+      calculateGeoCoverage(filteredRows, selectedBrand)
         .filter((item) => isKnownGeoRegion(item.geo_region))
         .slice(0, 10),
-    [rows]
+    [filteredRows, selectedBrand]
   );
 
   const geoSentiment = useMemo(
     () =>
-      calculateGeoSentiment(rows)
+      calculateGeoSentiment(filteredRows, selectedBrand)
         .filter((item) => isKnownGeoRegion(item.geo_region))
         .slice(0, 10),
-    [rows]
+    [filteredRows, selectedBrand]
   );
 
   const geoSentimentTableData = useMemo(
@@ -490,10 +575,10 @@ export default function VoiceInfluencerTab() {
 
   const geoCreatorRankings = useMemo(
     () =>
-      calculateGeoCreatorRankings(rows)
+      calculateGeoCreatorRankings(filteredRows, selectedBrand)
         .filter((item) => isKnownGeoRegion(item.geo_region))
         .slice(0, 5),
-    [rows]
+    [filteredRows, selectedBrand]
   );
 
   const geoContentChartData = useMemo(
@@ -565,132 +650,114 @@ export default function VoiceInfluencerTab() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-950">
-          Voice of Influencer
-        </h1>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-950">Brand Perception Analysis </h1>
+          <p className="mt-1 text-sm text-slate-500">Creator-led brand perception, sentiment and influence across tractor content</p>
+        </div>
 
-
-        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 p-5 shadow-sm">
-            <p className="text-sm font-semibold text-slate-500">Videos Analyzed</p>
-            <p className="mt-2 text-3xl font-bold text-blue-900">
-              {voiceKpiCards.videos_analyzed.toLocaleString()}
-            </p>
-            
-            <p className="mt-1 text-xs font-semibold text-blue-800">
-              Tractor videos: {voiceKpiCards.tractor_videos_analyzed.toLocaleString()}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 p-5 shadow-sm">
-            <p className="text-sm font-semibold text-slate-500">Brands Detected</p>
-            <p className="mt-2 text-3xl font-bold text-blue-900">
-              {voiceKpiCards.brands_detected.toLocaleString()}
-            </p>
-            
-          </div>
-
-          <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 p-5 shadow-sm">
-            <p className="text-sm font-semibold text-slate-500">Date Range</p>
-            <p className="mt-2 text-3xl font-bold text-blue-900">
-              {voiceKpiCards.date_range}
-            </p>
-           
-          </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs font-semibold text-slate-500">
+            From
+            <input
+              type="date"
+              min={availableDateRange.minDate}
+              max={selectedEndDate || availableDateRange.maxDate}
+              value={selectedStartDate}
+              onChange={(event) => setSelectedStartDate(event.target.value)}
+              className="mt-1 block rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500"
+            />
+          </label>
+          <label className="text-xs font-semibold text-slate-500">
+            To
+            <input
+              type="date"
+              min={selectedStartDate || availableDateRange.minDate}
+              max={availableDateRange.maxDate}
+              value={selectedEndDate}
+              onChange={(event) => setSelectedEndDate(event.target.value)}
+              className="mt-1 block rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500"
+            />
+          </label>
         </div>
       </div>
 
-      <SectionCard
-        title="Tractor Content Category Split"
-      >
-        {tractorContentCategoryData.length > 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h3 className="text-base font-bold text-slate-950">
-                  Tractor Video Category Distribution
-                </h3>
-                
-              </div>
-              <div className="flex flex-wrap items-center gap-4 text-xs">
-                <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
-                  <span
-                    className="inline-block h-3 w-3 rounded-sm"
-                    style={{ backgroundColor: '#60A5FA' }}
-                  />
-                  Total
-                </span>
-                <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
-                  <span
-                    className="inline-block h-3 w-3 rounded-sm"
-                    style={{ backgroundColor: '#F97316' }}
-                  />
-                  Sonalika
-                </span>
-              </div>
-            </div>
+      <TabOverviewCards
+        cards={[
+          {
+            label: 'Total Videos Analyzed',
+            value: resolvedStandardKpis.totalVideos.toLocaleString(),
+            descriptor: 'All monitored YouTube videos',
+            icon: <VideoIcon size={15} />,
+          },
+          {
+            label: 'Total Tractor Videos',
+            value: resolvedStandardKpis.tractorVideos.toLocaleString(),
+            descriptor: 'Tractor-related content identified',
+            icon: <TractorIcon size={15} />,
+          },
+          {
+            label: 'Brands Detected',
+            value: voiceKpiCards.brands_detected.toLocaleString(),
+            descriptor: 'Unique tractor brands identified',
+            icon: <TagIcon size={15} />,
+          },
+          {
+            label: 'Date Range',
+            value: resolvedStandardKpis.dateRange,
+            descriptor: 'Currently selected window',
+            icon: <CalendarIcon size={15} />,
+          },
+        ]}
+      />
 
-            <div className="h-[390px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={tractorContentCategoryData}
-                  margin={{ top: 28, right: 28, left: 4, bottom: 88 }}
-                  barGap={6}
-                  barCategoryGap="24%"
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-                  <XAxis
-                    dataKey="category"
-                    interval={0}
-                    angle={-28}
-                    textAnchor="end"
-                    height={105}
-                    tick={{ fontSize: 12, fill: '#475569' }}
-                    tickMargin={12}
-                  />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#475569' }} />
-                  <Tooltip />
-                  <Bar
-                    dataKey="Total"
-                    name="Total"
-                    fill="#60A5FA"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={42}
-                  >
-                    <LabelList
-                      dataKey="Total"
-                      position="top"
-                      formatter={formatNumberLabel}
-                      fill="#1E293B"
-                      fontSize={12}
-                      fontWeight={700}
-                    />
-                  </Bar>
-                  <Bar
-                    dataKey="Sonalika"
-                    name="Sonalika"
-                    fill="#F97316"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={42}
-                  >
-                    <LabelList
-                      dataKey="Sonalika"
-                      position="top"
-                      formatter={formatNumberLabel}
-                      fill="#1E293B"
-                      fontSize={12}
-                      fontWeight={700}
-                    />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        ) : (
-          <EmptyState message="Tractor content category data is not available for the current CSV rows." />
-        )}
-      </SectionCard>
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-slate-500">Brand</span>
+        <VSSelect
+          value={selectedBrand}
+          options={brandSelectOptions}
+          onChange={(brand) => {
+            setSelectedBrand(brand);
+            setTrendBrand(brand);
+            setSelectedFeature(null);
+          }}
+          size="lg"
+          ariaLabel="Select focus brand"
+        />
+      </div>
+
+      <TabInsights
+        question={`How do creators talk about ${selectedBrand}?`}
+        cards={[
+          {
+            headline: `${brandSentimentTableData.find((item) => String(item.brand).toLowerCase() === selectedBrand.toLowerCase())?.Positive_pct.toFixed(1) || '0.0'}% positive sentiment, ${brandSentimentTableData.find((item) => String(item.brand).toLowerCase() === selectedBrand.toLowerCase())?.Negative_pct.toFixed(1) || '0.0'}% negative`,
+            detail: `${brandSentimentTableData.find((item) => String(item.brand).toLowerCase() === selectedBrand.toLowerCase())?.Neutral_pct.toFixed(1) || '0.0'}% neutral across ${selectedBrand} sentiment signals`,
+            icon: <SmileIcon size={15} />,
+            tone: 'green',
+          },
+          {
+            headline: `Most positively discussed feature: ${mostMentioned.praised[0]?.feature || 'Not available'}`,
+            detail: mostMentioned.praised[0]
+              ? `${mostMentioned.praised[0].Positive.toLocaleString()} positive, ${mostMentioned.praised[0].Neutral.toLocaleString()} neutral and ${mostMentioned.praised[0].Negative.toLocaleString()} negative mentions out of ${mostMentioned.praised[0].total_mentions.toLocaleString()}`
+              : 'No feature sentiment is available for the selected filters',
+            icon: <TrendingUpIcon size={15} />,
+            tone: 'green',
+          },
+          {
+            headline: `Top creator: ${topCreatorInsight?.channelTitle || 'Not available'}`,
+            detail: `${Number(topCreatorInsight?.engagement || 0).toLocaleString()} total engagement`,
+            icon: <VideoIcon size={15} />,
+            tone: 'blue',
+          },
+          {
+            headline: `${geoCoverage.slice(0, 2).map((item) => item.geo_region).join(' & ') || 'Regional'} coverage leads`,
+            detail: geoCoverage.slice(0, 3).map((item) => item.geo_region).join(', ') || 'No region data available',
+            icon: <MegaphoneIcon size={15} />,
+            tone: 'amber',
+          },
+        ]}
+      />
+
 
       <SectionCard
         title="Brand-Level Sentiment"
@@ -712,12 +779,12 @@ export default function VoiceInfluencerTab() {
 
               <tbody className="divide-y divide-slate-100 bg-white">
                 {brandSentimentTableData.map((item) => {
-                  const isSonalikaRow = String(item.brand || '').toLowerCase() === 'sonalika';
+                  const isSelectedBrandRow = String(item.brand || '').toLowerCase() === selectedBrand.toLowerCase();
 
                   return (
                   <tr
                     key={item.brand}
-                    className={isSonalikaRow ? 'bg-blue-50/70 ring-1 ring-inset ring-blue-100' : 'hover:bg-blue-50/40'}
+                    className={isSelectedBrandRow ? 'bg-blue-50/70 ring-1 ring-inset ring-blue-100' : 'hover:bg-blue-50/40'}
                   >
                     <td className="px-4 py-3 font-bold text-slate-950">{item.brand}</td>
                     <td className="px-4 py-3 text-center text-slate-700">
@@ -781,7 +848,7 @@ export default function VoiceInfluencerTab() {
                 <p className="text-sm text-slate-500">
                   {selectedFeature
                     ? `Comparing ${selectedBrand} with the top 3 other tractor brands for this feature.`
-                    : 'Click any feature bar to compare Sonalika with the top positive competitor brands for that feature.'}
+                    : `Click any feature bar to compare ${selectedBrand} with the top positive competitor brands for that feature.`}
                 </p>
               </div>
 
@@ -956,6 +1023,11 @@ export default function VoiceInfluencerTab() {
                       <p className="mt-1 text-sm text-slate-500">
                         Same feature sentiment split for the selected brand.
                       </p>
+                      {selectedFeatureModels.length > 0 ? (
+                        <p className="mt-2 text-xs font-semibold text-blue-700">
+                          Models identified: {selectedFeatureModels.join(', ')}
+                        </p>
+                      ) : null}
                     </div>
 
                     {selectedFeatureSingleChartData.length > 0 ? (
@@ -1115,88 +1187,75 @@ export default function VoiceInfluencerTab() {
       </SectionCard>
 
       <SectionCard
-        title="Most-Mentioned Features"
+        title="Feature Sentiment Context"
+        subtitle="Features are ranked by positive or negative signal, while the full positive, neutral/factual and negative distribution remains visible."
       >
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-          <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 p-5 shadow-sm">
-            <div className="mb-4">
-              <h3 className="text-lg font-bold text-slate-950">
-                Top Praised Features — {selectedBrand}
-              </h3>
-            </div>
+          {[
+            {
+              title: `Strongest positive signals — ${selectedBrand}`,
+              items: mostMentioned.praised,
+              accent: 'blue' as const,
+            },
+            {
+              title: `Features needing attention — ${selectedBrand}`,
+              items: mostMentioned.criticized,
+              accent: 'red' as const,
+            },
+          ].map((group) => (
+            <div key={group.title} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="text-base font-semibold text-slate-950">{group.title}</h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Neutral mentions represent factual or specification-led statements, not praise or criticism.
+              </p>
 
-            {mostMentioned.praised.length > 0 ? (
-              <div className="space-y-3">
-                {mostMentioned.praised.map((item, index) => (
-                  <div
-                    key={item.feature}
-                    className="flex items-center justify-between gap-4 rounded-xl border border-blue-100 bg-white p-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-700 text-sm font-bold text-white">
-                        #{index + 1}
-                      </span>
-                      <div>
-                        <p className="font-bold text-slate-950">{item.feature}</p>
-                        <p className="text-xs text-slate-500">
-                          {item.total_mentions.toLocaleString()} total mentions
-                        </p>
+              {group.items.length > 0 ? (
+                <div className="mt-4 space-y-3">
+                  {group.items.map((item, index) => {
+                    const positivePct = item.total_mentions > 0 ? (item.Positive / item.total_mentions) * 100 : 0;
+                    const neutralPct = item.total_mentions > 0 ? (item.Neutral / item.total_mentions) * 100 : 0;
+                    const negativePct = Math.max(0, 100 - positivePct - neutralPct);
+                    const representativeModel = item.models[0];
+                    const signalCount = group.accent === 'blue' ? item.Positive : item.Negative;
+
+                    return (
+                      <div key={`${group.title}-${item.feature}`} className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white ${group.accent === 'blue' ? 'bg-blue-700' : 'bg-red-600'}`}>
+                                {index + 1}
+                              </span>
+                              <p className="font-semibold text-slate-950">{item.feature}</p>
+                            </div>
+                            <p className="mt-2 text-xs text-slate-500">
+                              {item.total_mentions.toLocaleString()} total mentions
+                              {representativeModel ? ` · Representative model: ${representativeModel}` : ''}
+                            </p>
+                          </div>
+                          <div className={`text-right ${group.accent === 'blue' ? 'text-blue-700' : 'text-red-700'}`}>
+                            <p className="text-xl font-bold">{signalCount.toLocaleString()}</p>
+                            <p className="text-[11px]">{group.accent === 'blue' ? 'positive' : 'negative'} signals</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <SentimentStrip positive={positivePct} neutral={neutralPct} negative={negativePct} height="h-6" minWidth="min-w-0" />
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+                          <span><strong className="text-blue-700">{item.Positive}</strong> positive</span>
+                          <span><strong className="text-slate-700">{item.Neutral}</strong> neutral / factual</span>
+                          <span><strong className="text-red-700">{item.Negative}</strong> negative</span>
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-blue-800">
-                        {Number(item.Positive || 0).toLocaleString()}
-                      </p>
-                      <p className="text-xs text-slate-500">positive</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState message="No praised features available for the selected brand." />
-            )}
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4">
-              <h3 className="text-lg font-bold text-slate-950">
-                Top Criticized Features — {selectedBrand}
-              </h3>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-4"><EmptyState message="No feature sentiment is available for this view." /></div>
+              )}
             </div>
-
-            {mostMentioned.criticized.length > 0 ? (
-              <div className="space-y-3">
-                {mostMentioned.criticized.map((item, index) => (
-                  <div
-                    key={item.feature}
-                    className="flex items-center justify-between gap-4 rounded-xl border border-red-100 bg-red-50/40 p-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-sm font-bold text-white">
-                        #{index + 1}
-                      </span>
-                      <div>
-                        <p className="font-bold text-slate-950">{item.feature}</p>
-                        <p className="text-xs text-slate-500">
-                          {item.total_mentions.toLocaleString()} total mentions
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-red-700">
-                        {Number(item.Negative || 0).toLocaleString()}
-                      </p>
-                      <p className="text-xs text-slate-500">negative</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState message="No criticized features available for the selected brand." />
-            )}
-          </div>
+          ))}
         </div>
 
         {mostMentionedVerbatims.length > 0 ? (
@@ -1298,6 +1357,26 @@ export default function VoiceInfluencerTab() {
             </div>
           </div>
         ) : null}
+      </SectionCard>
+
+      <SectionCard title="Key Discussion Themes">
+        <p className="mb-4 text-sm text-slate-500">
+          The curated AskMe discussion summaries are retained for Sonalika. For another selected brand, clean source-backed themes are generated from that brand’s filtered tractor videos.
+        </p>
+        {discussionThemes.selectedBrand.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {discussionThemes.selectedBrand.map((item) => (
+              <DiscussionThemeCard
+                key={item.title}
+                title={item.title}
+                points={item.points}
+                models={item.models}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState message={`No discussion themes are available for ${selectedBrand} in the selected date range.`} />
+        )}
       </SectionCard>
 
       <SectionCard
@@ -1443,7 +1522,7 @@ export default function VoiceInfluencerTab() {
                     <SortableHeader label="Tractor Video %" sortKey="tractor_video_percentage" />
                   </th>
                   <th className="px-4 py-3 text-right">
-                    <SortableHeader label="Sonalika Mention %" sortKey="sonalika_mention_percentage" />
+                    <SortableHeader label={`${selectedBrand} Mention %`} sortKey="sonalika_mention_percentage" />
                   </th>
                   <th className="px-4 py-3 text-right">
                     <SortableHeader label="Sentiment Score" sortKey="sentiment_score" />
@@ -1507,21 +1586,21 @@ export default function VoiceInfluencerTab() {
             <div className="rounded-2xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-xs leading-5 text-slate-600">
               <p className="font-bold text-slate-800">Creator leaderboard formula notes</p>
               <p>
-                <span className="font-semibold">Scope:</span> this leaderboard includes only creators with Sonalika-related tractor videos. Creators with 0% Sonalika mention are excluded from this KPI.
+                <span className="font-semibold">Scope:</span> this leaderboard includes only creators with selected-brand-related tractor videos. Creators with 0% selected-brand mention are excluded from this KPI.
               </p>
               <p>
-                <span className="font-semibold">Content Frequency</span> = number of Sonalika-related videos by the creator. 
-                <span className="font-semibold"> Sonalika Mention %</span> = (Sonalika-related videos / selected creator videos) × 100.
+                <span className="font-semibold">Content Frequency</span> = number of selected-brand-related videos by the creator. 
+                <span className="font-semibold"> {selectedBrand} Mention %</span> = (selected-brand-related videos / selected creator videos) × 100.
               </p>
               <p>
-                <span className="font-semibold">Sentiment Score</span> = ((Positive Sonalika sentiment mentions − Negative Sonalika sentiment mentions) / Total Sonalika sentiment mentions) × 100. A positive value means positive sentiment is stronger; a negative value means criticism is stronger.
+                <span className="font-semibold">Sentiment Score</span> = ((Positive selected-brand sentiment mentions − Negative selected-brand sentiment mentions) / Total selected-brand sentiment mentions) × 100. A positive value means positive sentiment is stronger; a negative value means criticism is stronger.
               </p>
               <p>
-                <span className="font-semibold">Engagement</span> = Total Views + Total Likes + Total Comments from Sonalika-related videos. 
+                <span className="font-semibold">Engagement</span> = Total Views + Total Likes + Total Comments from selected-brand-related videos. 
                 <span className="font-semibold"> Engagement Rate %</span> = ((Likes + Comments) / Views) × 100.
               </p>
               <p>
-                <span className="font-semibold">Overall Score</span> = normalized weighted score: Engagement contributes 40%, Content Frequency contributes 20%, Sonalika Mention % contributes 20%, and Sentiment Score contributes 20%.
+                <span className="font-semibold">Overall Score</span> = normalized weighted score: Engagement contributes 40%, Content Frequency contributes 20%, {selectedBrand} Mention % contributes 20%, and Sentiment Score contributes 20%.
               </p>
             </div>
           </div>
@@ -1562,7 +1641,7 @@ export default function VoiceInfluencerTab() {
                     <Tooltip />
                     <Bar
                       dataKey="videos"
-                      name="Unique Sonalika videos"
+                      name="Selected brand videos"
                       fill="#F59E0B"
                       radius={[0, 8, 8, 0]}
                       maxBarSize={36}

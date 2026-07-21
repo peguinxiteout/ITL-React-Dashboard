@@ -20,11 +20,11 @@ const NAV_ITEMS: {
 },
 {
   key: 'influencer',
-  label: 'Voice of Influencer'
+  label: 'Brand Perception Analysis'
 },
 {
   key: 'positioning',
-  label: 'Competitive Positioning'
+  label: 'Competitive Intelligence'
 },
 {
   key: 'sentiment',

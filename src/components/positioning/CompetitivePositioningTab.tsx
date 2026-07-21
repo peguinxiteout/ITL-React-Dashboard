@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -8,18 +8,22 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { CalendarIcon, TagIcon, TractorIcon, TrendingUpIcon, VideoIcon } from 'lucide-react';
 import { SectionCard } from '../SectionCard';
+import { TabInsights, TabOverviewCards } from '../TabOverview';
+import { VSSelect, type VSSelectOption } from '../sentiment/VSSelect';
+import { getBrandColor } from '../../utils/brandColors';
 import { useKpiData } from '../../hooks/useKpiData';
 import {
-  calculateCompetitiveMtpComparison,
   calculateCompetitiveTrendTable,
-  calculateCompetitorMentionsInSonalikaVideos,
   getVideoLevelRows,
+  calculateVoiceInfluencerKpiCards,
+  getAvailableBrands,
+  getAvailableDateRange,
+  getModelsForBrandFeature,
 } from '../../utils/kpiCalculations';
 
 const CHART_COLOR = '#2563EB';
-const SONALIKA_COLOR = '#FACC15';
-const SONALIKA_PANEL_COLOR = '#DBEAFE';
 
 const EmptyState = ({ message }: { message: string }) => (
   <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
@@ -39,52 +43,156 @@ const TrendArrow = ({ trend }: { trend: 'up' | 'down' | 'flat' }) => {
   return <span className="text-2xl font-bold text-slate-900">▬</span>;
 };
 
-const MtpNodeCard = ({
-  title,
-  points,
-  side,
-}: {
-  title: string;
-  points: string[];
-  side: 'sonalika' | 'other';
-}) => (
-  <div
-    className={`rounded-xl border p-4 shadow-sm ${
-      side === 'sonalika'
-        ? 'border-blue-200 bg-white'
-        : 'border-blue-200 bg-white'
-    }`}
-  >
-    <h4 className="text-center text-sm font-bold text-slate-950">{title}</h4>
-    <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs leading-5 text-slate-700">
-      {points.map((point) => (
-        <li key={point}>{point}</li>
-      ))}
-    </ol>
-  </div>
-);
+const filterRowsByDateRange = (
+  rows: Record<string, string>[],
+  startDate: string,
+  endDate: string
+) => {
+  if (!startDate && !endDate) return rows;
 
-export default function CompetitivePositioningTab() {
+  return rows.filter((row) => {
+    const postedDate = String(row.posted_date || '').slice(0, 10);
+    if (!postedDate) return false;
+    if (startDate && postedDate < startDate) return false;
+    if (endDate && postedDate > endDate) return false;
+    return true;
+  });
+};
+
+const rowMentionsBrand = (row: Record<string, string>, brand: string) => {
+  const searchableText = [
+    row.detected_brands_from_transcript,
+    row.title,
+    row.description,
+    row.page_content,
+    row.sentiments,
+    row.insights,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return searchableText.includes(brand.toLowerCase());
+};
+
+const formatDisplayDate = (value: string) => {
+  if (!value) return 'Not available';
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+const splitTrendRange = (startDate: string, endDate: string) => {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
+    return { baselineStart: startDate, baselineEnd: startDate, currentStart: endDate, currentEnd: endDate };
+  }
+  const totalDays = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+  const baselineDays = Math.ceil(totalDays / 2);
+  const baselineEndDate = new Date(start);
+  baselineEndDate.setDate(start.getDate() + baselineDays - 1);
+  const currentStartDate = new Date(baselineEndDate);
+  currentStartDate.setDate(baselineEndDate.getDate() + 1);
+  return {
+    baselineStart: startDate,
+    baselineEnd: baselineEndDate.toISOString().slice(0, 10),
+    currentStart: currentStartDate > end ? endDate : currentStartDate.toISOString().slice(0, 10),
+    currentEnd: endDate,
+  };
+};
+
+interface CompetitivePositioningTabProps {
+  onBrandChange?: (brand: string) => void;
+  standardKpis?: {
+    totalVideos: number;
+    tractorVideos: number;
+    dateRange: string;
+  };
+}
+
+export default function CompetitivePositioningTab({ standardKpis, onBrandChange }: CompetitivePositioningTabProps = {}) {
   const { rows, loading, error } = useKpiData();
 
-  const videoLevelRows = useMemo(
-    () => getVideoLevelRows(rows),
-    [rows]
+  const availableBrands = useMemo(() => getAvailableBrands(rows), [rows]);
+  const availableDateRange = useMemo(() => getAvailableDateRange(rows), [rows]);
+  const [selectedBrand, setSelectedBrand] = useState('Sonalika');
+  const [selectedStartDate, setSelectedStartDate] = useState('');
+  const [selectedEndDate, setSelectedEndDate] = useState('');
+  const [trendRangeMode, setTrendRangeMode] = useState<'page' | 'custom'>('page');
+  const [trendStartDate, setTrendStartDate] = useState('');
+  const [trendEndDate, setTrendEndDate] = useState('');
+
+  useEffect(() => {
+    if (!rows.length) return;
+    setSelectedStartDate((current) => current || availableDateRange.minDate);
+    setSelectedEndDate((current) => current || availableDateRange.maxDate);
+    setTrendStartDate((current) => current || availableDateRange.minDate);
+    setTrendEndDate((current) => current || availableDateRange.maxDate);
+  }, [rows.length, availableDateRange.minDate, availableDateRange.maxDate]);
+
+  const brandOptions = useMemo(() => {
+    const options = availableBrands.length ? availableBrands : ['Sonalika'];
+    return options.includes('Sonalika') ? options : ['Sonalika', ...options];
+  }, [availableBrands]);
+
+  const brandSelectOptions = useMemo<VSSelectOption[]>(
+    () => brandOptions.map((brand) => ({ value: brand, label: brand, color: getBrandColor(brand) })),
+    [brandOptions]
   );
 
-  const competitorMentions = useMemo(
-    () => calculateCompetitorMentionsInSonalikaVideos(rows),
-    [rows]
+  useEffect(() => {
+    onBrandChange?.(selectedBrand);
+  }, [selectedBrand, onBrandChange]);
+
+  const filteredRows = useMemo(
+    () => filterRowsByDateRange(rows, selectedStartDate, selectedEndDate),
+    [rows, selectedStartDate, selectedEndDate]
   );
 
-  const mtpComparison = useMemo(
-    () => calculateCompetitiveMtpComparison(rows),
-    [rows]
+
+  const sharedKpiValues = useMemo(
+    () => calculateVoiceInfluencerKpiCards(filteredRows),
+    [filteredRows]
   );
+
+  const resolvedStandardKpis = useMemo(
+    () => ({
+      totalVideos: standardKpis?.totalVideos ?? sharedKpiValues.videos_analyzed,
+      tractorVideos:
+        standardKpis?.tractorVideos ?? sharedKpiValues.tractor_videos_analyzed,
+      dateRange: standardKpis?.dateRange ?? sharedKpiValues.date_range,
+    }),
+    [standardKpis, sharedKpiValues]
+  );
+
+  const competitorMentions = useMemo(() => {
+    const selectedBrandRows = getVideoLevelRows(filteredRows).filter((row) =>
+      rowMentionsBrand(row, selectedBrand)
+    );
+
+    return brandOptions
+      .filter((brand) => brand.toLowerCase() !== selectedBrand.toLowerCase())
+      .map((competitor) => ({
+        competitor,
+        mention_count: selectedBrandRows.filter((row) => rowMentionsBrand(row, competitor)).length,
+      }))
+      .filter((item) => item.mention_count > 0)
+      .sort((a, b) => b.mention_count - a.mention_count);
+  }, [filteredRows, selectedBrand, brandOptions]);
+
+  const effectiveTrendStartDate = trendRangeMode === 'custom' ? trendStartDate : selectedStartDate;
+  const effectiveTrendEndDate = trendRangeMode === 'custom' ? trendEndDate : selectedEndDate;
 
   const trendTableRows = useMemo(
-    () => calculateCompetitiveTrendTable(rows),
-    [rows]
+    () => calculateCompetitiveTrendTable(rows, selectedBrand, effectiveTrendStartDate, effectiveTrendEndDate),
+    [rows, selectedBrand, effectiveTrendStartDate, effectiveTrendEndDate]
+  );
+
+  const trendPeriods = useMemo(
+    () => splitTrendRange(effectiveTrendStartDate, effectiveTrendEndDate),
+    [effectiveTrendStartDate, effectiveTrendEndDate]
   );
 
   const totalMentions = useMemo(
@@ -97,6 +205,22 @@ export default function CompetitivePositioningTab() {
   );
 
   const topCompetitor = competitorMentions[0];
+
+  const competitorProfiles = useMemo(
+    () => new Map(competitorMentions.map((item) => [
+      item.competitor,
+      getModelsForBrandFeature(filteredRows, item.competitor, '', 3),
+    ])),
+    [filteredRows, competitorMentions]
+  );
+
+  const brandMentionShare = useMemo(
+    () =>
+      trendTableRows
+        .find((item) => item.metric === 'Brand Mention Share')
+        ?.currentWeek.replace(/\s*Share/i, '') || '0%',
+    [trendTableRows]
+  );
 
   if (loading) {
     return (
@@ -116,49 +240,75 @@ export default function CompetitivePositioningTab() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Competitive Positioning
-        </h1>
-        
-        <p className="mt-2 inline-flex rounded-md bg-slate-100 px-3 py-1 text-sm text-slate-600">
-          {videoLevelRows.length} videos are being analyzed
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm font-medium text-slate-500">
-            Total Competitor Mentions
-          </p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {totalMentions}
-          </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-950">Competitive Intelligence</h1>
+          <p className="mt-1 text-sm text-slate-500">Competitor visibility and positioning within {selectedBrand}-related tractor content</p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm font-medium text-slate-500">
-            Competitor Brands Mentioned
-          </p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {competitorMentions.length}
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm font-medium text-slate-500">
-            Most Mentioned Competitor
-          </p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">
-            {topCompetitor ? topCompetitor.competitor : 'No data'}
-          </p>
-          {topCompetitor && (
-            <p className="mt-1 text-sm text-slate-500">
-              {topCompetitor.mention_count} mentions
-            </p>
-          )}
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs font-semibold text-slate-500">
+            From
+            <input type="date" min={availableDateRange.minDate} max={selectedEndDate || availableDateRange.maxDate} value={selectedStartDate} onChange={(event) => setSelectedStartDate(event.target.value)} className="mt-1 block rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500" />
+          </label>
+          <label className="text-xs font-semibold text-slate-500">
+            To
+            <input type="date" min={selectedStartDate || availableDateRange.minDate} max={availableDateRange.maxDate} value={selectedEndDate} onChange={(event) => setSelectedEndDate(event.target.value)} className="mt-1 block rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500" />
+          </label>
         </div>
       </div>
+
+      <TabOverviewCards
+        cards={[
+          {
+            label: 'Total Videos Analyzed',
+            value: resolvedStandardKpis.totalVideos.toLocaleString(),
+            descriptor: 'All monitored YouTube videos',
+            icon: <VideoIcon size={15} />,
+          },
+          {
+            label: 'Total Tractor Videos',
+            value: resolvedStandardKpis.tractorVideos.toLocaleString(),
+            descriptor: 'Tractor-related content identified',
+            icon: <TractorIcon size={15} />,
+          },
+          {
+            label: 'Competitor Brands Mentioned',
+            value: competitorMentions.length.toLocaleString(),
+            descriptor: 'Unique competitor brands detected',
+            icon: <TagIcon size={15} />,
+          },
+          {
+            label: 'Date Range',
+            value: resolvedStandardKpis.dateRange,
+            descriptor: 'Currently selected window',
+            icon: <CalendarIcon size={15} />,
+          },
+        ]}
+      />
+
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-slate-500">Brand</span>
+        <VSSelect value={selectedBrand} options={brandSelectOptions} onChange={setSelectedBrand} size="lg" ariaLabel="Select focus brand" />
+      </div>
+
+      <TabInsights
+        question={`How does ${selectedBrand} stand vs competitors?`}
+        cards={[
+          {
+            headline: `${topCompetitor?.competitor || 'No competitor'} most co-mentioned: ${Number(topCompetitor?.mention_count || 0).toLocaleString()} times`,
+            detail: `${totalMentions > 0 && topCompetitor ? ((topCompetitor.mention_count / totalMentions) * 100).toFixed(1) : '0.0'}% of all competitor mentions`,
+            icon: <TagIcon size={15} />,
+            tone: 'amber',
+          },
+          {
+            headline: `Brand mention share: ${brandMentionShare}`,
+            detail: 'Pulled from the same two-week trend logic',
+            icon: <TrendingUpIcon size={15} />,
+            tone: 'green',
+          },
+        ]}
+      />
 
       <SectionCard title="1. Competitor Mention Frequency">
         {competitorMentions.length > 0 ? (
@@ -208,7 +358,7 @@ export default function CompetitivePositioningTab() {
             </ResponsiveContainer>
           </div>
         ) : (
-          <EmptyState message="No competitor mentions were detected in the current Sonalika-related videos." />
+          <EmptyState message="No competitor mentions were detected in the current selected-brand videos." />
         )}
       </SectionCard>
 
@@ -225,6 +375,9 @@ export default function CompetitivePositioningTab() {
                 </th>
                 <th className="px-3 py-2 text-right font-semibold text-slate-600">
                   Mention Count
+                </th>
+                <th className="px-3 py-2 text-left font-semibold text-slate-600">
+                  Models Identified
                 </th>
                 <th className="px-3 py-2 text-right font-semibold text-slate-600">
                   Mention Share
@@ -253,6 +406,10 @@ export default function CompetitivePositioningTab() {
                       {row.mention_count}
                     </td>
 
+                    <td className="px-3 py-2 text-left text-xs text-slate-600">
+                      {competitorProfiles.get(row.competitor)?.join(', ') || 'Not identified'}
+                    </td>
+
                     <td className="px-3 py-2 text-right text-slate-700">
                       {share.toFixed(1)}%
                     </td>
@@ -269,84 +426,36 @@ export default function CompetitivePositioningTab() {
           </div>
         )}
       </SectionCard>
-<SectionCard
-        title="3. Major Talking Points (MTP)"
-      >
-        {mtpComparison.sonalika.length > 0 || mtpComparison.otherBrands.length > 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-5 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-              <div className="text-center">
-                <span
-                  className="inline-flex rounded px-2 py-1 text-base font-extrabold text-slate-950"
-                  style={{ backgroundColor: SONALIKA_COLOR }}
-                >
-                  Sonalika
-                </span>
-              </div>
-              <div className="text-xl font-extrabold text-slate-950">VS</div>
-              <div className="text-center">
-                <span
-                  className="inline-flex rounded px-2 py-1 text-base font-extrabold text-slate-950"
-                  style={{ backgroundColor: SONALIKA_COLOR }}
-                >
-                  Other Brands
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_auto_1fr]">
-              <div
-                className="relative rounded-2xl border border-blue-100 p-4"
-                style={{ backgroundColor: SONALIKA_PANEL_COLOR }}
-              >
-                <div className="absolute left-1/2 top-4 hidden h-[calc(100%-32px)] w-px -translate-x-1/2 bg-slate-300 lg:block" />
-                <div className="relative grid gap-4">
-                  {mtpComparison.sonalika.map((item, index) => (
-                    <div
-                      key={item.title}
-                      className={index % 2 === 0 ? 'lg:pr-16' : 'lg:pl-16'}
-                    >
-                      <MtpNodeCard
-                        title={item.title}
-                        points={item.points}
-                        side="sonalika"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="hidden w-8 items-center justify-center lg:flex">
-                <div className="h-full w-px bg-slate-300" />
-              </div>
-
-              <div className="relative rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="absolute left-1/2 top-4 hidden h-[calc(100%-32px)] w-px -translate-x-1/2 bg-slate-300 lg:block" />
-                <div className="relative grid gap-4">
-                  {mtpComparison.otherBrands.map((item, index) => (
-                    <div
-                      key={item.title}
-                      className={index % 2 === 0 ? 'lg:pl-16' : 'lg:pr-16'}
-                    >
-                      <MtpNodeCard
-                        title={item.title}
-                        points={item.points}
-                        side="other"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <EmptyState message="No tractor-category talking points are available for the current data." />
-        )}
-      </SectionCard>
-
       <SectionCard
-        title="4. Two-Week Competitive Trend Summary"
-        subtitle="Baseline is 1 Mar – 8 Mar. Current week is 9 Mar – 15 Mar."
+        title="3. Competitive Trend Summary"
+        subtitle={`Baseline: ${formatDisplayDate(trendPeriods.baselineStart)} – ${formatDisplayDate(trendPeriods.baselineEnd)}. Current: ${formatDisplayDate(trendPeriods.currentStart)} – ${formatDisplayDate(trendPeriods.currentEnd)}.`}
+        actions={
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="text-xs font-semibold text-slate-500">
+              Trend Range
+              <select
+                value={trendRangeMode}
+                onChange={(event) => setTrendRangeMode(event.target.value as 'page' | 'custom')}
+                className="mt-1 block rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm"
+              >
+                <option value="page">Use Page Range</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </label>
+            {trendRangeMode === 'custom' ? (
+              <>
+                <label className="text-xs font-semibold text-slate-500">
+                  From
+                  <input type="date" min={availableDateRange.minDate} max={trendEndDate || availableDateRange.maxDate} value={trendStartDate} onChange={(event) => setTrendStartDate(event.target.value)} className="mt-1 block rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm" />
+                </label>
+                <label className="text-xs font-semibold text-slate-500">
+                  To
+                  <input type="date" min={trendStartDate || availableDateRange.minDate} max={availableDateRange.maxDate} value={trendEndDate} onChange={(event) => setTrendEndDate(event.target.value)} className="mt-1 block rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm" />
+                </label>
+              </>
+            ) : null}
+          </div>
+        }
       >
         <div className="overflow-x-auto rounded-2xl border border-slate-200">
           <table className="min-w-full divide-y divide-slate-200 text-sm">
@@ -356,10 +465,10 @@ export default function CompetitivePositioningTab() {
                   KPI / Strategic Metric
                 </th>
                 <th className="border border-slate-700 px-4 py-3 text-center text-base font-extrabold text-slate-950">
-                  Baseline (1st Mar - 8th Mar)
+                  Baseline ({formatDisplayDate(trendPeriods.baselineStart)} – {formatDisplayDate(trendPeriods.baselineEnd)})
                 </th>
                 <th className="border border-slate-700 px-4 py-3 text-center text-base font-extrabold text-slate-950">
-                  Current Week
+                  Current ({formatDisplayDate(trendPeriods.currentStart)} – {formatDisplayDate(trendPeriods.currentEnd)})
                 </th>
                 <th className="border border-slate-700 px-4 py-3 text-center text-base font-extrabold text-slate-950">
                   Trend
@@ -389,7 +498,7 @@ export default function CompetitivePositioningTab() {
         </div>
 
         <p className="mt-3 text-xs text-slate-500">
-          Tractor Content Density = tractor videos / all videos. Brand Mention Share = Sonalika-related tractor videos / tractor videos. Sentiment is calculated from Sonalika sentiment mentions.
+          Tractor Content Density = tractor videos / all videos. Brand Mention Share = selected-brand tractor videos / tractor videos. Sentiment is calculated from the selected brand’s sentiment mentions.
         </p>
       </SectionCard>
 

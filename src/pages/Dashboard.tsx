@@ -432,25 +432,7 @@ function KeyInsightsCard({
     };
   }, [kpiRows]);
 
-  const showCPStateB = true;
 
-  const trendArrowMeta = (trend: 'up' | 'down' | 'flat') => {
-    if (trend === 'up') return { arrow: '▲', color: '#16a34a' };
-    if (trend === 'down') return { arrow: '▼', color: '#dc2626' };
-    return { arrow: '▬', color: '#94a3b8' };
-  };
-
-  const cpTableRows: { kpi: string; prev: string; curr: string; arrow: string; color: string }[] =
-    cpStateA.trendRows.map((row: any) => {
-      const { arrow, color } = trendArrowMeta(row.trend);
-      return {
-        kpi: row.metric,
-        prev: row.baseline,
-        curr: row.currentWeek,
-        arrow,
-        color,
-      };
-    });
 
   const kiDivider = <div style={{ borderTop: '0.5px solid var(--color-border-tertiary, #e2e8f0)', margin: '20px 0' }} />;
 
@@ -498,16 +480,18 @@ export function Dashboard() {
   const [activeTabBrandName, setActiveTabBrandName] = useState<string | null>(null);
 
   useEffect(() => {
-    if (activeTab !== 'market-share' && activeTab !== 'sentiment') {
+    if (activeTab === 'overview') {
       setActiveTabBrandName(null);
     }
   }, [activeTab]);
 
   const handleCMSBrandChange = useCallback((brand: string) => setActiveTabBrandName(brand), []);
   const handleVSBrandChange = useCallback((brand: string) => setActiveTabBrandName(brand), []);
+  const handleInfluencerBrandChange = useCallback((brand: string) => setActiveTabBrandName(brand), []);
+  const handlePositioningBrandChange = useCallback((brand: string) => setActiveTabBrandName(brand), []);
 
   const headerTitle =
-    (activeTab === 'market-share' || activeTab === 'sentiment') && activeTabBrandName
+    (['market-share', 'sentiment', 'influencer', 'positioning'] as TabKey[]).includes(activeTab) && activeTabBrandName
       ? `${activeTabBrandName} YouTube Intelligence`
       : 'Sonalika YouTube Intelligence';
 
@@ -656,11 +640,11 @@ export function Dashboard() {
     }
 
     if (activeTab === 'influencer') {
-      return <VoiceInfluencerTab />;
+      return <VoiceInfluencerTab onBrandChange={handleInfluencerBrandChange} />;
     }
 
     if (activeTab === 'positioning') {
-      return <CompetitivePositioningTab />;
+      return <CompetitivePositioningTab onBrandChange={handlePositioningBrandChange} />;
     }
 
     return null;
