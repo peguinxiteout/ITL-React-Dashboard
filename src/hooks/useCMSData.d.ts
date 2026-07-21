@@ -92,6 +92,7 @@ export interface BrandChannelRow {
 
 export const CMS_BRAND_META: Record<string, BrandMeta>;
 export const SONALIKA_BRAND: string;
+export const TOTAL_MONITORED_CHANNELS: number;
 
 export function summarizeBrands(rows: Record<string, unknown>[]): BrandSummaryRow[];
 export function buildWeeklyData(rows: Record<string, unknown>[]): WeeklyDataRow[];

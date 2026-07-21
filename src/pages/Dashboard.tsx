@@ -18,10 +18,8 @@ import {
   useCMSData,
   computeOverviewStats,
   computeCategoryData,
-  computeChannelCoverage,
   computeBrandChannelMatrix,
   type CategoryItem,
-  type ChannelCoverage,
   type BrandChannelRow,
 } from '../hooks/useCMSData.js';
 import { useKpiData } from '../hooks/useKpiData';
@@ -153,53 +151,6 @@ function CategoryVideosCard({ data, loading }: { data: CategoryItem[]; loading: 
           <p style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', marginTop: 14, marginBottom: 0 }}>
             Categories derived from pipeline classification. Additional categories will appear automatically as the pipeline is updated.
           </p>
-        </>
-      )}
-    </SectionCard>
-  );
-}
-
-// ─── ChannelCoverageCard ──────────────────────────────────────────────────────
-function ChannelCoverageCard({
-  data, totalMonitored, loading,
-}: {
-  data: ChannelCoverage;
-  totalMonitored: number;
-  loading: boolean;
-}) {
-  const pct = totalMonitored > 0 ? (data.tractorChannels / totalMonitored) * 100 : 0;
-  return (
-    <SectionCard
-      title="Channel Coverage"
-      subtitle="Monitored channel activity in selected date window"
-    >
-      {loading ? (
-        <p style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center', padding: '16px 0' }}>Loading…</p>
-      ) : (
-        <>
-          <div>
-            <p style={{ fontSize: 28, fontWeight: 500, color: '#0f172a', margin: '0 0 4px 0', lineHeight: 1.1 }}>
-              {data.tractorChannels} of {totalMonitored} channels
-            </p>
-            <p style={{ fontSize: 12, color: '#94a3b8', margin: 0 }}>
-              contributed tractor content in selected window
-            </p>
-            <div style={{ background: '#E5E7EB', height: 6, borderRadius: 3, marginTop: 10 }}>
-              <div style={{ height: 6, borderRadius: 3, width: `${pct}%`, backgroundColor: '#185FA5' }} />
-            </div>
-            <p style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', margin: '4px 0 0 0' }}>
-              ({data.activeChannels} channels published any content in this window)
-            </p>
-          </div>
-          <div style={{ borderTop: '0.5px solid #e2e8f0', margin: '14px 0' }} />
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 500, color: '#0f172a', margin: '0 0 6px 0' }}>
-              Not yet contributing tractor content:
-            </p>
-            <p style={{ fontSize: 12, color: '#64748b', lineHeight: 1.6, margin: 0 }}>
-              {data.inactiveChannelNames.join(', ')}
-            </p>
-          </div>
         </>
       )}
     </SectionCard>
@@ -506,7 +457,7 @@ export function Dashboard() {
     endDate: '2026-03-15',
   });
 
-  const { allData, cmsData, loading: cmsLoading, error: cmsError, totalMonitored } = useCMSData();
+  const { allData, cmsData, loading: cmsLoading, error: cmsError } = useCMSData();
 
   const { startDate, endDate } = globalDateRange;
 
@@ -519,11 +470,6 @@ export function Dashboard() {
 
   const categoryData = useMemo(
     () => computeCategoryData(allData, startDate, endDate),
-    [allData, startDate, endDate]
-  );
-
-  const channelCoverage = useMemo(
-    () => computeChannelCoverage(allData, startDate, endDate),
     [allData, startDate, endDate]
   );
 
@@ -601,9 +547,6 @@ export function Dashboard() {
 
           {/* Total Category Videos bar chart */}
           <CategoryVideosCard data={categoryData} loading={cmsLoading} />
-
-          {/* Channel Coverage */}
-          <ChannelCoverageCard data={channelCoverage} totalMonitored={totalMonitored} loading={cmsLoading} />
 
           {/* Brand × Channel heatmap */}
           <BrandChannelHeatmap data={brandChannelMatrix} loading={cmsLoading} />

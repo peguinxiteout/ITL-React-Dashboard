@@ -8,6 +8,7 @@ import { ShareTrendCharts } from './ShareTrendCharts';
 import { ContentFrequencyChart } from './ContentFrequencyChart';
 import { ContentCategoryBreakdownCard } from './ContentCategoryBreakdownCard';
 import { BrandShareChart } from './BrandShareChart';
+import { ChannelCoverageCard } from './ChannelCoverageCard';
 import { VSSelect, VSSelectOption } from '../sentiment/VSSelect';
 import {
   summarizeBrands,
@@ -387,6 +388,13 @@ export function MarketShareTab({
             startDate={startDate}
             endDate={endDate}
             ownBrand={ownBrand} />
+
+          </motion.div>
+          <motion.div variants={item}>
+            <ChannelCoverageCard
+            allData={allData}
+            startDate={startDate}
+            endDate={endDate} />
 
           </motion.div>
         </>
