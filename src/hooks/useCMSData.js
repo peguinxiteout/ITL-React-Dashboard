@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
-import { getBrandColor } from '../utils/brandColors';
+import { getBrandColor, EXCLUDED_BRANDS } from '../utils/brandColors';
 
 // ─── Brand metadata ──────────────────────────────────────────────────────────
 // Keyed by the exact `attributed_brand` string in the CSV. Colors come from
@@ -15,7 +15,6 @@ export const CMS_BRAND_META = {
   'Massey Ferguson': { short: 'MF' },
   'Escorts Kubota': { short: 'EK' },
   Kartar: { short: 'KAR' },
-  'Ashok Leyland': { short: 'AL' },
   'Indo Farm': { short: 'IF' },
   'Deutz Fahr': { short: 'DF' },
   Preet: { short: 'PRT' },
@@ -352,14 +351,10 @@ const BRAND_NORMALIZE = {
   Kubota: 'Escorts Kubota',
 };
 
-// Non-tractor vehicle brands that appear as incidental co-mentions
-// in misclassified pipeline videos — excluded from all KPI calculations
-const NON_TRACTOR_BRANDS = new Set([
-  'Maruti Suzuki',
-  'Royal Enfield',
-  'Tata',
-  'Ultraviolette',
-]);
+// Non-tractor vehicle brands that appear as incidental co-mentions in
+// misclassified pipeline videos — excluded from all KPI calculations. Sourced
+// from the shared list in brandColors.ts so CMS and VS stay in sync.
+const NON_TRACTOR_BRANDS = EXCLUDED_BRANDS;
 
 function getIsoWeek(isoDate) {
   const d = new Date(isoDate + 'T00:00:00Z');

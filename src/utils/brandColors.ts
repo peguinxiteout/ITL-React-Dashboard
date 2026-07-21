@@ -16,7 +16,6 @@ export const BRAND_COLORS: Record<string, string> = {
   'Massey Ferguson': '#F0997B',
   'Escorts Kubota': '#ED93B1',
   Kartar: '#CCC619',
-  'Ashok Leyland': '#77D161',
   'Indo Farm': '#59CF7A',
   'Deutz Fahr': '#5CCCD6',
   Preet: '#AA81DA',
@@ -42,3 +41,18 @@ export const FALLBACK_BRAND_COLOR = '#9CA3AF';
 
 export const getBrandColor = (brand: string): string =>
   BRAND_COLORS[brand] || FALLBACK_BRAND_COLOR;
+
+// ─── Shared brand exclusion list ─────────────────────────────────────────────
+// Names that surface in the raw data (CMS's detected_brands_from_transcript,
+// VS's pi_brand/un_brand/qs_brand) but aren't tractor manufacturers in this
+// project's competitive set — commercial-vehicle, two-wheeler, or otherwise
+// incidental co-mentions in the source transcripts/comments. Both CMS
+// (useCMSData.js) and VS (useVSData.js) exclude these from the brand universe
+// entirely, reading from this single shared list so the two never drift.
+export const EXCLUDED_BRANDS = new Set<string>([
+  'Maruti Suzuki',
+  'Royal Enfield',
+  'Tata',
+  'Ultraviolette',
+  'Ashok Leyland',
+]);

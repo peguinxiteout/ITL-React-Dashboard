@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
+import { EXCLUDED_BRANDS } from '../utils/brandColors';
 
 const isBool = (v) => v === true || v === 'True' || v === 'true';
 const num = (v) => (typeof v === 'number' && !Number.isNaN(v) ? v : 0);
@@ -68,6 +69,23 @@ function mostCommon(arr) {
   const counts = {};
   for (const v of arr) counts[v] = (counts[v] || 0) + 1;
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+// Rows carry brand attribution in three independent columns (pi_brand,
+// un_brand, qs_brand — one per signal type, populated per row as applicable).
+// Null out any that name an excluded (non-tractor) brand so those rows fall
+// back to the same "unattributed" treatment already applied to rows with no
+// brand at all — every downstream by-brand tally, dropdown, and filter reads
+// these three fields directly, so sanitizing them once here (same shared list
+// as CMS's NON_TRACTOR_BRANDS in useCMSData.js) is sufficient to exclude a
+// brand everywhere on this tab.
+function sanitizeBrandFields(row) {
+  if (!row) return row;
+  const clean = row;
+  if (clean.pi_brand && EXCLUDED_BRANDS.has(clean.pi_brand)) clean.pi_brand = null;
+  if (clean.un_brand && EXCLUDED_BRANDS.has(clean.un_brand)) clean.un_brand = null;
+  if (clean.qs_brand && EXCLUDED_BRANDS.has(clean.qs_brand)) clean.qs_brand = null;
+  return clean;
 }
 
 const SEVERITY_ORDER = { high: 3, medium: 2, low: 1, none: 0 };
@@ -377,7 +395,9 @@ export function useVSData({
       })
       .then((text) => {
         const parsed = Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true });
-        return parsed.data.filter((r) => r && r.extraction_status === 'success');
+        return parsed.data
+          .filter((r) => r && r.extraction_status === 'success')
+          .map(sanitizeBrandFields);
       });
 
     const fetchClusters = fetch('/data/question_clusters.csv')
