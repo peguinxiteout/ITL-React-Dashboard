@@ -11,10 +11,6 @@ const NAV_ITEMS: {
   label: string;
 }[] = [
 {
-  key: 'overview',
-  label: 'Intelligence Overview'
-},
-{
   key: 'market-share',
   label: 'Content Market Share'
 },
